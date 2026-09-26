@@ -159,14 +159,14 @@ export function useProjectMenuActions() {
     setProjectHubOpen(false);
   }, []);
 
-  const stageDeliveryFromFolder = useCallback(
-    async (folder: string) => {
-      if (!activeProject) return;
+  const stageDeliveryFromSources = useCallback(
+    async (sourcePaths: string[]) => {
+      if (!activeProject || sourcePaths.length === 0) return;
       setDeliveryStaging(true);
       setConfigError(null);
       try {
         const preview = await api.stageDelivery(
-          [folder],
+          sourcePaths,
           activeProject.id,
           normalizeApplicationId(activeProject.application_id),
         );
@@ -189,7 +189,7 @@ export function useProjectMenuActions() {
     modal: deliveryFolderConfirmModal,
   } = useDeliveryFolderConfirm({
     applicationId: deliveryApplicationId,
-    onConfirm: stageDeliveryFromFolder,
+    onConfirm: stageDeliveryFromSources,
   });
 
   const closeApplyDeliveryPicker = useCallback(() => {

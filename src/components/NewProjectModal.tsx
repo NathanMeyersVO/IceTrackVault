@@ -20,12 +20,13 @@ export function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalPr
   const [error, setError] = useState<string | null>(null);
   const setDeliveryStaging = usePlayerStore((s) => s.setDeliveryStaging);
 
-  const stageFromFolder = useCallback(
-    async (folder: string) => {
+  const stageFromSources = useCallback(
+    async (sourcePaths: string[]) => {
+      if (sourcePaths.length === 0) return;
       setDeliveryStaging(true, applicationId);
       setError(null);
       try {
-        const preview = await api.stageDelivery([folder], null, applicationId);
+        const preview = await api.stageDelivery(sourcePaths, null, applicationId);
         setDeliveryPreview(preview);
       } catch (e) {
         setError(String(e));
@@ -42,7 +43,7 @@ export function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalPr
     pickAndShow: pickDeliveryFolderForCreate,
     loadFolder: loadDeliveryFolderForCreate,
     modal: deliveryFolderConfirmModal,
-  } = useDeliveryFolderConfirm({ applicationId, onConfirm: stageFromFolder });
+  } = useDeliveryFolderConfirm({ applicationId, onConfirm: stageFromSources });
 
   const canStartDelivery = Boolean(newName.trim());
 

@@ -14,6 +14,12 @@ export interface DeliveryCopy {
   createProjectDropZoneLabel: string;
   pickFolderDialogTitle: string;
   confirmFolderModalTitle: string;
+  sourceBrowserTitle: string;
+  sourceBrowserDeliveryOnlyLabel: string;
+  sourceBrowserShowAllLabel: string;
+  sourceBrowserContinueLabel: string;
+  sourceBrowserSystemFolderLabel: string;
+  sourceBrowserEmptySelectionHint: string;
   applyUpdateMenuLabel: string;
   applyUpdateMenuLabelStaging: string;
   applyUpdateMenuTitle: string;
@@ -48,6 +54,13 @@ const NONE_DELIVERY_COPY: DeliveryCopy = {
   createProjectDropZoneLabel: "Drop delivery folder here",
   pickFolderDialogTitle: "Select delivery folder",
   confirmFolderModalTitle: "Confirm delivery folder",
+  sourceBrowserTitle: "Choose delivery files",
+  sourceBrowserDeliveryOnlyLabel: "Delivery files only",
+  sourceBrowserShowAllLabel: "Show all files",
+  sourceBrowserContinueLabel: "Continue",
+  sourceBrowserSystemFolderLabel: "Jump to folder in system dialog…",
+  sourceBrowserEmptySelectionHint:
+    "Select at least one archive, audio file, or folder to import.",
   applyUpdateMenuLabel: "Apply Delivery Update…",
   applyUpdateMenuLabelStaging: "Staging delivery…",
   applyUpdateMenuTitle:
@@ -74,6 +87,13 @@ const USFS_EMS_DELIVERY_COPY: DeliveryCopy = {
   createProjectDropZoneLabel: "Drop EMS download folder here",
   pickFolderDialogTitle: "Select EMS downloads folder",
   confirmFolderModalTitle: "Confirm EMS downloads folder",
+  sourceBrowserTitle: "Choose EMS download files",
+  sourceBrowserDeliveryOnlyLabel: "EMS files only",
+  sourceBrowserShowAllLabel: "Show all files",
+  sourceBrowserContinueLabel: "Continue",
+  sourceBrowserSystemFolderLabel: "Jump to folder in system dialog…",
+  sourceBrowserEmptySelectionHint:
+    "Select at least one archive, schedule, audio file, or folder to import.",
   applyUpdateMenuLabel: "Apply EMS Download…",
   applyUpdateMenuLabelStaging: "Staging EMS download…",
   applyUpdateMenuTitle:

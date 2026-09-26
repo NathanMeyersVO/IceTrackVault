@@ -1,73 +1,74 @@
 import { useCallback, useState } from "react";
 
-import { DeliveryFolderConfirmModal } from "../components/DeliveryFolderConfirmModal";
+import { DeliverySourceBrowserModal } from "../components/DeliverySourceBrowserModal";
 import { getApplicationConfig, getDeliveryCopy } from "../lib/applicationConfig";
 import { pickDeliveryFolder } from "../lib/pickDeliveryFolder";
-import { api, type ApplicationId, type DeliveryFolderBrowseResult } from "../lib/tauri";
+import type { ApplicationId } from "../lib/tauri";
 
 export function useDeliveryFolderConfirm(options: {
   applicationId: ApplicationId;
-  onConfirm: (folderPath: string) => void | Promise<void>;
+  onConfirm: (sourcePaths: string[]) => void | Promise<void>;
 }) {
   const { applicationId, onConfirm } = options;
   const deliveryCopy = getDeliveryCopy(applicationId);
   const supportsScheduleDelivery =
     getApplicationConfig(applicationId).supportsScheduleDelivery;
   const [open, setOpen] = useState(false);
-  const [browse, setBrowse] = useState<DeliveryFolderBrowseResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState(0);
+  const [startPath, setStartPath] = useState<string | null>(null);
+  const [preselectPaths, setPreselectPaths] = useState<string[]>([]);
 
   const close = useCallback(() => {
     setOpen(false);
-    setBrowse(null);
-    setError(null);
-    setLoading(false);
+    setStartPath(null);
+    setPreselectPaths([]);
   }, []);
 
-  const loadFolder = useCallback(async (folder: string) => {
+  const openBrowser = useCallback((path: string | null, preselect: string[] = []) => {
+    setStartPath(path);
+    setPreselectPaths(preselect);
+    setSession((n) => n + 1);
     setOpen(true);
-    setLoading(true);
-    setError(null);
-    setBrowse(null);
-    try {
-      setBrowse(await api.browseDeliveryFolder(folder));
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setLoading(false);
-    }
   }, []);
 
-  const pickAndShow = useCallback(async () => {
-    const folder = await pickDeliveryFolder(deliveryCopy.pickFolderDialogTitle);
-    if (!folder) return;
-    await loadFolder(folder);
-  }, [deliveryCopy.pickFolderDialogTitle, loadFolder]);
+  const loadFolder = useCallback(
+    (folder: string) => {
+      openBrowser(folder, [folder]);
+    },
+    [openBrowser],
+  );
 
-  const chooseDifferent = useCallback(async () => {
-    const folder = await pickDeliveryFolder(deliveryCopy.pickFolderDialogTitle);
-    if (folder) await loadFolder(folder);
-  }, [deliveryCopy.pickFolderDialogTitle, loadFolder]);
+  const pickAndShow = useCallback(() => {
+    openBrowser(null, []);
+  }, [openBrowser]);
+
+  const pickSystemFolder = useCallback(async () => {
+    return pickDeliveryFolder(deliveryCopy.pickFolderDialogTitle);
+  }, [deliveryCopy.pickFolderDialogTitle]);
 
   const confirm = useCallback(
-    (path: string) => {
+    (paths: string[]) => {
       close();
-      void onConfirm(path);
+      void onConfirm(paths);
     },
     [close, onConfirm],
   );
 
   const modal = open ? (
-    <DeliveryFolderConfirmModal
-      title={deliveryCopy.confirmFolderModalTitle}
+    <DeliverySourceBrowserModal
+      key={session}
+      title={deliveryCopy.sourceBrowserTitle}
       supportsScheduleDelivery={supportsScheduleDelivery}
-      browse={browse}
-      loading={loading}
-      error={error}
+      deliveryOnlyLabel={deliveryCopy.sourceBrowserDeliveryOnlyLabel}
+      showAllLabel={deliveryCopy.sourceBrowserShowAllLabel}
+      continueLabel={deliveryCopy.sourceBrowserContinueLabel}
+      systemFolderPickerLabel={deliveryCopy.sourceBrowserSystemFolderLabel}
+      emptySelectionHint={deliveryCopy.sourceBrowserEmptySelectionHint}
+      initialPath={startPath}
+      initialSelectedPaths={preselectPaths}
       onClose={close}
-      onChooseDifferent={() => void chooseDifferent()}
-      onConfirm={confirm}
+      onContinue={confirm}
+      onPickSystemFolder={pickSystemFolder}
     />
   ) : null;
 

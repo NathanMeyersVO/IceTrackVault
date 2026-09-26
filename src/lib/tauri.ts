@@ -310,6 +310,8 @@ export interface DeliveryBrowseEntry {
   name: string;
   path: string;
   kind: DeliveryEntryKind;
+  modified_ms?: number;
+  size_bytes?: number;
 }
 
 export interface DeliveryFolderSummary {

@@ -38,6 +38,10 @@ pub struct DeliveryBrowseEntry {
     pub name: String,
     pub path: String,
     pub kind: DeliveryEntryKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modified_ms: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub size_bytes: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -128,10 +132,25 @@ pub fn browse_delivery_folder_at(dir: &Path) -> Result<DeliveryFolderBrowseResul
         } else {
             classify_delivery_file(&entry_path)
         };
+        let (modified_ms, size_bytes) = entry
+            .metadata()
+            .ok()
+            .map(|m| {
+                let modified_ms = m
+                    .modified()
+                    .ok()
+                    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                    .map(|d| d.as_millis() as u64);
+                let size_bytes = if m.is_file() { Some(m.len()) } else { None };
+                (modified_ms, size_bytes)
+            })
+            .unwrap_or((None, None));
         entries.push(DeliveryBrowseEntry {
             name,
             path: entry_path.to_string_lossy().to_string(),
             kind,
+            modified_ms,
+            size_bytes,
         });
     }
 
@@ -144,7 +163,8 @@ pub fn browse_delivery_folder_at(dir: &Path) -> Result<DeliveryFolderBrowseResul
         }
     });
 
-    let summary = summarize_delivery_folder(&path)?;
+    // Non-recursive: browser UI only lists immediate children; avoid WalkDir on large trees (e.g. OneDrive).
+    let summary = summarize_browse_entries(&entries);
 
     Ok(DeliveryFolderBrowseResult {
         path: path_str,
@@ -159,6 +179,29 @@ fn folder_first(kind: DeliveryEntryKind) -> u8 {
         0
     } else {
         1
+    }
+}
+
+/// Immediate children only (see [`browse_delivery_folder_at`]).
+fn summarize_browse_entries(entries: &[DeliveryBrowseEntry]) -> DeliveryFolderSummary {
+    let mut archives = Vec::new();
+    let mut schedules = Vec::new();
+    let mut audio_files = Vec::new();
+    for entry in entries {
+        match entry.kind {
+            DeliveryEntryKind::Archive => archives.push(entry.name.clone()),
+            DeliveryEntryKind::Schedule => schedules.push(entry.name.clone()),
+            DeliveryEntryKind::Audio => audio_files.push(entry.name.clone()),
+            DeliveryEntryKind::Folder | DeliveryEntryKind::Other => {}
+        }
+    }
+    archives.sort();
+    schedules.sort();
+    audio_files.sort();
+    DeliveryFolderSummary {
+        archives,
+        schedules,
+        audio_files,
     }
 }
 
@@ -643,6 +686,20 @@ mod tests {
         assert_eq!(summary.schedules.len(), 1);
         assert_eq!(summary.audio_files.len(), 1);
         assert!(summary.can_import());
+
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn browse_summary_lists_top_level_only() {
+        let base = std::env::temp_dir().join(format!("tv-browse-shallow-{}", uuid::Uuid::new_v4()));
+        let root = base.join("root");
+        fs::create_dir_all(root.join("sub")).expect("mkdir");
+        write_test_zip(&root.join("top.zip"), "a.mp3", b"x");
+        write_test_zip(&root.join("sub/nested.zip"), "b.mp3", b"y");
+
+        let browse = browse_delivery_folder_at(&root).expect("browse");
+        assert_eq!(browse.summary.archives, vec!["top.zip".to_string()]);
 
         let _ = fs::remove_dir_all(&base);
     }
