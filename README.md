@@ -1,8 +1,13 @@
 # IceTrackVault
 
-A cross-platform desktop music player (Windows and macOS) with an iTunes-like layout. Manage **projects** (each stores audio under a `library/` folder in app data), browse **project tracks**, manage project playlists and taglists, apply **EMS download** updates (for US Figure Skating EMS projects), and play audio with a waveform view powered by [wavesurfer.js](https://wavesurfer.xyz/).
+A **Windows** desktop music player with an iTunes-like layout for music coordinators. Manage **projects** (each stores audio under a `library/` folder in app data), browse **project tracks**, manage project playlists and taglists, apply **EMS download** updates (for US Figure Skating EMS projects), and play audio with a waveform view powered by [wavesurfer.js](https://wavesurfer.xyz/). Built with Tauri + React; the source is OS-independent, but only Windows installers are published today.
 
 **Documentation & product site:** [nathanmeyersvo.github.io/IceTrackVault](https://nathanmeyersvo.github.io/IceTrackVault/)
+
+## Platform
+
+- **End users:** Windows only—download from [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases).
+- **macOS:** Not supported for delivery today. A local macOS build may be possible (`npm run tauri build` on a Mac), but that is not a current priority. The author welcomes help from any interested macOS developer who would like to take on enabling macOS—open an issue or PR on GitHub.
 
 ## Stack
 
@@ -20,8 +25,8 @@ npm run tauri dev
 
 Build a release installer: `npm run tauri build`
 
-- Windows output: `src-tauri/target/release/bundle/`
-- macOS output: build on macOS for `.app` / `.dmg`
+- Windows output (releases): `src-tauri/target/release/bundle/`
+- macOS output (unofficial): on a Mac, `.app` / `.dmg` under `bundle/` if a local build succeeds
 
 End-user setup, usage, CLI tools, and release downloads are in the [docs site](https://nathanmeyersvo.github.io/IceTrackVault/guide/getting-started).
 

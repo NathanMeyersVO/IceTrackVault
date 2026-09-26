@@ -4,7 +4,7 @@ layout: home
 hero:
   name: IceTrackVault
   text: Music library for skating projects
-  tagline: Manage EMS projects, playlists, and waveform playback on Windows and macOS.
+  tagline: Manage EMS projects, playlists, and waveform playback on Windows.
   actions:
     - theme: brand
       text: Download
@@ -24,8 +24,8 @@ features:
 
 ## About
 
-IceTrackVault is a cross-platform desktop music player with an iTunes-like layout. Use it to browse project tracks, organize playlists, apply vendor EMS deliveries, and play audio with a visual waveform.
+IceTrackVault is a Windows desktop music player with an iTunes-like layout. Use it to browse project tracks, organize playlists, apply vendor EMS deliveries, and play audio with a visual waveform.
 
-Pre-built **Windows installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS builds are produced locally on a Mac.
+Pre-built **Windows installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS is not supported for end users today. The codebase is OS-independent (Tauri); a local macOS build may work, but Windows is the focus and macOS delivery is not a current priority. Contributions from macOS developers who want to help enable macOS are welcome—open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault). See [Build from source](/guide/development) for prerequisites.
 
 **Documentation:** [Getting started](/guide/getting-started) · [Source on GitHub](https://github.com/NathanMeyersVO/IceTrackVault)

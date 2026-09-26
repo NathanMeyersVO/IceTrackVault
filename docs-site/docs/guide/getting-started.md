@@ -1,8 +1,8 @@
 # Getting started
 
-IceTrackVault runs on **Windows** and **macOS**.
+IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS is not offered as a supported platform today; see [Build from source](./development) if you are a contributor exploring a local macOS build.
 
-## Install (Windows)
+## Install
 
 1. Open [Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases) and download the latest installer (`.msi` and/or `.exe`, depending on the build).
 2. Run the installer. Unsigned builds may show a SmartScreen warning until the app is code-signed.

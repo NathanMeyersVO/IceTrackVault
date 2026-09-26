@@ -1,5 +1,7 @@
 # Download & releases
 
+IceTrackVault ships **Windows-only** installers. macOS builds are not published or maintained as part of releases today.
+
 Pre-built **Windows** installers are published as [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) assets:
 
 **[github.com/NathanMeyersVO/IceTrackVault/releases](https://github.com/NathanMeyersVO/IceTrackVault/releases)**
@@ -7,7 +9,7 @@ Pre-built **Windows** installers are published as [GitHub Release](https://docs.
 1. Download the latest installer (`.msi` and/or `.exe` setup, depending on what the build produced).
 2. Unsigned builds may trigger a SmartScreen warning until the app is code-signed.
 
-macOS `.app` / `.dmg` installers are built on a Mac locally; they are not produced in CI today.
+The source is Tauri-based and a local macOS build may be possible, but that is not a current priority. The author welcomes help from any interested macOS developer who would like to take on enabling macOS—see [Build from source](./development) and [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
 
 ## Maintainers — ship a new version
 

@@ -1,8 +1,10 @@
 # Build from source
 
+**Windows** is the supported development and release target: CI produces Windows installers only. The codebase is OS-independent (Tauri + Rust), and building on macOS should be possible using the steps below, but macOS delivery is not a current priority. The author welcomes help from macOS developers who want to take on enabling and maintaining macOS—please open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
+
 ## Prerequisites
 
-### All platforms
+### Node.js and Rust
 
 - [Node.js](https://nodejs.org/) 18+
 - [Rust](https://www.rust-lang.org/tools/install) (stable toolchain via rustup)
@@ -40,8 +42,8 @@ Release installer:
 npm run tauri build
 ```
 
-- Windows output: `src-tauri/target/release/bundle/`
-- macOS output: build on macOS for `.app` / `.dmg`
+- Windows output (official releases): `src-tauri/target/release/bundle/`
+- macOS output (unofficial / contributor): on a Mac, `npm run tauri build` may produce `.app` / `.dmg` under the same `bundle/` path—not tested or shipped by the project today
 
 If line endings look wrong after cloning, run `git add --renormalize .` once (see `.gitattributes` in the repo).
 

@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "IceTrackVault",
   description:
-    "Cross-platform desktop music player for figure skating EMS projects — projects, playlists, waveform playback, and EMS download updates.",
+    "Windows desktop music player for figure skating EMS projects — projects, playlists, waveform playback, and EMS download updates.",
   base: "/IceTrackVault/",
   themeConfig: {
     nav: [

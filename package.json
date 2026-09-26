@@ -2,7 +2,7 @@
   "name": "trackvault",
   "private": true,
   "version": "0.13.1",
-  "description": "Cross-platform desktop music player (Tauri + React)",
+  "description": "Windows desktop music player (Tauri + React)",
   "author": "Nathan Meyers",
   "license": "MIT",
   "repository": {
