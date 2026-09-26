@@ -1,6 +1,6 @@
 [package]
 name = "trackvault"
-version = "0.13.0"
+version = "0.13.1"
 description = "IceTrackVault — local music project player"
 authors = ["Nathan Meyers"]
 license = "MIT"
