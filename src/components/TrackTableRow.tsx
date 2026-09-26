@@ -5,7 +5,6 @@ import type { Playlist, Track } from "../lib/tauri";
 import { formatDuration } from "../lib/tauri";
 import { useAppearance } from "../hooks/useAppearance";
 import { TrackRowMenu } from "./TrackRowMenu";
-import { useTrackTooltip } from "./TrackTooltip";
 
 interface ReorderGripProps {
   "data-reorder-grip"?: boolean;
@@ -100,7 +99,6 @@ export function TrackTableRow({
 }: TrackTableRowProps) {
   const { settings } = useAppearance();
   const { onRowPointerDown } = usePointerTrackDragRow(track.id, draggable);
-  const { onMouseEnter, onMouseLeave, tooltip } = useTrackTooltip(track.id);
   const style = rowStyle(
     isPlaying,
     isCursor,
@@ -110,7 +108,6 @@ export function TrackTableRow({
   );
 
   return (
-    <>
       <tr
         id={`track-row-${track.id}`}
         {...reorderRowProps}
@@ -140,11 +137,7 @@ export function TrackTableRow({
             </button>
           </td>
         )}
-        <td
-          className="px-4 py-2"
-          onMouseEnter={onMouseEnter}
-          onMouseLeave={onMouseLeave}
-        >
+        <td className="px-4 py-2">
           <div className="truncate font-medium">{track.title}</div>
         </td>
         <td className="px-4 py-2">
@@ -201,7 +194,5 @@ export function TrackTableRow({
           />
         </td>
       </tr>
-      {tooltip}
-    </>
   );
 }
