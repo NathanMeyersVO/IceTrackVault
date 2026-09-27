@@ -29,7 +29,7 @@ pub struct DeliveryFolderSummary {
 
 impl DeliveryFolderSummary {
     pub fn can_import(&self) -> bool {
-        !self.archives.is_empty() || !self.audio_files.is_empty() || !self.schedules.is_empty()
+        !self.archives.is_empty() || !self.schedules.is_empty()
     }
 }
 
@@ -65,41 +65,28 @@ pub fn classify_delivery_file(path: &Path) -> DeliveryEntryKind {
 }
 
 pub fn summarize_delivery_folder(root: &Path) -> Result<DeliveryFolderSummary, String> {
-    let mut archives = Vec::new();
-    let mut schedules = Vec::new();
-    let mut audio_files = Vec::new();
-
-    for entry in WalkDir::new(root)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        let path = entry.path();
-        if !path.is_file() {
-            continue;
-        }
-        let rel = path
-            .strip_prefix(root)
-            .map_err(|e| e.to_string())?
-            .to_string_lossy()
-            .replace('\\', "/");
-        match classify_delivery_file(path) {
-            DeliveryEntryKind::Archive => archives.push(rel),
-            DeliveryEntryKind::Schedule => schedules.push(rel),
-            DeliveryEntryKind::Audio => audio_files.push(rel),
-            _ => {}
-        }
+    if !root.is_dir() {
+        return Err(format!("Not a directory: {}", root.display()));
     }
-
-    archives.sort();
-    schedules.sort();
-    audio_files.sort();
-
-    Ok(DeliveryFolderSummary {
-        archives,
-        schedules,
-        audio_files,
-    })
+    let mut entries = Vec::new();
+    for entry in fs::read_dir(root).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let entry_path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+        let kind = if entry_path.is_dir() {
+            DeliveryEntryKind::Folder
+        } else {
+            classify_delivery_file(&entry_path)
+        };
+        entries.push(DeliveryBrowseEntry {
+            name,
+            path: entry_path.to_string_lossy().to_string(),
+            kind,
+            modified_ms: None,
+            size_bytes: None,
+        });
+    }
+    Ok(summarize_browse_entries(&entries))
 }
 
 pub fn browse_delivery_folder_at(dir: &Path) -> Result<DeliveryFolderBrowseResult, String> {
@@ -218,7 +205,6 @@ pub fn default_delivery_browse_root() -> PathBuf {
 enum StagingWorkItem {
     ExtractArchive(PathBuf),
     CopyTopLevelFile(PathBuf),
-    CopyRelative { src: PathBuf, rel: PathBuf },
 }
 
 fn staging_item_step_count(item: &StagingWorkItem) -> Result<u32, String> {
@@ -235,7 +221,7 @@ fn staging_item_step_count(item: &StagingWorkItem) -> Result<u32, String> {
                 Ok(1)
             }
         }
-        StagingWorkItem::CopyTopLevelFile(_) | StagingWorkItem::CopyRelative { .. } => Ok(1),
+        StagingWorkItem::CopyTopLevelFile(_) => Ok(1),
     }
 }
 
@@ -284,11 +270,16 @@ fn collect_staging_work(source_paths: &[String]) -> Result<Vec<StagingWorkItem>,
             return Err(format!("Path not found: {}", path.display()));
         }
         if path.is_dir() {
-            collect_work_from_tree(&path, &mut work)?;
+            collect_work_from_directory_top_level(&path, &mut work)?;
         } else if is_tar_archive(&path) || is_zip_archive(&path) {
             work.push(StagingWorkItem::ExtractArchive(path));
-        } else if path.is_file() {
+        } else if is_schedule_spreadsheet(&path) {
             work.push(StagingWorkItem::CopyTopLevelFile(path));
+        } else if path.is_file() {
+            return Err(format!(
+                "Not a delivery archive or schedule file: {}",
+                path.display()
+            ));
         } else {
             return Err(format!("Unsupported path: {}", path.display()));
         }
@@ -296,26 +287,20 @@ fn collect_staging_work(source_paths: &[String]) -> Result<Vec<StagingWorkItem>,
     Ok(work)
 }
 
-fn collect_work_from_tree(from: &Path, work: &mut Vec<StagingWorkItem>) -> Result<(), String> {
-    for entry in WalkDir::new(from)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
+fn collect_work_from_directory_top_level(
+    from: &Path,
+    work: &mut Vec<StagingWorkItem>,
+) -> Result<(), String> {
+    for entry in fs::read_dir(from).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
         let path = entry.path();
         if !path.is_file() {
             continue;
         }
-        if is_tar_archive(path) {
-            work.push(StagingWorkItem::ExtractArchive(path.to_path_buf()));
-        } else if is_zip_archive(path) {
-            work.push(StagingWorkItem::ExtractArchive(path.to_path_buf()));
-        } else if is_schedule_spreadsheet(path) || crate::scanner::is_audio_file(path) {
-            let rel = path.strip_prefix(from).map_err(|e| e.to_string())?;
-            work.push(StagingWorkItem::CopyRelative {
-                src: path.to_path_buf(),
-                rel: rel.to_path_buf(),
-            });
+        if is_tar_archive(&path) || is_zip_archive(&path) {
+            work.push(StagingWorkItem::ExtractArchive(path));
+        } else if is_schedule_spreadsheet(&path) {
+            work.push(StagingWorkItem::CopyTopLevelFile(path));
         }
     }
     Ok(())
@@ -344,14 +329,6 @@ fn execute_staging_work(
                     .ok_or_else(|| format!("Invalid file: {}", p.display()))?;
                 fs::copy(p, staging_root.join(name)).map_err(|e| e.to_string())?;
                 Ok(())
-            })?;
-        }
-        StagingWorkItem::CopyRelative { src, rel } => {
-            let label = rel.to_string_lossy().replace('\\', "/");
-            let src = src.clone();
-            let rel = rel.clone();
-            staging_step(progress, done, staging_total, label, || {
-                copy_file_preserving_relative(&src, staging_root, &rel)
             })?;
         }
     }
@@ -506,37 +483,29 @@ fn is_schedule_spreadsheet(path: &Path) -> bool {
     )
 }
 
-/// Vendor drop folder: extract archives, copy audio and schedule files; skip other files.
+/// Top-level delivery folder: extract archives and copy schedule spreadsheets; skip subfolders and loose audio.
 pub fn ingest_delivery_folder(from: &Path, dest: &Path) -> Result<(), String> {
-    for entry in WalkDir::new(from)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
-        let path = entry.path();
-        if !path.is_file() {
-            continue;
-        }
-        if is_tar_archive(path) {
-            let mut done = 0u32;
-            extract_tar_into(path, dest, &DeliveryProgressCtx::none(), &mut done, 1)?;
-        } else if is_zip_archive(path) {
-            let mut done = 0u32;
-            extract_zip_into(path, dest, &DeliveryProgressCtx::none(), &mut done, 1)?;
-        } else if is_schedule_spreadsheet(path) || crate::scanner::is_audio_file(path) {
-            let rel = path.strip_prefix(from).map_err(|e| e.to_string())?;
-            copy_file_preserving_relative(path, dest, rel)?;
+    let mut work = Vec::new();
+    collect_work_from_directory_top_level(from, &mut work)?;
+    for item in &work {
+        match item {
+            StagingWorkItem::ExtractArchive(p) => {
+                if is_tar_archive(p) {
+                    let mut done = 0u32;
+                    extract_tar_into(p, dest, &DeliveryProgressCtx::none(), &mut done, 1)?;
+                } else {
+                    let mut done = 0u32;
+                    extract_zip_into(p, dest, &DeliveryProgressCtx::none(), &mut done, 1)?;
+                }
+            }
+            StagingWorkItem::CopyTopLevelFile(p) => {
+                let name = p
+                    .file_name()
+                    .ok_or_else(|| format!("Invalid file: {}", p.display()))?;
+                fs::copy(p, dest.join(name)).map_err(|e| e.to_string())?;
+            }
         }
     }
-    Ok(())
-}
-
-fn copy_file_preserving_relative(src: &Path, dest: &Path, rel: &Path) -> Result<(), String> {
-    let target = dest.join(rel);
-    if let Some(parent) = target.parent() {
-        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    fs::copy(src, &target).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -686,6 +655,64 @@ mod tests {
         assert_eq!(summary.schedules.len(), 1);
         assert_eq!(summary.audio_files.len(), 1);
         assert!(summary.can_import());
+
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn summarize_ignores_loose_audio_for_import() {
+        let base = std::env::temp_dir().join(format!("tv-summary-audio-{}", uuid::Uuid::new_v4()));
+        let drop = base.join("vendor");
+        fs::create_dir_all(&drop).expect("mkdir");
+        fs::write(drop.join("loose.wav"), b"wav").expect("wav");
+
+        let summary = summarize_delivery_folder(&drop).expect("summary");
+        assert_eq!(summary.audio_files.len(), 1);
+        assert!(!summary.can_import());
+
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn nested_archive_not_staged_from_parent_folder() {
+        let base = std::env::temp_dir().join(format!("tv-staging-nested-{}", uuid::Uuid::new_v4()));
+        let drop = base.join("vendor");
+        fs::create_dir_all(drop.join("sub")).expect("mkdir");
+        write_test_zip(&drop.join("sub/nested.zip"), "tracks/01.mp3", b"fake-mp3");
+
+        let sessions = base.join("sessions");
+        let staging_root = stage_delivery_sources(
+            &sessions,
+            "nested-session",
+            &[drop.to_string_lossy().into()],
+            &DeliveryProgressCtx::none(),
+        )
+        .expect("stage");
+
+        let audio = collect_audio_relative(&staging_root).expect("collect");
+        assert!(audio.is_empty(), "nested zip should not be picked up from parent");
+
+        let _ = fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn nested_archive_staged_when_subfolder_is_source() {
+        let base = std::env::temp_dir().join(format!("tv-staging-sub-{}", uuid::Uuid::new_v4()));
+        let sub = base.join("vendor/sub");
+        fs::create_dir_all(&sub).expect("mkdir");
+        write_test_zip(&sub.join("nested.zip"), "tracks/01.mp3", b"fake-mp3");
+
+        let sessions = base.join("sessions");
+        let staging_root = stage_delivery_sources(
+            &sessions,
+            "sub-session",
+            &[sub.to_string_lossy().into()],
+            &DeliveryProgressCtx::none(),
+        )
+        .expect("stage");
+
+        let audio = collect_audio_relative(&staging_root).expect("collect");
+        assert_eq!(audio.len(), 1);
 
         let _ = fs::remove_dir_all(&base);
     }

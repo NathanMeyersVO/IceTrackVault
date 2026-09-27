@@ -49,7 +49,7 @@ export interface ApplicationConfig {
 const NONE_DELIVERY_COPY: DeliveryCopy = {
   deliverySingular: "delivery",
   createProjectHint:
-    "Choose a folder with audio archives and/or loose audio files.",
+    "Choose the folder that contains your music track archives (.zip, .tar, etc.).",
   importButton: "Import delivery…",
   createProjectDropZoneLabel: "Drop delivery folder here",
   pickFolderDialogTitle: "Select delivery folder",
@@ -60,11 +60,11 @@ const NONE_DELIVERY_COPY: DeliveryCopy = {
   sourceBrowserContinueLabel: "Continue",
   sourceBrowserSystemFolderLabel: "Jump to folder in system dialog…",
   sourceBrowserImportFolderHint:
-    "Continue imports all delivery content in the current folder, including subfolders.",
+    "Continue imports archives and schedule files in this folder only (not subfolders).",
   applyUpdateMenuLabel: "Apply Delivery Update…",
   applyUpdateMenuLabelStaging: "Staging delivery…",
   applyUpdateMenuTitle:
-    "Choose a delivery folder with audio archives and/or loose audio to preview and apply.",
+    "Choose a delivery folder with music track archives to preview and apply.",
   applyUpdatePickerTitle: "Apply delivery update",
   applyUpdateChooseFolderButton: "Choose folder…",
   applyUpdateDropZoneLabel: "Drop delivery folder here",
@@ -93,7 +93,7 @@ const USFS_EMS_DELIVERY_COPY: DeliveryCopy = {
   sourceBrowserContinueLabel: "Continue",
   sourceBrowserSystemFolderLabel: "Jump to folder in system dialog…",
   sourceBrowserImportFolderHint:
-    "Continue imports all EMS download content in the current folder, including subfolders.",
+    "Continue imports archives and the event schedule in this folder only (not subfolders).",
   applyUpdateMenuLabel: "Apply EMS Download…",
   applyUpdateMenuLabelStaging: "Staging EMS download…",
   applyUpdateMenuTitle:

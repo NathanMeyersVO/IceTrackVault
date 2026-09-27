@@ -25,9 +25,19 @@ const TYPE_LABEL: Record<DeliveryEntryKind, string> = {
 };
 
 function isDeliveryKind(kind: DeliveryEntryKind, supportsSchedule: boolean): boolean {
-  if (kind === "folder" || kind === "archive" || kind === "audio") return true;
+  if (kind === "folder" || kind === "archive") return true;
   if (kind === "schedule" && supportsSchedule) return true;
   return false;
+}
+
+function folderCanImport(
+  summary: DeliveryFolderBrowseResult["summary"],
+  supportsScheduleDelivery: boolean,
+): boolean {
+  return (
+    summary.archives.length > 0 ||
+    (supportsScheduleDelivery && summary.schedules.length > 0)
+  );
 }
 
 function formatModified(ms?: number): string {
@@ -82,11 +92,8 @@ function formatTopLevelSummary(
   if (supportsScheduleDelivery && summary.schedules.length > 0) {
     parts.push(`${summary.schedules.length} schedule file(s) at top level`);
   }
-  if (summary.audio_files.length > 0) {
-    parts.push(`${summary.audio_files.length} loose audio file(s) at top level`);
-  }
   if (parts.length === 0) {
-    return "No delivery files at top level (subfolders may contain content).";
+    return "No archives or schedule files in this folder — open the folder that contains them, or go into a subfolder.";
   }
   return parts.join(" · ");
 }
@@ -176,7 +183,11 @@ export function DeliverySourceBrowserModal({
     }
   }, [loadPath, onPickSystemFolder]);
 
-  const canContinue = Boolean(browse?.path) && !loading && !error;
+  const canContinue =
+    Boolean(browse?.path) &&
+    !loading &&
+    !error &&
+    Boolean(browse && folderCanImport(browse.summary, supportsScheduleDelivery));
 
   const displayPath = useMemo(
     () => (browse?.path ? stripWindowsExtendedPath(browse.path) : null),

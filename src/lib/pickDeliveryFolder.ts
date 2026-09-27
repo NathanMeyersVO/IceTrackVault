@@ -3,7 +3,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { getDeliveryCopy } from "./applicationConfig";
 import { api } from "./tauri";
 
-/** Pick a folder that may contain audio archives and/or an event schedule spreadsheet. */
+/** Pick a folder whose top-level files are music track archives and/or an event schedule spreadsheet. */
 export async function pickDeliveryFolder(dialogTitle?: string): Promise<string | null> {
   let defaultPath: string | undefined;
   try {

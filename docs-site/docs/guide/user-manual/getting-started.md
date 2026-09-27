@@ -18,7 +18,7 @@ IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS
   <figcaption>Main window after a fresh installation, with no music loaded. Click the image to view full size.</figcaption>
 </figure>
 
-A new competition project is created using one or more ZIP archives of tracks—tagged and packaged by EMS—along with an EMS-generated schedule report. The schedule report provides the names for each event. To start, you will select the directory where these files are located.
+A new competition project is created using one or more ZIP archives of tracks—tagged and packaged by EMS—along with an EMS-generated schedule report. The schedule report provides the names for each event. To start, you will select the directory where these files are located. IceTrackVault reads only files **directly in that folder** (not in subfolders)—open the folder that contains your ZIPs and schedule, or navigate into a subfolder in the import browser if your download layout nests them.
 
 
 1. Open **Project → Projects…** and select "New Project"
