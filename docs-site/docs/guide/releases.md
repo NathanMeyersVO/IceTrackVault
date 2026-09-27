@@ -18,11 +18,11 @@ The source is Tauri-based and a local macOS build may be possible, but that is n
 3. Tag and push the tag (triggers the Release workflow):
 
    ```powershell
-   git tag v0.13.1
-   git push github v0.13.1
+   git tag v0.14.0
+   git push github v0.14.0
    ```
 
 4. In GitHub **Actions**, wait for the **Release** workflow to finish.
 5. Open the new **draft** release under **Releases**, verify the Windows assets, then **Publish release**.
 
-Use tag names like `v0.13.1` that match the app version `0.13.1`.
+Use tag names like `v0.14.0` that match the app version `0.14.0`.
