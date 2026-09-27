@@ -18,27 +18,28 @@ hero:
 
 ## About
 
-**IceTrackVault** is a Windows desktop music player built specifically for figure skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — using iTunes creates a lot of extra work. IceTrackVault eliminates much of the heavy workload and tedious change management required by traditional setups, streamlining the entire competition music workflow.
+**IceTrackVault** is a Windows desktop music player built specifically for figure skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — it creates a massive amount of extra work. IceTrackVault eliminates this heavy workload and tedious change management, streamlining the entire competition music workflow.
 
-**IceTrackVault**'s main job is to
+Here is how the application simplifies competition management:
 
-- Load music tracks and events data from EMS (EntryEeze support is targeted for future work), automatically building playlists for each event
-- Make it simple to set start order and adjust event order
-- Provide an easy-to-use music player, with waveform display
+### 🔄 Automated Event Management
+* **EMS Integration:** Automatically loads music tracks and event data to build playlists instantly (EntryEeze support is planned for the future).
+* **Flexible Sequencing:** Makes it simple to set the skater start order and adjust the overall event schedule on the fly.
+* **Project Dashboard:** Manages multiple competition projects at the same time within a single interface.
 
-In addition to those basic functions, **IceTrackVault** provides simple operations for common issues faced before and during the competition:
+### 🎛️ Specialized Music Player
+* **Visual Playback:** Features an easy-to-use music player complete with a real-time waveform display.
+* **Asset Collections:** Builds separate, permanent playlists outside of competition projects for assets like national anthems and background music.
 
-- Uploading and tagging missing music tracks
-- Replacing music tracks that are incorrect due to mistaken upload or technical problems
-- Swapping music tracks between events - for example, if short and freeskate programs were mistakenly uploaded to each others' event.
-- Moving competitors to different events
-- Building custom playlists during the competition for championship events
+### 🛠️ In-Competition Troubleshooting
+* **Track Corrections:** Uploads and tags missing tracks, or replaces files due to incorrect uploads or technical bugs.
+* **Program Swaps:** Instantly swaps tracks between events (e.g., if a skater's Short Program and Free Skate were accidentally reversed).
+* **Skater Roster Shifts:** Moves competitors between different events seamlessly.
+* **Championship Playlists:** Builds custom, dynamic playlists during the competition for championship rounds.
 
-Finally, **IceTrackVault** helps you manage your builds with the following features:
+### 💾 Security & Portability
+* **Archive Backups:** Backs up the entire project configuration and music files into a single archive for safety backups or easy transfer to another system.
 
-- Multiple competition projects can be managed at once.
-- Full project configuration + music can be backed up to an archive to use as a safety backup or to transfer your work to a different system.
-- Separate collections can be built - outside of the competition projects - for permanent assets like national anthems and background music continuous-play playlists.
 
 ---
 
