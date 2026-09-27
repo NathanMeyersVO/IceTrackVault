@@ -2,7 +2,7 @@
 layout: home
 hero:
   name: IceTrackVault
-  text: Music player for skating competitions
+  text: Music player for figure skating competitions
   tagline: Manage competition music, with waveform playback on Windows.
   image:
     src: /screenshots/sample-view.png
