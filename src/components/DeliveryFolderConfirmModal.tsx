@@ -48,11 +48,10 @@ export function DeliveryFolderConfirmModal({
   const canImport =
     summary &&
     (summary.archives.length > 0 ||
-      summary.audio_files.length > 0 ||
       (supportsScheduleDelivery && summary.schedules.length > 0));
   const nothingRecognizedMessage = supportsScheduleDelivery
-    ? "Nothing recognized to import here. Pick a folder that contains archives, audio, or a schedule spreadsheet."
-    : "Nothing recognized to import here. Pick a folder that contains audio archives or loose audio files.";
+    ? "Nothing recognized to import here. Pick a folder that contains music track archives and/or a schedule spreadsheet at this level."
+    : "Nothing recognized to import here. Pick a folder that contains music track archives at this level.";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
@@ -78,7 +77,7 @@ export function DeliveryFolderConfirmModal({
             <>
               {summary ? (
                 <p className="mb-3 text-xs text-muted">
-                  <span className="text-foreground">Found in this folder (including subfolders): </span>
+                  <span className="text-foreground">Found in this folder: </span>
                   {summary.archives.length > 0
                     ? `${summary.archives.length} archive(s)`
                     : "no archives"}
@@ -86,10 +85,6 @@ export function DeliveryFolderConfirmModal({
                   {summary.schedules.length > 0
                     ? `${summary.schedules.length} schedule file(s)`
                     : "no schedule"}
-                  {" · "}
-                  {summary.audio_files.length > 0
-                    ? `${summary.audio_files.length} loose audio file(s)`
-                    : "no loose audio"}
                   {!canImport ? (
                     <span className="mt-1 block text-red-400">{nothingRecognizedMessage}</span>
                   ) : null}

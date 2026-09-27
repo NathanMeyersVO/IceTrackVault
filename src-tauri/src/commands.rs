@@ -1686,8 +1686,8 @@ pub fn stage_delivery(
 
     if preview.staged_audio_count == 0 {
         return Err(
-            "No audio files found in the delivery folder. Put audio archives (.zip, .tar, .tar.gz, .tgz) \
-             or loose audio in the folder. Audio extensions: mp3, flac, wav, m4a, aac, ogg, aiff, mp4."
+            "No audio files found. Put music track archives (.zip, .tar, .tar.gz, .tgz) in the folder \
+             you selected (not in subfolders). Audio is read from inside those archives."
                 .to_string(),
         );
     }
