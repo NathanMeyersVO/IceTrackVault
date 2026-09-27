@@ -1,4 +1,5 @@
 import { defineConfig } from "vitepress";
+import lightbox from "vitepress-plugin-lightbox";
 
 export default defineConfig({
   title: "IceTrackVault",
@@ -40,6 +41,11 @@ export default defineConfig({
     footer: {
       message: "Released under the MIT License.",
       copyright: "Copyright © Nathan Meyers",
+    },
+  },
+  markdown: {
+    config: (md) => {
+      md.use(lightbox, {});
     },
   },
 });

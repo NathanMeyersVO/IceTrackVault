@@ -69,3 +69,10 @@ cd docs-site
 npm install
 npm run docs:dev
 ```
+
+### Screenshots in the guide
+
+- Put PNG (or WebP) files in `docs-site/docs/public/screenshots/`.
+- Reference them from Markdown with a root path, e.g. `![Alt text](/screenshots/my-screenshot.png)`.
+- Images under `/screenshots/` render at a mid width on the page; **click to zoom** to full resolution (via `vitepress-plugin-lightbox` and `docs/.vitepress/theme/`).
+- Pushes to `main` that touch `docs-site/` deploy the site through GitHub Actions (see repo `README`).

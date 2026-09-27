@@ -9,6 +9,10 @@ IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS
 
 ## First steps in the app
 
+![IceTrackVault main window after a fresh installation](/screenshots/initial-display.png)
+
+_Click the screenshot to view it full size._
+
 1. Open **Project → Projects…** and create a project (name + application), or **Import EMS download…** from a folder of EMS downloads (ZIP archives and/or an event schedule spreadsheet).
 2. Open the project. IceTrackVault scans audio and loads playlists and taglists from `library/trackvault.json`.
 3. Double-click a track (or select and press play) to start playback.

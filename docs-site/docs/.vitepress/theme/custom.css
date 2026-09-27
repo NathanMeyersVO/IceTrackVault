@@ -1,0 +1,16 @@
+/* Guide screenshots: mid-size inline, full resolution via lightbox click */
+.vp-doc img[src*="/screenshots/"] {
+  max-width: 720px;
+  width: 100%;
+  height: auto;
+  cursor: zoom-in;
+}
+
+.medium-zoom-overlay {
+  backdrop-filter: blur(5rem);
+}
+
+.medium-zoom-overlay,
+.medium-zoom-image--opened {
+  z-index: 999;
+}
