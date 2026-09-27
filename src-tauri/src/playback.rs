@@ -1,9 +1,13 @@
 use std::collections::VecDeque;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::Arc;
+use std::thread::{self, JoinHandle};
+use std::time::{Duration, Instant};
 
+use parking_lot::{Condvar, Mutex};
 use rodio::Source;
 use symphonia::core::audio::SampleBuffer;
 use symphonia::core::codecs::{Decoder, DecoderOptions};
@@ -16,9 +20,161 @@ use symphonia::core::units::Time;
 
 use crate::seek_index::{default_index, nearest_keyframe, SeekKeyframe};
 
-const PCM_PREFILL_FRAMES: usize = 4096;
+/// Initial PCM after open/seek (~370 ms at 44.1 kHz).
+const PCM_PREFILL_FRAMES: usize = 16_384;
+/// Decode thread fills up to this (~740 ms at 44.1 kHz).
+const PCM_HIGH_WATER_FRAMES: usize = 32_768;
+const POP_CHUNK_SAMPLES: usize = 4096;
 
-pub struct TrackSession {
+enum DecodeCommand {
+    Seek(u64),
+    SetSeekIndex(Vec<SeekKeyframe>),
+    Shutdown,
+}
+
+struct PipelineInner {
+    pcm: Mutex<VecDeque<f32>>,
+    ready: Condvar,
+    eof: AtomicBool,
+    playback_frame: AtomicU64,
+    sample_rate: AtomicU64,
+    channels: AtomicU64,
+    samples_in_frame: Mutex<u16>,
+}
+
+impl PipelineInner {
+    fn new() -> Self {
+        Self {
+            pcm: Mutex::new(VecDeque::new()),
+            ready: Condvar::new(),
+            eof: AtomicBool::new(false),
+            playback_frame: AtomicU64::new(0),
+            sample_rate: AtomicU64::new(44_100),
+            channels: AtomicU64::new(2),
+            samples_in_frame: Mutex::new(0),
+        }
+    }
+
+    fn buffered_frames(&self) -> usize {
+        let channels = self.channels.load(Ordering::Acquire).max(1) as usize;
+        self.pcm.lock().len() / channels
+    }
+
+    fn sync_decode_position(&self, session: &TrackSession) {
+        self.playback_frame
+            .store(session.playback_frame(), Ordering::Release);
+        self.sample_rate
+            .store(session.sample_rate() as u64, Ordering::Release);
+        self.channels
+            .store(session.channels().max(1) as u64, Ordering::Release);
+        *self.samples_in_frame.lock() = 0;
+    }
+}
+
+pub struct TrackPipeline {
+    inner: Arc<PipelineInner>,
+    duration_ms: u64,
+    cmd_tx: Sender<DecodeCommand>,
+    thread: Mutex<Option<JoinHandle<()>>>,
+}
+
+impl Drop for TrackPipeline {
+    fn drop(&mut self) {
+        let _ = self.cmd_tx.send(DecodeCommand::Shutdown);
+        if let Some(handle) = self.thread.lock().take() {
+            let _ = handle.join();
+        }
+    }
+}
+
+impl TrackPipeline {
+    pub fn sample_rate(&self) -> u32 {
+        self.inner.sample_rate.load(Ordering::Acquire) as u32
+    }
+
+    pub fn channels(&self) -> u16 {
+        self.inner.channels.load(Ordering::Acquire) as u16
+    }
+
+    pub fn position_ms(&self) -> u64 {
+        let rate = self.inner.sample_rate.load(Ordering::Acquire).max(1);
+        let frame = self.inner.playback_frame.load(Ordering::Acquire);
+        (frame.saturating_mul(1000) / rate).min(self.duration_ms)
+    }
+
+    pub fn is_eof(&self) -> bool {
+        self.inner.eof.load(Ordering::Acquire)
+    }
+
+    pub fn set_seek_index(&self, seek_index: Vec<SeekKeyframe>) {
+        let _ = self.cmd_tx.send(DecodeCommand::SetSeekIndex(seek_index));
+    }
+
+    pub fn seek_and_wait(&self, target_ms: u64) -> Result<(), String> {
+        self.inner.eof.store(false, Ordering::Release);
+        self.cmd_tx
+            .send(DecodeCommand::Seek(target_ms))
+            .map_err(|e| e.to_string())?;
+        self.wait_prefill(Duration::from_secs(120))
+    }
+
+    fn wait_prefill(&self, timeout: Duration) -> Result<(), String> {
+        let deadline = Instant::now() + timeout;
+        let mut pcm = self.inner.pcm.lock();
+        loop {
+            let frames = {
+                let channels = self.inner.channels.load(Ordering::Acquire).max(1) as usize;
+                pcm.len() / channels
+            };
+            if frames >= PCM_PREFILL_FRAMES
+                || self.inner.eof.load(Ordering::Acquire)
+            {
+                return Ok(());
+            }
+            if Instant::now() >= deadline {
+                if frames > 0 || self.inner.eof.load(Ordering::Acquire) {
+                    return Ok(());
+                }
+                return Err("Timed out waiting for audio decode".into());
+            }
+            self.inner
+                .ready
+                .wait_for(&mut pcm, Duration::from_millis(25));
+        }
+    }
+
+    fn pop_chunk(&self, max_samples: usize) -> Option<Vec<f32>> {
+        let mut pcm = self.inner.pcm.lock();
+        while pcm.is_empty() {
+            if self.inner.eof.load(Ordering::Acquire) {
+                return None;
+            }
+            self.inner
+                .ready
+                .wait_for(&mut pcm, Duration::from_millis(25));
+        }
+        let take = max_samples.min(pcm.len());
+        let chunk: Vec<f32> = pcm.drain(..take).collect();
+        drop(pcm);
+        self.inner.ready.notify_one();
+
+        let channels = self.inner.channels.load(Ordering::Acquire).max(1) as u16;
+        let mut samples_in_frame = self.inner.samples_in_frame.lock();
+        let mut frame = self.inner.playback_frame.load(Ordering::Acquire);
+        for _ in 0..take {
+            *samples_in_frame += 1;
+            if *samples_in_frame >= channels {
+                *samples_in_frame = 0;
+                frame = frame.saturating_add(1);
+            }
+        }
+        self.inner.playback_frame.store(frame, Ordering::Release);
+
+        Some(chunk)
+    }
+}
+
+struct TrackSession {
     path: PathBuf,
     seek_index: Vec<SeekKeyframe>,
     duration_ms: u64,
@@ -27,8 +183,6 @@ pub struct TrackSession {
     track_id: u32,
     frame_cursor: u64,
     playback_frame: u64,
-    samples_in_frame: u16,
-    pcm_buffer: VecDeque<f32>,
     eof: bool,
     format: Option<Box<dyn FormatReader>>,
     decoder: Option<Box<dyn Decoder>>,
@@ -36,7 +190,7 @@ pub struct TrackSession {
 }
 
 impl TrackSession {
-    pub fn open(
+    fn open(
         path: PathBuf,
         duration_ms: u64,
         seek_index: Vec<SeekKeyframe>,
@@ -56,8 +210,6 @@ impl TrackSession {
             track_id: 0,
             frame_cursor: 0,
             playback_frame: 0,
-            samples_in_frame: 0,
-            pcm_buffer: VecDeque::new(),
             eof: false,
             format: None,
             decoder: None,
@@ -65,7 +217,7 @@ impl TrackSession {
         })
     }
 
-    pub fn set_seek_index(&mut self, seek_index: Vec<SeekKeyframe>) {
+    fn set_seek_index(&mut self, seek_index: Vec<SeekKeyframe>) {
         self.seek_index = if seek_index.is_empty() {
             default_index(self.duration_ms)
         } else {
@@ -73,27 +225,23 @@ impl TrackSession {
         };
     }
 
-    pub fn sample_rate(&self) -> u32 {
+    fn sample_rate(&self) -> u32 {
         self.sample_rate
     }
 
-    pub fn channels(&self) -> u16 {
+    fn channels(&self) -> u16 {
         self.channels
     }
 
-    pub fn position_ms(&self) -> u64 {
+    fn playback_frame(&self) -> u64 {
         self.playback_frame
-            .saturating_mul(1000)
-            .checked_div(self.sample_rate as u64)
-            .unwrap_or(0)
-            .min(self.duration_ms)
     }
 
-    pub fn is_eof(&self) -> bool {
+    fn is_eof(&self) -> bool {
         self.eof
     }
 
-    pub fn seek_to(&mut self, target_ms: u64) -> Result<(), String> {
+    fn seek_to(&mut self, target_ms: u64, pcm_out: &mut VecDeque<f32>) -> Result<(), String> {
         let target_ms = target_ms.min(self.duration_ms);
         let keyframe = nearest_keyframe(&self.seek_index, target_ms).clone();
 
@@ -119,37 +267,17 @@ impl TrackSession {
                 self.frame_cursor = keyframe_frame;
             } else {
                 self.frame_cursor = 0;
-                self.decode_until_frame(keyframe_frame, false)?;
+                self.decode_until_frame(keyframe_frame, false, pcm_out)?;
             }
         } else {
             self.frame_cursor = 0;
         }
 
-        self.decode_until_frame(target_frame, false)?;
+        self.decode_until_frame(target_frame, false, pcm_out)?;
         self.playback_frame = target_frame;
-        self.samples_in_frame = 0;
-        self.pcm_buffer.clear();
-        self.prefill_buffer()?;
+        pcm_out.clear();
+        self.prefill_buffer(pcm_out)?;
         Ok(())
-    }
-
-    pub fn next_pcm_sample(&mut self) -> Option<f32> {
-        if self.pcm_buffer.is_empty() && !self.eof {
-            if self.prefill_buffer().is_err() {
-                return None;
-            }
-        }
-
-        if let Some(sample) = self.pcm_buffer.pop_front() {
-            self.samples_in_frame += 1;
-            if self.samples_in_frame >= self.channels.max(1) {
-                self.samples_in_frame = 0;
-                self.playback_frame = self.playback_frame.saturating_add(1);
-            }
-            Some(sample)
-        } else {
-            None
-        }
     }
 
     fn reopen(&mut self) -> Result<(), String> {
@@ -194,32 +322,38 @@ impl TrackSession {
         Ok(())
     }
 
-    fn prefill_buffer(&mut self) -> Result<(), String> {
-        while self.buffered_frames() < PCM_PREFILL_FRAMES && !self.eof {
-            self.decode_one_packet()?;
+    fn prefill_buffer(&mut self, pcm_out: &mut VecDeque<f32>) -> Result<(), String> {
+        while self.buffered_frames(pcm_out) < PCM_PREFILL_FRAMES && !self.eof {
+            self.decode_one_packet(pcm_out)?;
         }
         Ok(())
     }
 
-    fn buffered_frames(&self) -> usize {
-        self.pcm_buffer.len() / self.channels.max(1) as usize
+    fn buffered_frames(&self, pcm_out: &VecDeque<f32>) -> usize {
+        pcm_out.len() / self.channels.max(1) as usize
     }
 
-    fn decode_until_frame(&mut self, target_frame: u64, emit_pcm: bool) -> Result<(), String> {
+    fn decode_until_frame(
+        &mut self,
+        target_frame: u64,
+        emit_pcm: bool,
+        pcm_out: &mut VecDeque<f32>,
+    ) -> Result<(), String> {
         while self.frame_cursor < target_frame && !self.eof {
-            self.decode_one_packet_with_target(target_frame, emit_pcm)?;
+            self.decode_one_packet_with_target(target_frame, emit_pcm, pcm_out)?;
         }
         Ok(())
     }
 
-    fn decode_one_packet(&mut self) -> Result<(), String> {
-        self.decode_one_packet_with_target(u64::MAX, true)
+    fn decode_one_packet(&mut self, pcm_out: &mut VecDeque<f32>) -> Result<(), String> {
+        self.decode_one_packet_with_target(u64::MAX, true, pcm_out)
     }
 
     fn decode_one_packet_with_target(
         &mut self,
         target_frame: u64,
         emit_pcm: bool,
+        pcm_out: &mut VecDeque<f32>,
     ) -> Result<(), String> {
         loop {
             let packet = match self
@@ -266,7 +400,7 @@ impl TrackSession {
 
                         if emit_pcm {
                             for &sample in frame {
-                                self.pcm_buffer.push_back(sample);
+                                pcm_out.push_back(sample);
                             }
                         }
 
@@ -289,22 +423,89 @@ impl TrackSession {
     }
 }
 
+fn handle_decode_command(
+    cmd: DecodeCommand,
+    session: &mut TrackSession,
+    inner: &PipelineInner,
+) -> bool {
+    match cmd {
+        DecodeCommand::Shutdown => false,
+        DecodeCommand::SetSeekIndex(index) => {
+            session.set_seek_index(index);
+            true
+        }
+        DecodeCommand::Seek(target_ms) => {
+            inner.eof.store(false, Ordering::Release);
+            let mut pcm = inner.pcm.lock();
+            pcm.clear();
+            let seek_result = session.seek_to(target_ms, &mut pcm);
+            drop(pcm);
+
+            if seek_result.is_ok() {
+                inner.sync_decode_position(session);
+            } else if let Err(error) = seek_result {
+                eprintln!("Seek decode error: {error}");
+            }
+            inner.eof.store(session.is_eof(), Ordering::Release);
+            inner.ready.notify_all();
+            true
+        }
+    }
+}
+
+fn run_decode_loop(
+    mut session: TrackSession,
+    rx: Receiver<DecodeCommand>,
+    inner: Arc<PipelineInner>,
+) {
+    loop {
+        match rx.recv_timeout(Duration::from_millis(8)) {
+            Ok(cmd) => {
+                if !handle_decode_command(cmd, &mut session, &inner) {
+                    return;
+                }
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => return,
+            Err(mpsc::RecvTimeoutError::Timeout) => {}
+        }
+
+        while let Ok(cmd) = rx.try_recv() {
+            if !handle_decode_command(cmd, &mut session, &inner) {
+                return;
+            }
+        }
+
+        if inner.buffered_frames() >= PCM_HIGH_WATER_FRAMES || session.is_eof() {
+            continue;
+        }
+
+        let mut pcm = inner.pcm.lock();
+        if let Err(error) = session.decode_one_packet(&mut pcm) {
+            eprintln!("Decode error: {error}");
+            session.eof = true;
+        }
+        inner.eof.store(session.is_eof(), Ordering::Release);
+        drop(pcm);
+        inner.ready.notify_all();
+    }
+}
+
 pub struct SymphoniaSource {
-    session: Arc<Mutex<TrackSession>>,
+    pipeline: Arc<TrackPipeline>,
     sample_rate: u32,
     channels: u16,
+    chunk: Vec<f32>,
+    chunk_idx: usize,
 }
 
 impl SymphoniaSource {
-    pub fn new(session: Arc<Mutex<TrackSession>>) -> Self {
-        let (sample_rate, channels) = {
-            let locked = session.lock().expect("session lock");
-            (locked.sample_rate(), locked.channels())
-        };
+    pub fn new(pipeline: Arc<TrackPipeline>) -> Self {
         Self {
-            session,
-            sample_rate,
-            channels,
+            sample_rate: pipeline.sample_rate(),
+            channels: pipeline.channels(),
+            chunk: Vec::new(),
+            chunk_idx: 0,
+            pipeline,
         }
     }
 }
@@ -313,8 +514,16 @@ impl Iterator for SymphoniaSource {
     type Item = f32;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut session = self.session.lock().ok()?;
-        session.next_pcm_sample()
+        loop {
+            if self.chunk_idx < self.chunk.len() {
+                let sample = self.chunk[self.chunk_idx];
+                self.chunk_idx += 1;
+                return Some(sample);
+            }
+
+            self.chunk = self.pipeline.pop_chunk(POP_CHUNK_SAMPLES)?;
+            self.chunk_idx = 0;
+        }
     }
 }
 
@@ -341,12 +550,51 @@ pub fn open_track_session(
     duration_ms: u64,
     seek_index: Vec<SeekKeyframe>,
     start_ms: u64,
-) -> Result<(Arc<Mutex<TrackSession>>, SymphoniaSource), String> {
-    let mut session = TrackSession::open(path.to_path_buf(), duration_ms, seek_index)?;
-    session.seek_to(start_ms)?;
-    let shared = Arc::new(Mutex::new(session));
-    let source = SymphoniaSource::new(Arc::clone(&shared));
-    Ok((shared, source))
+) -> Result<(Arc<TrackPipeline>, SymphoniaSource), String> {
+    let path_buf = path.to_path_buf();
+    let start = start_ms.min(duration_ms);
+    let inner = Arc::new(PipelineInner::new());
+    let (cmd_tx, cmd_rx) = mpsc::channel();
+
+    let inner_for_thread = Arc::clone(&inner);
+    let seek_index_for_session = seek_index.clone();
+    let handle = thread::spawn(move || {
+        let mut session = match TrackSession::open(path_buf, duration_ms, seek_index_for_session)
+        {
+            Ok(session) => session,
+            Err(error) => {
+                eprintln!("Failed to open track session: {error}");
+                return;
+            }
+        };
+
+        {
+            let mut pcm = inner_for_thread.pcm.lock();
+            if let Err(error) = session.seek_to(start, &mut pcm) {
+                eprintln!("Failed to seek track session: {error}");
+                return;
+            }
+            inner_for_thread.sync_decode_position(&session);
+            inner_for_thread
+                .eof
+                .store(session.is_eof(), Ordering::Release);
+        }
+        inner_for_thread.ready.notify_all();
+
+        run_decode_loop(session, cmd_rx, inner_for_thread);
+    });
+
+    let pipeline = Arc::new(TrackPipeline {
+        inner,
+        duration_ms,
+        cmd_tx,
+        thread: Mutex::new(Some(handle)),
+    });
+
+    pipeline.wait_prefill(Duration::from_secs(120))?;
+
+    let source = SymphoniaSource::new(Arc::clone(&pipeline));
+    Ok((pipeline, source))
 }
 
 fn ms_to_frames(ms: u64, sample_rate: u32) -> u64 {
