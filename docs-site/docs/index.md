@@ -3,7 +3,10 @@ layout: home
 hero:
   name: IceTrackVault
   text: Music player for skating competitions
-  tagline: Manage competitions playlists, with waveform playback on Windows.
+  tagline: Manage competition music, with waveform playback on Windows.
+  image:
+    src: /screenshots/sample-view.png
+    alt: IceTrackVault main window showing project tracks and waveform playback
   actions:
     - theme: brand
       text: Download

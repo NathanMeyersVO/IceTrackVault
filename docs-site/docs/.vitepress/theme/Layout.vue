@@ -8,7 +8,7 @@ const { Layout } = DefaultTheme;
 const router = useRouter();
 
 const setupMediumZoom = () => {
-  mediumZoom("[data-zoomable]", {
+  mediumZoom("[data-zoomable], .VPHomeHero .image-src", {
     background: "transparent",
   });
 };

@@ -41,3 +41,35 @@
   color: var(--vp-c-text-2);
   text-align: center;
 }
+
+/* Home hero: app screenshot beside headline (no logo glow) */
+.VPHome .VPHomeHero.has-image .image-bg {
+  display: none;
+}
+
+.VPHome .VPHomeHero.has-image .image-src {
+  cursor: zoom-in;
+}
+
+@media (min-width: 60rem) {
+  .VPHome .VPHomeHero.has-image .image-container {
+    justify-content: flex-end;
+    transform: none;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+
+  .VPHome .VPHomeHero.has-image .image-container .image-src,
+  .VPHome .VPHomeHero.has-image .image-container .image-src img {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    max-width: min(100%, 520px);
+    max-height: min(50vh, 420px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+}
