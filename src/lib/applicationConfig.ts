@@ -19,7 +19,7 @@ export interface DeliveryCopy {
   sourceBrowserShowAllLabel: string;
   sourceBrowserContinueLabel: string;
   sourceBrowserSystemFolderLabel: string;
-  sourceBrowserEmptySelectionHint: string;
+  sourceBrowserImportFolderHint: string;
   applyUpdateMenuLabel: string;
   applyUpdateMenuLabelStaging: string;
   applyUpdateMenuTitle: string;
@@ -54,13 +54,13 @@ const NONE_DELIVERY_COPY: DeliveryCopy = {
   createProjectDropZoneLabel: "Drop delivery folder here",
   pickFolderDialogTitle: "Select delivery folder",
   confirmFolderModalTitle: "Confirm delivery folder",
-  sourceBrowserTitle: "Choose delivery files",
+  sourceBrowserTitle: "Choose delivery folder",
   sourceBrowserDeliveryOnlyLabel: "Delivery files only",
   sourceBrowserShowAllLabel: "Show all files",
   sourceBrowserContinueLabel: "Continue",
   sourceBrowserSystemFolderLabel: "Jump to folder in system dialog…",
-  sourceBrowserEmptySelectionHint:
-    "Select at least one archive, audio file, or folder to import.",
+  sourceBrowserImportFolderHint:
+    "Continue imports all delivery content in the current folder, including subfolders.",
   applyUpdateMenuLabel: "Apply Delivery Update…",
   applyUpdateMenuLabelStaging: "Staging delivery…",
   applyUpdateMenuTitle:
@@ -87,13 +87,13 @@ const USFS_EMS_DELIVERY_COPY: DeliveryCopy = {
   createProjectDropZoneLabel: "Drop EMS download folder here",
   pickFolderDialogTitle: "Select EMS downloads folder",
   confirmFolderModalTitle: "Confirm EMS downloads folder",
-  sourceBrowserTitle: "Choose EMS download files",
+  sourceBrowserTitle: "Choose EMS download folder",
   sourceBrowserDeliveryOnlyLabel: "EMS files only",
   sourceBrowserShowAllLabel: "Show all files",
   sourceBrowserContinueLabel: "Continue",
   sourceBrowserSystemFolderLabel: "Jump to folder in system dialog…",
-  sourceBrowserEmptySelectionHint:
-    "Select at least one archive, schedule, audio file, or folder to import.",
+  sourceBrowserImportFolderHint:
+    "Continue imports all EMS download content in the current folder, including subfolders.",
   applyUpdateMenuLabel: "Apply EMS Download…",
   applyUpdateMenuLabelStaging: "Staging EMS download…",
   applyUpdateMenuTitle:

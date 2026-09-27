@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { api, type DeliveryBrowseEntry, type DeliveryEntryKind, type DeliveryFolderBrowseResult } from "../lib/tauri";
 
@@ -9,9 +9,8 @@ export interface DeliverySourceBrowserModalProps {
   showAllLabel: string;
   continueLabel: string;
   systemFolderPickerLabel: string;
-  emptySelectionHint: string;
+  importFolderHint: string;
   initialPath?: string | null;
-  initialSelectedPaths?: string[];
   onClose: () => void;
   onContinue: (sourcePaths: string[]) => void;
   onPickSystemFolder: () => Promise<string | null>;
@@ -28,16 +27,6 @@ const TYPE_LABEL: Record<DeliveryEntryKind, string> = {
 function isDeliveryKind(kind: DeliveryEntryKind, supportsSchedule: boolean): boolean {
   if (kind === "folder" || kind === "archive" || kind === "audio") return true;
   if (kind === "schedule" && supportsSchedule) return true;
-  return false;
-}
-
-function selectionIsImportable(
-  selected: Map<string, DeliveryEntryKind>,
-  supportsSchedule: boolean,
-): boolean {
-  for (const kind of selected.values()) {
-    if (isDeliveryKind(kind, supportsSchedule)) return true;
-  }
   return false;
 }
 
@@ -82,6 +71,26 @@ function entryIcon(kind: DeliveryEntryKind): string {
   }
 }
 
+function formatTopLevelSummary(
+  summary: DeliveryFolderBrowseResult["summary"],
+  supportsScheduleDelivery: boolean,
+): string {
+  const parts: string[] = [];
+  if (summary.archives.length > 0) {
+    parts.push(`${summary.archives.length} archive(s) at top level`);
+  }
+  if (supportsScheduleDelivery && summary.schedules.length > 0) {
+    parts.push(`${summary.schedules.length} schedule file(s) at top level`);
+  }
+  if (summary.audio_files.length > 0) {
+    parts.push(`${summary.audio_files.length} loose audio file(s) at top level`);
+  }
+  if (parts.length === 0) {
+    return "No delivery files at top level (subfolders may contain content).";
+  }
+  return parts.join(" · ");
+}
+
 export function DeliverySourceBrowserModal({
   title,
   supportsScheduleDelivery,
@@ -89,9 +98,8 @@ export function DeliverySourceBrowserModal({
   showAllLabel,
   continueLabel,
   systemFolderPickerLabel,
-  emptySelectionHint,
+  importFolderHint,
   initialPath = null,
-  initialSelectedPaths = [],
   onClose,
   onContinue,
   onPickSystemFolder,
@@ -101,11 +109,6 @@ export function DeliverySourceBrowserModal({
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [deliveryOnly, setDeliveryOnly] = useState(true);
-  const [selected, setSelected] = useState<Map<string, DeliveryEntryKind>>(() => new Map());
-  const [showBasket, setShowBasket] = useState(false);
-  const lastBrowsePathRef = useRef<string | null>(null);
-  const initialPreselectAppliedRef = useRef(false);
-  const selectAllRef = useRef<HTMLInputElement>(null);
 
   const loadPath = useCallback(async (path: string | null) => {
     setLoading(true);
@@ -124,66 +127,11 @@ export function DeliverySourceBrowserModal({
     void loadPath(initialPath);
   }, [initialPath, loadPath]);
 
-  useEffect(() => {
-    if (!browse?.path) return;
-
-    const prevPath = lastBrowsePathRef.current;
-    if (prevPath !== null && prevPath !== browse.path) {
-      setSelected(new Map());
-      initialPreselectAppliedRef.current = true;
-    }
-    lastBrowsePathRef.current = browse.path;
-
-    if (initialPreselectAppliedRef.current || initialSelectedPaths.length === 0) {
-      return;
-    }
-
-    const next = new Map<string, DeliveryEntryKind>();
-    for (const path of initialSelectedPaths) {
-      const entry = browse.entries.find((e) => e.path === path);
-      next.set(path, entry?.kind ?? "folder");
-    }
-    if (next.size > 0) {
-      setSelected(next);
-    }
-    initialPreselectAppliedRef.current = true;
-  }, [browse, initialSelectedPaths]);
-
   const visibleEntries = useMemo(() => {
     if (!browse) return [];
     if (!deliveryOnly) return browse.entries;
     return browse.entries.filter((e) => isDeliveryKind(e.kind, supportsScheduleDelivery));
   }, [browse, deliveryOnly, supportsScheduleDelivery]);
-
-  const allVisibleSelected =
-    visibleEntries.length > 0 && visibleEntries.every((e) => selected.has(e.path));
-  const someVisibleSelected = visibleEntries.some((e) => selected.has(e.path));
-
-  useEffect(() => {
-    const el = selectAllRef.current;
-    if (!el) return;
-    el.indeterminate = someVisibleSelected && !allVisibleSelected;
-  }, [allVisibleSelected, someVisibleSelected]);
-
-  const toggleSelectAllVisible = useCallback(() => {
-    if (allVisibleSelected) {
-      setSelected((prev) => {
-        const next = new Map(prev);
-        for (const entry of visibleEntries) {
-          next.delete(entry.path);
-        }
-        return next;
-      });
-    } else {
-      setSelected((prev) => {
-        const next = new Map(prev);
-        for (const entry of visibleEntries) {
-          next.set(entry.path, entry.kind);
-        }
-        return next;
-      });
-    }
-  }, [allVisibleSelected, visibleEntries]);
 
   const navigateTo = useCallback(
     (path: string, pushHistory: boolean) => {
@@ -211,18 +159,6 @@ export function DeliverySourceBrowserModal({
     }
   }, [browse?.parent_path, navigateTo]);
 
-  const toggleSelected = useCallback((entry: DeliveryBrowseEntry) => {
-    setSelected((prev) => {
-      const next = new Map(prev);
-      if (next.has(entry.path)) {
-        next.delete(entry.path);
-      } else {
-        next.set(entry.path, entry.kind);
-      }
-      return next;
-    });
-  }, []);
-
   const openEntry = useCallback(
     (entry: DeliveryBrowseEntry) => {
       if (entry.kind === "folder") {
@@ -240,13 +176,17 @@ export function DeliverySourceBrowserModal({
     }
   }, [loadPath, onPickSystemFolder]);
 
-  const canContinue = selectionIsImportable(selected, supportsScheduleDelivery);
-  const selectedList = useMemo(() => Array.from(selected.entries()), [selected]);
+  const canContinue = Boolean(browse?.path) && !loading && !error;
 
   const displayPath = useMemo(
     () => (browse?.path ? stripWindowsExtendedPath(browse.path) : null),
     [browse?.path],
   );
+
+  const handleContinue = useCallback(() => {
+    if (!browse?.path) return;
+    onContinue([browse.path]);
+  }, [browse?.path, onContinue]);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
@@ -317,17 +257,6 @@ export function DeliverySourceBrowserModal({
             <table className="w-full border-collapse text-sm">
               <thead className="sticky top-0 bg-surface text-left text-xs text-muted">
                 <tr className="border-b border-border">
-                  <th className="w-10 px-2 py-2">
-                    <input
-                      ref={selectAllRef}
-                      type="checkbox"
-                      checked={allVisibleSelected}
-                      disabled={visibleEntries.length === 0}
-                      onChange={toggleSelectAllVisible}
-                      aria-label="Select all in this folder"
-                      className="rounded border-border disabled:opacity-40"
-                    />
-                  </th>
                   <th className="px-2 py-2 font-medium">Name</th>
                   <th className="hidden w-28 px-2 py-2 font-medium sm:table-cell">Type</th>
                   <th className="hidden w-36 px-2 py-2 font-medium md:table-cell">Date modified</th>
@@ -336,39 +265,40 @@ export function DeliverySourceBrowserModal({
               </thead>
               <tbody>
                 {visibleEntries.map((entry) => {
-                  const checked = selected.has(entry.path);
                   const delivery = isDeliveryKind(entry.kind, supportsScheduleDelivery);
+                  const isFolder = entry.kind === "folder";
                   return (
                     <tr
                       key={entry.path}
                       className={`border-b border-border/60 hover:bg-surface-hover/60 ${
                         delivery ? "" : "opacity-70"
-                      }`}
+                      } ${isFolder ? "cursor-pointer" : ""}`}
                       onDoubleClick={() => openEntry(entry)}
                     >
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleSelected(entry)}
-                          aria-label={`Select ${entry.name}`}
-                          className="rounded border-border"
-                        />
-                      </td>
                       <td className="max-w-0 px-2 py-1.5">
-                        <button
-                          type="button"
-                          className="flex min-w-0 max-w-full items-center gap-2 text-left text-sm text-foreground hover:underline"
-                          title={entry.path}
-                          onClick={() =>
-                            entry.kind === "folder" ? openEntry(entry) : toggleSelected(entry)
-                          }
-                        >
-                          <span className="shrink-0 text-base leading-none" aria-hidden>
-                            {entryIcon(entry.kind)}
-                          </span>
-                          <span className="truncate">{entry.name}</span>
-                        </button>
+                        {isFolder ? (
+                          <button
+                            type="button"
+                            className="flex min-w-0 max-w-full items-center gap-2 text-left text-sm text-foreground hover:underline"
+                            title={entry.path}
+                            onClick={() => openEntry(entry)}
+                          >
+                            <span className="shrink-0 text-base leading-none" aria-hidden>
+                              {entryIcon(entry.kind)}
+                            </span>
+                            <span className="truncate">{entry.name}</span>
+                          </button>
+                        ) : (
+                          <div
+                            className="flex min-w-0 max-w-full items-center gap-2 text-sm text-foreground"
+                            title={entry.path}
+                          >
+                            <span className="shrink-0 text-base leading-none" aria-hidden>
+                              {entryIcon(entry.kind)}
+                            </span>
+                            <span className="truncate">{entry.name}</span>
+                          </div>
+                        )}
                       </td>
                       <td className="hidden px-2 py-1.5 text-muted sm:table-cell">
                         {TYPE_LABEL[entry.kind]}
@@ -384,7 +314,7 @@ export function DeliverySourceBrowserModal({
                 })}
                 {visibleEntries.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted">
+                    <td colSpan={4} className="px-4 py-6 text-center text-sm text-muted">
                       {deliveryOnly
                         ? "No delivery files in this folder. Turn off the filter to see all files, or open a subfolder."
                         : "This folder is empty."}
@@ -397,25 +327,11 @@ export function DeliverySourceBrowserModal({
         </div>
 
         <div className="border-t border-border bg-surface-hover/20 px-4 py-2">
-          <button
-            type="button"
-            className="text-xs text-accent hover:underline"
-            onClick={() => setShowBasket((v) => !v)}
-          >
-            {selectedList.length} selected in this folder
-            {showBasket ? " ▴" : " ▾"}
-          </button>
-          {showBasket && selectedList.length > 0 ? (
-            <ul className="mt-2 max-h-24 overflow-y-auto text-xs text-muted">
-              {selectedList.map(([path, kind]) => (
-                <li key={path} className="truncate" title={path}>
-                  {TYPE_LABEL[kind]}: {path.replace(/^.*[/\\]/, "")}
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          {!canContinue && selectedList.length > 0 ? (
-            <p className="mt-1 text-xs text-red-400">{emptySelectionHint}</p>
+          <p className="text-xs text-muted">{importFolderHint}</p>
+          {browse && !loading && !error ? (
+            <p className="mt-1 text-xs text-muted">
+              {formatTopLevelSummary(browse.summary, supportsScheduleDelivery)}
+            </p>
           ) : null}
         </div>
 
@@ -439,8 +355,8 @@ export function DeliverySourceBrowserModal({
             </button>
             <button
               type="button"
-              disabled={!canContinue || loading}
-              onClick={() => onContinue(Array.from(selected.keys()))}
+              disabled={!canContinue}
+              onClick={handleContinue}
               className="rounded-md bg-accent px-3 py-1.5 text-sm text-accent-foreground disabled:opacity-40"
             >
               {continueLabel}

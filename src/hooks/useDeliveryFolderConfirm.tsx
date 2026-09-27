@@ -16,30 +16,27 @@ export function useDeliveryFolderConfirm(options: {
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState(0);
   const [startPath, setStartPath] = useState<string | null>(null);
-  const [preselectPaths, setPreselectPaths] = useState<string[]>([]);
 
   const close = useCallback(() => {
     setOpen(false);
     setStartPath(null);
-    setPreselectPaths([]);
   }, []);
 
-  const openBrowser = useCallback((path: string | null, preselect: string[] = []) => {
+  const openBrowser = useCallback((path: string | null) => {
     setStartPath(path);
-    setPreselectPaths(preselect);
     setSession((n) => n + 1);
     setOpen(true);
   }, []);
 
   const loadFolder = useCallback(
     (folder: string) => {
-      openBrowser(folder, [folder]);
+      openBrowser(folder);
     },
     [openBrowser],
   );
 
   const pickAndShow = useCallback(() => {
-    openBrowser(null, []);
+    openBrowser(null);
   }, [openBrowser]);
 
   const pickSystemFolder = useCallback(async () => {
@@ -63,9 +60,8 @@ export function useDeliveryFolderConfirm(options: {
       showAllLabel={deliveryCopy.sourceBrowserShowAllLabel}
       continueLabel={deliveryCopy.sourceBrowserContinueLabel}
       systemFolderPickerLabel={deliveryCopy.sourceBrowserSystemFolderLabel}
-      emptySelectionHint={deliveryCopy.sourceBrowserEmptySelectionHint}
+      importFolderHint={deliveryCopy.sourceBrowserImportFolderHint}
       initialPath={startPath}
-      initialSelectedPaths={preselectPaths}
       onClose={close}
       onContinue={confirm}
       onPickSystemFolder={pickSystemFolder}
