@@ -31,7 +31,7 @@ A new competition project is created using one or more ZIP archives of tracks—
   <figcaption>This dialog will display your current projects (there are none yet) and allow you to create a new one.</figcaption>
 </figure>
 
-2. In the **New Project** dialog, type in a project name, choose the **USFigureSkating EMS** application
+2. In the **New Project** dialog, type in a project name and choose the **USFigureSkating EMS** application.
 <figure class="screenshot-box">
   <img
     src="/screenshots/new-project.png"
