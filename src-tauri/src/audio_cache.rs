@@ -369,6 +369,10 @@ fn run_decode_worker(
             (track_id, path, gen)
         };
 
+        while player.state().is_playing {
+            thread::sleep(Duration::from_millis(250));
+        }
+
         cache_one_track(&app, &db, &player, &generation, gen, track_id, &path);
         let _ = done_tx.send(JobFinished {
             track_id,

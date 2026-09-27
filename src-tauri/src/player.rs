@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
@@ -9,7 +9,7 @@ use rodio::{OutputStream, Sink};
 use tauri::{AppHandle, Emitter};
 
 use crate::models::PlaybackState;
-use crate::playback::{open_track_session, TrackSession};
+use crate::playback::{open_track_session, SymphoniaSource, TrackPipeline};
 use crate::seek_index::SeekKeyframe;
 
 enum PlayerCommand {
@@ -40,7 +40,7 @@ enum PlayerCommand {
 struct PlayerRuntime {
     _stream: OutputStream,
     sink: Option<Sink>,
-    session: Option<Arc<Mutex<TrackSession>>>,
+    session: Option<Arc<TrackPipeline>>,
     track_id: Option<i64>,
     path: Option<PathBuf>,
     duration_ms: u64,
@@ -74,9 +74,7 @@ impl PlayerRuntime {
     fn current_position_ms(&self) -> u64 {
         if self.is_playing {
             if let Some(session) = &self.session {
-                if let Ok(locked) = session.lock() {
-                    return locked.position_ms().min(self.duration_ms);
-                }
+                return session.position_ms();
             }
         }
         self.position_ms.min(self.duration_ms)
@@ -159,7 +157,6 @@ impl PlayerRuntime {
         let session_eof = self
             .session
             .as_ref()
-            .and_then(|session| session.lock().ok())
             .map(|session| session.is_eof())
             .unwrap_or(false);
 
@@ -178,6 +175,14 @@ impl PlayerRuntime {
     }
 
     fn resume(&mut self, stream_handle: &rodio::OutputStreamHandle) -> Result<(), String> {
+        if let Some(sink) = self.sink.as_ref() {
+            if self.session.is_some() {
+                sink.play();
+                self.is_playing = true;
+                return Ok(());
+            }
+        }
+
         let track_id = self.track_id.ok_or("Nothing to resume")?;
         let path = self.path.clone().ok_or("Nothing to resume")?;
         let duration = self.duration_ms;
@@ -210,22 +215,36 @@ impl PlayerRuntime {
         stream_handle: &rodio::OutputStreamHandle,
         position_ms: u64,
     ) -> Result<(), String> {
-        let path = self.path.clone().ok_or("No track loaded")?;
-        let duration_ms = self.duration_ms;
-        let track_id = self.track_id.ok_or("No track loaded")?;
         let was_playing = self.is_playing;
-        let target = position_ms.min(duration_ms);
-        let seek_index = self.seek_index.clone();
+        let target = position_ms.min(self.duration_ms);
+        let pipeline = self
+            .session
+            .clone()
+            .ok_or("No track loaded")?;
 
-        self.play_at(
-            stream_handle,
-            track_id,
-            path,
-            duration_ms,
-            target,
-            seek_index,
-            was_playing,
-        )
+        pipeline.seek_and_wait(target)?;
+        self.position_ms = target;
+
+        if let Some(sink) = self.sink.take() {
+            sink.stop();
+        }
+
+        let source = SymphoniaSource::new(Arc::clone(&pipeline));
+        let sink = Sink::try_new(stream_handle)
+            .map_err(|e| format!("Failed to create audio sink: {e}"))?;
+        sink.set_volume(self.volume);
+        sink.append(source);
+
+        if was_playing {
+            sink.play();
+            self.is_playing = true;
+        } else {
+            sink.pause();
+            self.is_playing = false;
+        }
+
+        self.sink = Some(sink);
+        Ok(())
     }
 
     fn set_volume(&mut self, volume: f32) {
@@ -241,9 +260,7 @@ impl PlayerRuntime {
         }
         self.seek_index = seek_index.clone();
         if let Some(session) = &self.session {
-            if let Ok(mut locked) = session.lock() {
-                locked.set_seek_index(seek_index);
-            }
+            session.set_seek_index(seek_index);
         }
     }
 }
