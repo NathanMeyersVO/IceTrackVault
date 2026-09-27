@@ -6,7 +6,7 @@
 
 ### Node.js and Rust
 
-- [Node.js](https://nodejs.org/) 18+
+- [Node.js](https://nodejs.org/) 22+
 - [Rust](https://www.rust-lang.org/tools/install) (stable toolchain via rustup)
 
 ### Windows

@@ -14,6 +14,9 @@
   },
   "homepage": "https://nathanmeyersvo.github.io/IceTrackVault/",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "brand:sync": "node scripts/sync-brand-assets.mjs",
     "icons:regenerate": "npm run tauri icon brand/trackvault-logo.png",
