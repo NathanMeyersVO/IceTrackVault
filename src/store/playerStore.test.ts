@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import type { PlaybackState } from "../lib/tauri";
 import {
@@ -7,6 +7,7 @@ import {
   mergeBackendPlaybackState,
   serializeView,
   shouldClearPositionGuard,
+  usePlayerStore,
   viewsEqual,
 } from "./playerStore";
 
@@ -108,6 +109,38 @@ describe("view helpers", () => {
     expect(
       viewsEqual({ taglistId: 1, value: "a" }, { taglistId: 1, value: "b" }),
     ).toBe(false);
+  });
+});
+
+describe("applyBackendPlayback seek transport", () => {
+  beforeEach(() => {
+    usePlayerStore.setState({
+      transportBusy: false,
+      transportMode: "idle",
+      lockedPositionMs: null,
+      positionGuardTargetMs: null,
+      playback: playback(0, false),
+    });
+  });
+
+  it("completes seek transport when playing position advances past target", () => {
+    usePlayerStore.getState().beginTransport(120_000);
+
+    usePlayerStore
+      .getState()
+      .applyBackendPlayback(playback(120_150, true));
+
+    const state = usePlayerStore.getState();
+    expect(state.transportBusy).toBe(false);
+    expect(state.playback.position_ms).toBe(120_150);
+  });
+
+  it("ignores stale pre-seek ticks while seek transport is active", () => {
+    usePlayerStore.getState().beginTransport(120_000);
+
+    usePlayerStore.getState().applyBackendPlayback(playback(50_000, true));
+
+    expect(usePlayerStore.getState().transportBusy).toBe(true);
   });
 });
 

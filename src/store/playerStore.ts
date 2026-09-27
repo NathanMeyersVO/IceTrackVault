@@ -79,7 +79,7 @@ export interface PlayIntent {
   autoplay: boolean;
 }
 
-const SEEK_CONFIRM_TOLERANCE_MS = 50;
+export const SEEK_CONFIRM_TOLERANCE_MS = 50;
 const POSITION_GUARD_TOLERANCE_MS = 100;
 export const SEEK_FALLBACK_MS = 15_000;
 
@@ -349,11 +349,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       state.transportMode === "seek" &&
       state.lockedPositionMs != null
     ) {
-      if (
-        Math.abs(incoming.position_ms - state.lockedPositionMs) <=
-        SEEK_CONFIRM_TOLERANCE_MS
-      ) {
-        get().completeTransport(incoming, state.lockedPositionMs);
+      const locked = state.lockedPositionMs;
+      const withinTolerance =
+        Math.abs(incoming.position_ms - locked) <= SEEK_CONFIRM_TOLERANCE_MS;
+      const forwardWhilePlaying =
+        incoming.is_playing && shouldClearPositionGuard(locked, incoming);
+      if (withinTolerance || forwardWhilePlaying) {
+        get().completeTransport(incoming, locked);
       }
       return;
     }

@@ -547,16 +547,24 @@ async function seek(positionMs: number) {
 
   store.beginTransport(positionMs);
   const seekGeneration = store.seekGeneration;
+  scheduleSeekFallback(seekGeneration, positionMs);
 
   try {
     const result = await api.seekPlayback(positionMs);
     usePlayerStore.getState().completeTransport(result, positionMs);
     scheduleContinuousPlaybackSave();
   } catch {
-    // Seek was queued; stay pinned until emitter confirms or fallback fires.
+    // Emitter or scheduled fallback will complete transport.
+  } finally {
+    const latest = usePlayerStore.getState();
+    if (
+      latest.seekGeneration === seekGeneration &&
+      latest.transportBusy &&
+      latest.transportMode === "seek"
+    ) {
+      latest.forceCompleteTransport(positionMs);
+    }
   }
-
-  scheduleSeekFallback(seekGeneration, positionMs);
 }
 
 async function stop() {

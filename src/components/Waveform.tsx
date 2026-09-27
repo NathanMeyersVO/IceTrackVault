@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import WaveSurfer from "wavesurfer.js";
 
 import { useAppearance } from "../hooks/useAppearance";
+import { SEEK_CONFIRM_TOLERANCE_MS } from "../store/playerStore";
 
 interface WaveformProps {
   trackId: number | null;
@@ -115,14 +116,20 @@ export function Waveform({
   }, [interactive, transportBusy]);
 
   useEffect(() => {
+    if (!transportBusy) {
+      pendingUserSeekMsRef.current = null;
+    }
+  }, [transportBusy]);
+
+  useEffect(() => {
     const ws = wavesurferRef.current;
     if (!ws) return;
 
     const pending = pendingUserSeekMsRef.current;
-    if (pending != null && positionMs !== pending) {
-      return;
-    }
-    if (pending === positionMs) {
+    if (pending != null) {
+      if (Math.abs(positionMs - pending) > SEEK_CONFIRM_TOLERANCE_MS) {
+        return;
+      }
       pendingUserSeekMsRef.current = null;
     }
 

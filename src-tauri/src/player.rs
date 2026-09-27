@@ -9,7 +9,7 @@ use rodio::{OutputStream, Sink};
 use tauri::{AppHandle, Emitter};
 
 use crate::models::PlaybackState;
-use crate::playback::{open_track_session, SymphoniaSource, TrackPipeline};
+use crate::playback::{open_track_session, TrackPipeline};
 use crate::seek_index::SeekKeyframe;
 
 enum PlayerCommand {
@@ -215,36 +215,22 @@ impl PlayerRuntime {
         stream_handle: &rodio::OutputStreamHandle,
         position_ms: u64,
     ) -> Result<(), String> {
+        let path = self.path.clone().ok_or("No track loaded")?;
+        let duration_ms = self.duration_ms;
+        let track_id = self.track_id.ok_or("No track loaded")?;
         let was_playing = self.is_playing;
-        let target = position_ms.min(self.duration_ms);
-        let pipeline = self
-            .session
-            .clone()
-            .ok_or("No track loaded")?;
+        let target = position_ms.min(duration_ms);
+        let seek_index = self.seek_index.clone();
 
-        pipeline.seek_and_wait(target)?;
-        self.position_ms = target;
-
-        if let Some(sink) = self.sink.take() {
-            sink.stop();
-        }
-
-        let source = SymphoniaSource::new(Arc::clone(&pipeline));
-        let sink = Sink::try_new(stream_handle)
-            .map_err(|e| format!("Failed to create audio sink: {e}"))?;
-        sink.set_volume(self.volume);
-        sink.append(source);
-
-        if was_playing {
-            sink.play();
-            self.is_playing = true;
-        } else {
-            sink.pause();
-            self.is_playing = false;
-        }
-
-        self.sink = Some(sink);
-        Ok(())
+        self.play_at(
+            stream_handle,
+            track_id,
+            path,
+            duration_ms,
+            target,
+            seek_index,
+            was_playing,
+        )
     }
 
     fn set_volume(&mut self, volume: f32) {
