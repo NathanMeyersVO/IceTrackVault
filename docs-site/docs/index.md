@@ -15,7 +15,7 @@ hero:
 
 ## About
 
-**IceTrackVault** is a Windows desktop music player built specifically for US Figure Skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — the software is poorly suited for the task. IceTrackVault eliminates much of the heavy workload and tedious change management required by traditional setups, streamlining the entire competition music workflow.
+**IceTrackVault** is a Windows desktop music player built specifically for US Figure Skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — using iTunes creates a lot of extra work. IceTrackVault eliminates much of the heavy workload and tedious change management required by traditional setups, streamlining the entire competition music workflow.
 
 **IceTrackVault**'s main job is to
 
