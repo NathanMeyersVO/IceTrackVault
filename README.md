@@ -28,7 +28,7 @@ Build a release installer: `npm run tauri build`
 - Windows output (releases): `src-tauri/target/release/bundle/`
 - macOS output (unofficial): on a Mac, `.app` / `.dmg` under `bundle/` if a local build succeeds
 
-End-user setup, usage, CLI tools, and release downloads are in the [docs site](https://nathanmeyersvo.github.io/IceTrackVault/guide/getting-started).
+End-user setup, usage, CLI tools, and release downloads are in the [docs site](https://nathanmeyersvo.github.io/IceTrackVault/guide/user-manual/).
 
 ## Git remotes
 

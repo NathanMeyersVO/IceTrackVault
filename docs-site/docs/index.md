@@ -3,14 +3,14 @@ layout: home
 hero:
   name: IceTrackVault
   text: Music player for skating competitions
-  tagline: Manage EMS competitions, playlists, and waveform playback on Windows.
+  tagline: Manage competitions playlists, with waveform playback on Windows.
   actions:
     - theme: brand
       text: Download
       link: /guide/releases
     - theme: alt
-      text: User guide
-      link: /guide/getting-started
+      text: User manual
+      link: /guide/user-manual/
 ---
 
 ## About
@@ -41,4 +41,4 @@ Finally, **IceTrackVault** helps you manage your builds with the following featu
 
 Pre-built **Windows installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS is not supported for end users today. The codebase is OS-independent (Tauri); a local macOS build may work, but Windows is the focus and macOS delivery is not a current priority. Contributions from macOS developers who want to help enable macOS are welcome—open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault). See [Build from source](/guide/development) for prerequisites.
 
-**Documentation:** [Getting started](/guide/getting-started) · [Source on GitHub](https://github.com/NathanMeyersVO/IceTrackVault)
+**Documentation:** [User manual](/guide/user-manual/) · [Source on GitHub](https://github.com/NathanMeyersVO/IceTrackVault)

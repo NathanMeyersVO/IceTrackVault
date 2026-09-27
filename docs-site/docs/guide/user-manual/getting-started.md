@@ -1,6 +1,6 @@
 # Getting started
 
-IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS is not offered as a supported platform today; see [Build from source](./development) if you are a contributor exploring a local macOS build.
+IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS is not offered as a supported platform today; see [Build from source](../development) if you are a contributor exploring a local macOS build.
 
 ## Install
 
@@ -73,5 +73,3 @@ A new competition project is created using one or more ZIP archives of tracks—
   />
   <figcaption>IceTrackVault has loaded the project. The left-hand column lets you navigate - it's currently showing you "Project Tracks", a list of all the tracks. The big center window shows the tracks, and you can see the music player at the bottom.</figcaption>
 </figure>
-
-## Using the App
