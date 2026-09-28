@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Playlist } from "../lib/tauri";
 
 interface TrackRowMenuProps {
-  onEditTags: () => void;
+  onEditTags?: () => void;
   changeTaglistValueLabel?: string;
   onChangeTaglistValue?: () => void;
   swapTaglistEntryLabel?: string;
@@ -52,6 +52,19 @@ export function TrackRowMenu({
   const showAddToPlaylist =
     playlists != null && playlists.length > 0 && onAddToPlaylist != null;
 
+  const hasActions =
+    onEditTags != null ||
+    (changeTaglistValueLabel && onChangeTaglistValue) ||
+    (swapTaglistEntryLabel && onSwapTaglistEntry) ||
+    showAddToPlaylist ||
+    onRemoveFromPlaylist != null ||
+    onReplaceFile != null ||
+    onDeleteTrack != null;
+
+  if (!hasActions) {
+    return null;
+  }
+
   return (
     <div ref={menuRef} className="relative">
       <button
@@ -70,17 +83,19 @@ export function TrackRowMenu({
       </button>
       {open && (
         <div className="absolute right-0 z-20 mt-1 min-w-[10rem] rounded-md border border-border bg-surface py-1 shadow-lg">
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              closeMenu();
-              onEditTags();
-            }}
-            className="block w-full px-3 py-1.5 text-left text-xs text-foreground hover:bg-surface-hover"
-          >
-            Edit tags…
-          </button>
+          {onEditTags && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                closeMenu();
+                onEditTags();
+              }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-foreground hover:bg-surface-hover"
+            >
+              Edit tags…
+            </button>
+          )}
 
           {changeTaglistValueLabel && onChangeTaglistValue && (
             <button

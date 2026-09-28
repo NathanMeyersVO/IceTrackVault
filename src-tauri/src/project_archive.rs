@@ -203,6 +203,7 @@ pub fn import_project(app_data: &Path, source: &Path) -> Result<ProjectSummary, 
         schedule_relative_path: imported.schedule_relative_path,
         schedule_last_imported_mtime: None,
         origin: ProjectOrigin::Imported,
+        changes_locked: imported.changes_locked,
     };
 
     let project_root = projects::create_project_dirs(app_data, &manifest)?;

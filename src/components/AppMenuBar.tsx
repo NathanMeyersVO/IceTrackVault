@@ -47,7 +47,12 @@ export function AppMenuBar() {
     projectActionsDisabled,
     projectUploadDisabled,
     collectionUploadDisabled,
+    projectChangesLocked,
   } = useProjectMenuActions();
+
+  const projectLockedTitle = projectChangesLocked
+    ? "This project is locked against changes."
+    : undefined;
   const collectionUploadLabel =
     collectionName != null
       ? `Upload track to stored collection (${collectionName})…`
@@ -64,13 +69,14 @@ export function AppMenuBar() {
       label: deliveryStaging
         ? deliveryCopy.applyUpdateMenuLabelStaging
         : deliveryCopy.applyUpdateMenuLabel,
-      title: deliveryCopy.applyUpdateMenuTitle,
+      title: projectLockedTitle ?? deliveryCopy.applyUpdateMenuTitle,
       onClick: () => void applyDeliveryUpdate(),
       disabled: projectActionsDisabled || deliveryStaging,
     },
     {
       label: projectUploading ? "Uploading to project…" : "Upload track to project…",
       title:
+        projectLockedTitle ??
         "Copy audio files into the project folder (choose files, drag and drop, or upload from phone).",
       disabled: projectUploadDisabled,
       onClick: () => openProjectUpload(),
@@ -148,7 +154,7 @@ export function AppMenuBar() {
     collectionId != null && collectionName != null
       ? `Stored collection: ${collectionName}`
       : activeProject != null
-        ? `Project: ${activeProject.name}`
+        ? `Project: ${activeProject.name}${activeProject.changes_locked ? " (locked)" : ""}`
         : "No project open";
 
   return (

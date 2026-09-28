@@ -54,6 +54,26 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
 
   const activeProjectId = usePlayerStore((s) => s.activeProject?.id);
 
+  const changeProjectChangesLocked = async (
+    project: ProjectSummary,
+    changesLocked: boolean,
+  ) => {
+    if (project.changes_locked === changesLocked) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.updateProjectChangesLocked(project.id, changesLocked);
+      await reload();
+      if (project.id === activeProjectId) {
+        await refresh();
+      }
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const changeProjectApplication = async (project: ProjectSummary, next: ApplicationId) => {
     if (project.application_id === next) return;
     setBusy(true);
@@ -112,6 +132,9 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium text-foreground">
                           {p.name}
+                          {p.changes_locked ? (
+                            <span className="ml-1.5 text-xs font-normal text-muted">(locked)</span>
+                          ) : null}
                           {activeProjectId === p.id ? (
                             <span className="ml-1.5 text-xs font-normal text-muted">(open)</span>
                           ) : null}
@@ -124,11 +147,28 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
                             p.application_id === "usfs_ems" ? "usfs_ems" : "none",
                           )}
                         </div>
+                        <label className="mt-1.5 flex items-center gap-2 text-xs text-muted">
+                          <input
+                            type="checkbox"
+                            checked={p.changes_locked}
+                            disabled={busy}
+                            onChange={(e) =>
+                              void changeProjectChangesLocked(p, e.target.checked)
+                            }
+                            className="rounded border-border"
+                          />
+                          Lock against changes
+                        </label>
                         <label className="mt-1.5 block text-xs text-muted">
                           Application
                           <select
                             value={p.application_id === "usfs_ems" ? "usfs_ems" : "none"}
-                            disabled={busy}
+                            disabled={busy || p.changes_locked}
+                            title={
+                              p.changes_locked
+                                ? "Unlock the project to change application."
+                                : undefined
+                            }
                             onChange={(e) =>
                               void changeProjectApplication(
                                 p,
