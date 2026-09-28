@@ -245,7 +245,21 @@ export const COMMON_TAG_KEYS = [
 
 export interface ThemeSettings {
   theme_id: string;
+  brightness?: number;
+  contrast?: number;
 }
+
+export interface KeyBinding {
+  key: string;
+  ctrl?: boolean;
+  alt?: boolean;
+  shift?: boolean;
+  meta?: boolean;
+}
+
+export type KeyboardShortcutSettings = Partial<
+  Record<string, KeyBinding | null>
+>;
 
 export type ApplicationId = "none" | "usfs_ems";
 
@@ -573,6 +587,10 @@ export const api = {
   getAppSettings: () => invoke<ThemeSettings>("get_app_settings"),
   setAppSettings: (settings: ThemeSettings) =>
     invoke<ThemeSettings>("set_app_settings", { settings }),
+  getKeyboardShortcuts: () =>
+    invoke<KeyboardShortcutSettings>("get_keyboard_shortcuts"),
+  setKeyboardShortcuts: (settings: KeyboardShortcutSettings) =>
+    invoke<KeyboardShortcutSettings>("set_keyboard_shortcuts", { settings }),
   listProjects: () => invoke<ProjectSummary[]>("list_projects"),
   getActiveProject: () => invoke<ProjectSummary | null>("get_active_project"),
   getProjectLoadProgress: () =>

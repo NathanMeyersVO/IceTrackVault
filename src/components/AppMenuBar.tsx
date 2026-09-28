@@ -125,7 +125,7 @@ export function AppMenuBar() {
   const helpItems: MenuEntry[] = [
     {
       label: "Keyboard shortcuts…",
-      title: "View keyboard shortcuts for playback and navigation.",
+      title: "View and customize keyboard shortcuts for playback and navigation.",
       onClick: () => setShortcutsOpen(true),
     },
     {

@@ -23,16 +23,38 @@ const VALID_THEME_IDS: &[&str] = &[
     "monokai",
 ];
 
+fn default_adjustment() -> u8 {
+    100
+}
+
+fn normalize_adjustment(value: i32) -> u8 {
+    value.clamp(50, 150) as u8
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ThemeSettings {
     pub theme_id: String,
+    #[serde(default = "default_adjustment")]
+    pub brightness: u8,
+    #[serde(default = "default_adjustment")]
+    pub contrast: u8,
 }
 
 impl Default for ThemeSettings {
     fn default() -> Self {
         Self {
             theme_id: DEFAULT_THEME_ID.to_string(),
+            brightness: default_adjustment(),
+            contrast: default_adjustment(),
         }
+    }
+}
+
+fn normalize_theme_settings(settings: ThemeSettings) -> ThemeSettings {
+    ThemeSettings {
+        theme_id: normalize_theme_id(&settings.theme_id),
+        brightness: normalize_adjustment(settings.brightness as i32),
+        contrast: normalize_adjustment(settings.contrast as i32),
     }
 }
 
@@ -58,9 +80,7 @@ pub fn get_theme(db: &Database) -> Result<ThemeSettings, String> {
     };
 
     if let Ok(theme) = serde_json::from_str::<ThemeSettings>(&json) {
-        return Ok(ThemeSettings {
-            theme_id: normalize_theme_id(&theme.theme_id),
-        });
+        return Ok(normalize_theme_settings(theme));
     }
 
     Ok(ThemeSettings::default())
@@ -89,7 +109,11 @@ pub fn set_theme(db: &Database, settings: ThemeSettings) -> Result<ThemeSettings
         return Err(format!("Unknown theme id: {}", settings.theme_id));
     }
 
-    let normalized = ThemeSettings { theme_id };
+    let normalized = normalize_theme_settings(ThemeSettings {
+        theme_id,
+        brightness: settings.brightness,
+        contrast: settings.contrast,
+    });
     let json = serde_json::to_string(&normalized).map_err(|e| e.to_string())?;
     db.set_app_setting(SETTINGS_KEY, &json)
         .map_err(|e| e.to_string())?;
@@ -107,6 +131,8 @@ mod tests {
             &db,
             ThemeSettings {
                 theme_id: "ocean".to_string(),
+                brightness: default_adjustment(),
+                contrast: default_adjustment(),
             },
         )
         .expect("save");
@@ -117,6 +143,35 @@ mod tests {
     #[test]
     fn invalid_theme_falls_back_to_default() {
         assert_eq!(normalize_theme_id("not-a-theme"), DEFAULT_THEME_ID);
+    }
+
+    #[test]
+    fn round_trip_brightness_contrast() {
+        let db = Database::open(std::path::Path::new(":memory:")).expect("db");
+        set_theme(
+            &db,
+            ThemeSettings {
+                theme_id: "forest".to_string(),
+                brightness: 120,
+                contrast: 80,
+            },
+        )
+        .expect("save");
+        let loaded = get_theme(&db).expect("load");
+        assert_eq!(loaded.theme_id, "forest");
+        assert_eq!(loaded.brightness, 120);
+        assert_eq!(loaded.contrast, 80);
+    }
+
+    #[test]
+    fn legacy_theme_id_only_defaults_adjustments() {
+        let db = Database::open(std::path::Path::new(":memory:")).expect("db");
+        db.set_app_setting(SETTINGS_KEY, "{\"theme_id\":\"ocean\"}")
+            .expect("seed");
+        let loaded = get_theme(&db).expect("load");
+        assert_eq!(loaded.theme_id, "ocean");
+        assert_eq!(loaded.brightness, 100);
+        assert_eq!(loaded.contrast, 100);
     }
 
     #[test]
