@@ -31,8 +31,10 @@ import {
   sidebarPlaylistId,
   sidebarSublistId,
 } from "../lib/sidebarNavigation";
+import { useAppearance } from "../hooks/useAppearance";
 import { useProject } from "../hooks/usePlayer";
 import { useTagDropConfirm } from "../hooks/useTagDropConfirm";
+import { navItemSelectionStyle } from "../lib/appearance";
 import { usePlayerStore, type View } from "../store/playerStore";
 
 interface TaglistDropTarget {
@@ -75,6 +77,7 @@ function TaglistGroup({
   };
   scrollContainerRef: RefObject<HTMLElement | null>;
 }) {
+  const { settings } = useAppearance();
   const { refresh } = useProject();
   const [values, setValues] = useState<TaglistValue[]>([]);
   const [editingValue, setEditingValue] = useState<string | null>(null);
@@ -274,8 +277,13 @@ function TaglistGroup({
         : isTrackDragging
           ? "border border-dashed border-border bg-surface-hover/50 text-foreground"
           : active
-            ? "border border-transparent bg-cursor-background text-foreground"
-            : "border border-transparent text-foreground hover:bg-surface-hover/60";
+            ? "border border-transparent text-foreground"
+            : "border border-transparent text-foreground hover:bg-surface/70";
+
+    const selectionStyle = navItemSelectionStyle(
+      active && !dropIndicator && !isDragOver,
+      settings,
+    );
 
     return (
       <div
@@ -285,6 +293,7 @@ function TaglistGroup({
         tabIndex={0}
         onClick={handleNavigate}
         onKeyDown={handleKeyDown}
+        style={selectionStyle}
         {...(reorderable ? getRowProps(index) : {})}
         {...{
           [TRACK_DROP_ATTR]: "taglist",
@@ -309,7 +318,9 @@ function TaglistGroup({
         ) : null}
         <span className="min-w-0 flex-1 cursor-pointer select-none truncate">
           <span className="truncate">{label}</span>
-          <span className="ml-1 text-muted">({entry.track_count})</span>
+          <span className={active ? "ml-1 opacity-80" : "ml-1 text-muted"}>
+            ({entry.track_count})
+          </span>
         </span>
         {entry.value != null && (
           <button
@@ -361,6 +372,7 @@ function TaglistGroup({
 }
 
 export function Sidebar({ width }: { width: number }) {
+  const { settings } = useAppearance();
   const {
     playlists,
     taglists,
@@ -698,12 +710,13 @@ export function Sidebar({ width }: { width: number }) {
                 }
               }}
               {...collectionReorder.getRowProps(index)}
+              style={navItemSelectionStyle(active, settings)}
               className={`group/collection mb-1 flex w-full cursor-pointer items-center rounded-md py-2 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted pl-2 ${dropBarClass} ${
                 isDragging ? "opacity-40" : ""
               } ${
                 active
-                  ? "border border-transparent bg-cursor-background text-foreground"
-                  : "border border-transparent text-foreground hover:bg-surface-hover/60"
+                  ? "border border-transparent text-foreground"
+                  : "border border-transparent text-foreground hover:bg-surface/70"
               }`}
             >
               <button
@@ -743,7 +756,9 @@ export function Sidebar({ width }: { width: number }) {
               ) : (
                 <span className="min-w-0 flex-1 cursor-pointer select-none truncate">
                   {collection.name}
-                  <span className="ml-1 text-muted">({collection.track_count})</span>
+                  <span className={active ? "ml-1 opacity-80" : "ml-1 text-muted"}>
+                    ({collection.track_count})
+                  </span>
                 </span>
               )}
               {!isEditing ? (
@@ -810,10 +825,11 @@ export function Sidebar({ width }: { width: number }) {
 
         <button
           onClick={() => setView("project_tracks")}
+          style={navItemSelectionStyle(isProjectTracksActive, settings)}
           className={`mb-1 mt-4 w-full rounded-md px-3 py-2 text-left text-sm ${
             isProjectTracksActive
-              ? "bg-cursor-background text-foreground"
-              : "text-foreground hover:bg-surface-hover/60"
+              ? "text-foreground"
+              : "text-foreground hover:bg-surface/70"
           }`}
         >
           Project Tracks
@@ -869,6 +885,10 @@ export function Sidebar({ width }: { width: number }) {
                 [TRACK_DROP_ATTR]: "playlist",
                 "data-playlist-id": String(playlist.id),
               }}
+              style={navItemSelectionStyle(
+                active && !dropIndicator && !isDragOver,
+                settings,
+              )}
               className={`group/playlist mb-1 flex w-full cursor-pointer items-center rounded-md py-2 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted pl-2 ${dropBarClass} ${
                 isDragging ? "opacity-40" : ""
               } ${
@@ -879,8 +899,8 @@ export function Sidebar({ width }: { width: number }) {
                     : isTrackDragging
                       ? "border border-dashed border-border bg-surface-hover/50 text-foreground"
                       : active
-                        ? "border border-transparent bg-cursor-background text-foreground"
-                        : "border border-transparent text-foreground hover:bg-surface-hover/60"
+                        ? "border border-transparent text-foreground"
+                        : "border border-transparent text-foreground hover:bg-surface/70"
               }`}
             >
               <button
@@ -920,7 +940,9 @@ export function Sidebar({ width }: { width: number }) {
               ) : (
                 <span className="min-w-0 flex-1 cursor-pointer select-none truncate">
                   {playlist.name}
-                  <span className="ml-1 text-muted">({playlist.track_count})</span>
+                  <span className={active ? "ml-1 opacity-80" : "ml-1 text-muted"}>
+                    ({playlist.track_count})
+                  </span>
                 </span>
               )}
               {!isEditing ? (

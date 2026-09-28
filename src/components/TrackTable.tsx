@@ -1,7 +1,8 @@
-import { useRef, type CSSProperties } from "react";
+import { useRef } from "react";
 
 import { TAGLIST_FOOTER_ROW_ID, TRACK_LIST_ID } from "../hooks/useTrackCursor";
 import { usePointerListReorder } from "../hooks/usePointerListReorder";
+import { navItemSelectionStyle } from "../lib/appearance";
 import { useAppearance } from "../hooks/useAppearance";
 import type { Playlist, Track } from "../lib/tauri";
 import { TrackTableRow } from "./TrackTableRow";
@@ -16,6 +17,7 @@ interface TrackTableFooterRow {
 interface TrackTableProps {
   tracks: Track[];
   playingTrackId: number | null;
+  playbackIsPlaying: boolean;
   cursorTrackId: number | null;
   onCursorChange: (trackId: number) => void;
   onPlay: (trackId: number) => void;
@@ -50,17 +52,10 @@ function reorderTrackIds(
   return next;
 }
 
-function footerRowStyle(
-  isSelected: boolean,
-  cursorBackground: string,
-): CSSProperties | undefined {
-  if (!isSelected) return undefined;
-  return { backgroundColor: cursorBackground };
-}
-
 export function TrackTable({
   tracks,
   playingTrackId,
+  playbackIsPlaying,
   cursorTrackId,
   onCursorChange,
   onPlay,
@@ -112,7 +107,7 @@ export function TrackTable({
   }
 
   const footerStyle = footerRow
-    ? footerRowStyle(footerRow.isSelected, settings.cursorBackground)
+    ? navItemSelectionStyle(footerRow.isSelected, settings)
     : undefined;
 
   return (
@@ -147,6 +142,9 @@ export function TrackTable({
               key={track.id}
               track={track}
               isPlaying={playingTrackId === track.id}
+              isActivelyPlaying={
+                playingTrackId === track.id && playbackIsPlaying
+              }
               isCursor={cursorTrackId === track.id}
               onCursorChange={onCursorChange}
               onPlay={onPlay}
