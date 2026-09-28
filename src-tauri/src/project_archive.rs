@@ -117,7 +117,7 @@ pub fn import_project(app_data: &Path, source: &Path) -> Result<ProjectSummary, 
         .map_err(|e| format!("Invalid zip archive: {e}"))?;
 
     let temp_dir = std::env::temp_dir().join(format!(
-        "trackvault-project-import-{}-{}",
+        "icetrackvault-project-import-{}-{}",
         std::process::id(),
         unix_now()
     ));
@@ -277,7 +277,7 @@ mod tests {
 
     fn temp_root(label: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "trackvault-project-archive-test-{}-{}-{}",
+            "icetrackvault-project-archive-test-{}-{}-{}",
             label,
             std::process::id(),
             unix_now()
@@ -299,7 +299,7 @@ mod tests {
         let track = library_dir(&root).join("clip.mp3");
         fs::write(&track, b"fake-mp3").unwrap();
 
-        let archive_path = app_data.join("export.tvproject.zip");
+        let archive_path = app_data.join("export.iceproject.zip");
         export_project(
             &app_data,
             &id,

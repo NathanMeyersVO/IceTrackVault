@@ -1,12 +1,12 @@
-export const TRACK_DRAG_MIME = "application/x-trackvault-track-id";
-export const REORDER_DRAG_MIME = "application/x-trackvault-reorder-index";
+export const TRACK_DRAG_MIME = "application/x-icetrackvault-track-id";
+export const REORDER_DRAG_MIME = "application/x-icetrackvault-reorder-index";
 export const SUBLIST_REORDER_DRAG_MIME =
-  "application/x-trackvault-sublist-reorder-index";
+  "application/x-icetrackvault-sublist-reorder-index";
 export const COLLECTION_REORDER_DRAG_MIME =
-  "application/x-trackvault-collection-reorder-index";
+  "application/x-icetrackvault-collection-reorder-index";
 export const PLAYLIST_REORDER_DRAG_MIME =
-  "application/x-trackvault-playlist-reorder-index";
-const TRACK_DRAG_TEXT_PREFIX = "trackvault:";
+  "application/x-icetrackvault-playlist-reorder-index";
+const TRACK_DRAG_TEXT_PREFIX = "icetrackvault:";
 
 export function setTrackDragData(dataTransfer: DataTransfer, trackId: number): void {
   dataTransfer.setData(TRACK_DRAG_MIME, String(trackId));

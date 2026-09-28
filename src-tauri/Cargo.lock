@@ -2060,6 +2060,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "icetrackvault"
+version = "0.14.1"
+dependencies = [
+ "axum",
+ "calamine",
+ "csv",
+ "dirs",
+ "fake",
+ "flate2",
+ "lofty",
+ "parking_lot",
+ "rand",
+ "rodio",
+ "rusqlite",
+ "rust_xlsxwriter",
+ "serde",
+ "serde_json",
+ "sha2",
+ "symphonia",
+ "tar",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "thiserror 2.0.20",
+ "tokio",
+ "ureq",
+ "uuid",
+ "walkdir",
+ "zip",
+]
+
+[[package]]
 name = "ico"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5157,39 +5190,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
-]
-
-[[package]]
-name = "trackvault"
-version = "0.14.1"
-dependencies = [
- "axum",
- "calamine",
- "csv",
- "dirs",
- "fake",
- "flate2",
- "lofty",
- "parking_lot",
- "rand",
- "rodio",
- "rusqlite",
- "rust_xlsxwriter",
- "serde",
- "serde_json",
- "sha2",
- "symphonia",
- "tar",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "thiserror 2.0.20",
- "tokio",
- "ureq",
- "uuid",
- "walkdir",
- "zip",
 ]
 
 [[package]]

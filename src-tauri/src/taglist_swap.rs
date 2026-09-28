@@ -461,7 +461,7 @@ fn exchange_paths_same_parent(source_path: &Path, partner_path: &Path) -> Result
     let parent = source_path
         .parent()
         .ok_or("Track has no parent directory.")?;
-    let temp_path = parent.join(format!(".trackvault-swap-{}.tmp", std::process::id()));
+    let temp_path = parent.join(format!(".icetrackvault-swap-{}.tmp", std::process::id()));
     if temp_path.exists() {
         fs::remove_file(&temp_path)
             .map_err(|e| format!("Failed to clear swap temp file: {e}"))?;
@@ -484,7 +484,7 @@ fn temp_swap_path(path: &Path) -> PathBuf {
         .and_then(|name| name.to_str())
         .unwrap_or("track");
     parent.join(format!(
-        ".trackvault-swap-{stem}-{}.tmp",
+        ".icetrackvault-swap-{stem}-{}.tmp",
         std::process::id()
     ))
 }

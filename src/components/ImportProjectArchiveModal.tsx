@@ -32,7 +32,7 @@ export function ImportProjectArchiveModal({
   const importProjectArchiveFromPath = useCallback(
     async (source: string) => {
       if (!isProjectArchivePath(source)) {
-        setError("Choose a .tvproject.zip project archive file.");
+        setError("Choose a .iceproject.zip project archive file.");
         return;
       }
       setImportingArchive(true);
@@ -85,7 +85,7 @@ export function ImportProjectArchiveModal({
 
           <div className="space-y-3 px-4 py-3">
             <p className="text-xs text-muted">
-              Restore a saved project as a new copy (.tvproject.zip).
+              Restore a saved project as a new copy (.iceproject.zip).
             </p>
             <button
               type="button"
@@ -96,7 +96,7 @@ export function ImportProjectArchiveModal({
               {importingArchive ? "Importing…" : "Import project archive…"}
             </button>
             <ProjectArchiveDropZone
-              label="Drop project archive (.tvproject.zip) here"
+              label="Drop project archive (.iceproject.zip) here"
               enabled={canImportArchive}
               onArchiveDropped={(path) => void importProjectArchiveFromPath(path)}
               onInvalidDrop={(message) => setError(message)}

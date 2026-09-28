@@ -21,7 +21,7 @@ export function ProjectArchiveDropZone({
       const path = paths[0];
       if (!path) return;
       if (!isProjectArchivePath(path)) {
-        onInvalidDrop?.("Drop a .tvproject.zip project archive file.");
+        onInvalidDrop?.("Drop a .iceproject.zip project archive file.");
         return;
       }
       onArchiveDropped(path);

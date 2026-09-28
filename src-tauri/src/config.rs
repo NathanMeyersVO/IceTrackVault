@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 use crate::db::Database;
 
 pub const CONFIG_VERSION: u32 = 1;
-pub const CONFIG_FILENAME: &str = "trackvault.json";
+pub const CONFIG_FILENAME: &str = "icetrackvault.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct TrackvaultConfig {
+pub struct IceTrackVaultConfig {
     pub version: u32,
     pub playlists: Vec<ConfigPlaylist>,
     pub taglists: Vec<ConfigTaglist>,
@@ -127,7 +127,7 @@ fn path_lookup_candidates(path: &Path) -> Vec<String> {
     candidates
 }
 
-pub fn export_config(db: &Database, library_root: &Path) -> Result<TrackvaultConfig, String> {
+pub fn export_config(db: &Database, library_root: &Path) -> Result<IceTrackVaultConfig, String> {
     let library_root = library_root
         .canonicalize()
         .unwrap_or_else(|_| library_root.to_path_buf());
@@ -200,7 +200,7 @@ pub fn export_config(db: &Database, library_root: &Path) -> Result<TrackvaultCon
         });
     }
 
-    Ok(TrackvaultConfig {
+    Ok(IceTrackVaultConfig {
         version: CONFIG_VERSION,
         playlists,
         taglists,
@@ -215,14 +215,14 @@ pub fn save_config(db: &Database, library_root: &Path) -> Result<PathBuf, String
     Ok(path)
 }
 
-pub fn load_config_file(library_root: &Path) -> Result<Option<TrackvaultConfig>, String> {
+pub fn load_config_file(library_root: &Path) -> Result<Option<IceTrackVaultConfig>, String> {
     let path = config_file_path(library_root);
     if !path.exists() {
         return Ok(None);
     }
     let contents =
         std::fs::read_to_string(&path).map_err(|e| format!("Failed to read config: {e}"))?;
-    let config: TrackvaultConfig =
+    let config: IceTrackVaultConfig =
         serde_json::from_str(&contents).map_err(|e| format!("Invalid config JSON: {e}"))?;
     if config.version != CONFIG_VERSION {
         return Err(format!(
@@ -236,7 +236,7 @@ pub fn load_config_file(library_root: &Path) -> Result<Option<TrackvaultConfig>,
 pub fn apply_config(
     db: &Database,
     library_root: &Path,
-    config: &TrackvaultConfig,
+    config: &IceTrackVaultConfig,
 ) -> Result<(), String> {
     let library_root = library_root
         .canonicalize()
@@ -307,7 +307,7 @@ mod tests {
     fn test_db_with_library() -> (Database, PathBuf) {
         let db = Database::open(std::path::Path::new(":memory:")).expect("in-memory db");
         let library = std::env::temp_dir().join(format!(
-            "trackvault-config-test-{}",
+            "icetrackvault-config-test-{}",
             uuid::Uuid::new_v4()
         ));
         std::fs::create_dir_all(&library).expect("create library dir");
@@ -460,7 +460,7 @@ mod tests {
     fn import_skips_missing_tracks() {
         let (db, library) = test_db_with_library();
 
-        let config = TrackvaultConfig {
+        let config = IceTrackVaultConfig {
             version: CONFIG_VERSION,
             playlists: vec![ConfigPlaylist {
                 name: "Partial".to_string(),

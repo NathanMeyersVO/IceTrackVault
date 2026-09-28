@@ -10,7 +10,7 @@ use super::{DeliveryChange, DeliveryChangeKind};
 use crate::application::{self, ApplicationId};
 use crate::models::DeliveryProgressPhase;
 use crate::config;
-use crate::project_config::autosave_trackvault_json;
+use crate::project_config::autosave_icetrackvault_json;
 use crate::projects::{self, ProjectManifest};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -141,7 +141,7 @@ pub fn apply_delivery(
 
     projects::save_manifest(project_root, manifest)?;
     let _ = apply_mode;
-    autosave_trackvault_json(db, &library_root)?;
+    autosave_icetrackvault_json(db, &library_root)?;
 
     Ok(ApplyDeliveryResult { applied, skipped })
 }
@@ -189,7 +189,7 @@ fn migrate_path_in_config(
         return Ok(());
     }
     let mut cfg = config::load_config_file(library_root)?
-        .ok_or_else(|| "trackvault.json missing".to_string())?;
+        .ok_or_else(|| "icetrackvault.json missing".to_string())?;
     for playlist in &mut cfg.playlists {
         for track in &mut playlist.tracks {
             if track == from_rel {

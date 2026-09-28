@@ -1,5 +1,5 @@
 {
-  "name": "trackvault",
+  "name": "icetrackvault",
   "private": true,
   "version": "0.14.1",
   "description": "Windows desktop music player (Tauri + React)",
@@ -19,7 +19,7 @@
   },
   "scripts": {
     "brand:sync": "node scripts/sync-brand-assets.mjs",
-    "icons:regenerate": "npm run tauri icon brand/trackvault-logo.png",
+    "icons:regenerate": "npm run tauri icon brand/icetrackvault-logo.png",
     "dev": "npm run brand:sync && vite",
     "build": "npm run brand:sync && tsc && vite build",
     "preview": "vite preview",

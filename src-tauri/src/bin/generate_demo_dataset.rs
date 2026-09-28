@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use trackvault_lib::demo_dataset::{
+use icetrackvault_lib::demo_dataset::{
     generate_demo_dataset, GenerateDemoOptions, DEFAULT_COMPETITORS_MAX,
     DEFAULT_COMPETITORS_MIN, DEFAULT_MULTI_EVENT_2_WEIGHT, DEFAULT_MULTI_EVENT_3_WEIGHT,
     DEFAULT_SEED, MIN_POOL_TRACK_DURATION_MS,

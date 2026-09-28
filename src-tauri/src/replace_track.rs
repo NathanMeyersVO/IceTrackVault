@@ -718,7 +718,7 @@ fn temp_replace_path(target: &Path) -> PathBuf {
         .and_then(|name| name.to_str())
         .map(|name| format!(".{name}"))
         .unwrap_or_default();
-    target.with_file_name(format!("{stem}.trackvault-replace{ext}"))
+    target.with_file_name(format!("{stem}.icetrackvault-replace{ext}"))
 }
 
 #[cfg(test)]
@@ -728,7 +728,7 @@ mod tests {
     #[test]
     fn paths_are_same_file_false_when_planned_target_missing() {
         let base = std::env::temp_dir().join(format!(
-            "trackvault_replace_test_{}",
+            "icetrackvault_replace_test_{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&base);
@@ -770,7 +770,7 @@ mod tests {
         let temp = temp_replace_path(target);
         assert_eq!(
             temp.file_name().and_then(|n| n.to_str()),
-            Some("Berniece Pacocha.trackvault-replace.mp3")
+            Some("Berniece Pacocha.icetrackvault-replace.mp3")
         );
     }
 }

@@ -6,10 +6,10 @@ use crate::db::Database;
 
 pub const SETTINGS_KEY: &str = "appearance";
 pub const LAST_DELIVERY_FOLDER_KEY: &str = "last_delivery_folder";
-pub const DEFAULT_THEME_ID: &str = "trackvault";
+pub const DEFAULT_THEME_ID: &str = "icetrackvault";
 
 const VALID_THEME_IDS: &[&str] = &[
-    "trackvault",
+    "icetrackvault",
     "charcoal",
     "midnight",
     "ocean",

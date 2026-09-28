@@ -19,7 +19,7 @@ use crate::delivery::{
     StagingSession,
 };
 use crate::projects::{self, ProjectManifest, ProjectSummary};
-use crate::project_config::{autosave_trackvault_json, load_trackvault_json_if_present};
+use crate::project_config::{autosave_icetrackvault_json, load_icetrackvault_json_if_present};
 use crate::drop_staging::{
     new_drop_staging_cache, new_drop_staging_failures, DropStagingCache, DropStagingFailures,
 };
@@ -42,7 +42,7 @@ pub struct AppState {
 fn try_autosave_project_config(state: &AppState) {
     let db = state.db.lock();
     if let Ok(Some(path)) = db.get_project_folder() {
-        let _ = autosave_trackvault_json(&db, Path::new(&path));
+        let _ = autosave_icetrackvault_json(&db, Path::new(&path));
     }
 }
 
@@ -1559,7 +1559,7 @@ fn reapply_project_application(
             application,
             schedule_ref,
         )?;
-        autosave_trackvault_json(&db, &library_root)?;
+        autosave_icetrackvault_json(&db, &library_root)?;
     }
     let _ = app.emit("project-updated", ());
     state.audio_cache.kick();
@@ -1938,7 +1938,7 @@ fn open_project_internal(app: &AppHandle, state: &AppState, project_id: &str) ->
     ctx.emit(ProjectLoadPhase::LoadingConfig, 0, 0, false, None);
     {
         let db = state.db.lock();
-        let _ = load_trackvault_json_if_present(&db, &library_root);
+        let _ = load_icetrackvault_json_if_present(&db, &library_root);
     }
 
     ctx.emit(ProjectLoadPhase::ApplyingSetup, 0, 0, false, None);
@@ -1965,7 +1965,7 @@ pub fn init_state(app: &AppHandle) -> Result<(AppState, Option<String>), String>
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-    let db_path = data_dir.join("trackvault.db");
+    let db_path = data_dir.join("icetrackvault.db");
     let db = Arc::new(Mutex::new(Database::open(&db_path).map_err(|e| e.to_string())?));
     let player = Arc::new(AudioPlayer::new()?);
     player.start_position_emitter(app.clone());

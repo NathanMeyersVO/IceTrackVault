@@ -1,4 +1,4 @@
-import logoUrl from "../assets/trackvault-logo.png";
+import logoUrl from "../assets/icetrackvault-logo.png";
 import { APP_NAME } from "../lib/appInfo";
 
 interface AppLogoProps {

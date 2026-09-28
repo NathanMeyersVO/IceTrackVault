@@ -1,15 +1,15 @@
 [package]
-name = "trackvault"
+name = "icetrackvault"
 version = "0.14.1"
 description = "IceTrackVault — local music project player"
 authors = ["Nathan Meyers"]
 license = "MIT"
 repository = "https://github.com/NathanMeyersVO/IceTrackVault"
 edition = "2021"
-default-run = "trackvault"
+default-run = "icetrackvault"
 
 [lib]
-name = "trackvault_lib"
+name = "icetrackvault_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

@@ -132,7 +132,7 @@ mod tests {
         let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
         let db = Database::open(std::path::Path::new(":memory:")).expect("in-memory db");
         let library = std::env::temp_dir().join(format!(
-            "trackvault-events-test-{}-{unique}",
+            "icetrackvault-events-test-{}-{unique}",
             std::process::id()
         ));
         std::fs::create_dir_all(&library).expect("create library dir");
