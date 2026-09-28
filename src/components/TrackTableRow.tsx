@@ -20,7 +20,7 @@ interface TrackTableRowProps {
   isCursor: boolean;
   onCursorChange: (trackId: number) => void;
   onPlay: (trackId: number) => void;
-  onEditTags: (trackId: number) => void;
+  onEditTags?: (trackId: number) => void;
   changeTaglistValueLabel?: string;
   onChangeTaglistValue?: (trackId: number) => void;
   swapTaglistEntryLabel?: string;
@@ -148,7 +148,7 @@ export function TrackTableRow({
         </td>
         <td className="w-12 px-2 py-2 text-right">
           <TrackRowMenu
-            onEditTags={() => onEditTags(track.id)}
+            onEditTags={onEditTags ? () => onEditTags(track.id) : undefined}
             changeTaglistValueLabel={changeTaglistValueLabel}
             onChangeTaglistValue={
               onChangeTaglistValue

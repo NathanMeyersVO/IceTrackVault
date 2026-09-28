@@ -536,10 +536,14 @@ export function useProjectMenuActions() {
     exportingProject;
   const fileOperationBusy = coreFileOperationBusy || uploadModalOpen;
   const actionsDisabled = fileOperationBusy;
-  const projectActionsDisabled = fileOperationBusy || !projectFolder;
-  const projectUploadDisabled = fileOperationBusy || !projectFolder;
+  const projectChangesLocked = activeProject?.changes_locked === true;
+  const projectActionsDisabled =
+    fileOperationBusy || !projectFolder || projectChangesLocked;
+  const projectUploadDisabled =
+    fileOperationBusy || !projectFolder || projectChangesLocked;
   const collectionUploadDisabled = fileOperationBusy || collectionId == null;
-  const projectUploadModalEnabled = !coreFileOperationBusy && !!projectFolder;
+  const projectUploadModalEnabled =
+    !coreFileOperationBusy && !!projectFolder && !projectChangesLocked;
   const collectionUploadModalEnabled =
     !coreFileOperationBusy && collectionId != null;
 
@@ -615,5 +619,6 @@ export function useProjectMenuActions() {
     projectActionsDisabled,
     projectUploadDisabled,
     collectionUploadDisabled,
+    projectChangesLocked,
   };
 }

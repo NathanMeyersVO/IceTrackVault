@@ -21,7 +21,7 @@ interface TrackTableProps {
   cursorTrackId: number | null;
   onCursorChange: (trackId: number) => void;
   onPlay: (trackId: number) => void;
-  onEditTags: (trackId: number) => void;
+  onEditTags?: (trackId: number) => void;
   changeTaglistValueLabel?: string;
   onChangeTaglistValue?: (trackId: number) => void;
   swapTaglistEntryLabel?: string;

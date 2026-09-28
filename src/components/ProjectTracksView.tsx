@@ -7,6 +7,7 @@ import { useDeleteTrack } from "../hooks/useDeleteTrack";
 import { useReplaceProjectTrackFile } from "../hooks/useReplaceProjectTrackFile";
 import { useProjectSearch } from "../hooks/useProjectSearch";
 import { formatProjectSearchSubtitle } from "../lib/projectSearchCopy";
+import { useProjectChangesLocked } from "../hooks/useProjectChangesLocked";
 import { usePlayerStore } from "../store/playerStore";
 import { playerController } from "../playerController";
 import { TagEditorModal } from "./TagEditorModal";
@@ -30,6 +31,7 @@ export function ProjectTracksView() {
   const [editingTrackId, setEditingTrackId] = useState<number | null>(null);
   const { query, setQuery, isSearching, hits, searchLoading, searchError, globalHitCount } =
     useProjectSearch();
+  const projectChangesLocked = useProjectChangesLocked();
 
   useEffect(() => {
     const trackIds = tracks.map((track) => track.id);
@@ -79,11 +81,14 @@ export function ProjectTracksView() {
           cursorTrackId={cursorTrackId}
           onCursorChange={selectTrack}
           onPlay={playTrack}
-          onEditTags={setEditingTrackId}
+          onEditTags={projectChangesLocked ? undefined : setEditingTrackId}
           playlists={playlists}
-          onAddTrackToPlaylist={handleAddToPlaylist}
-          onDeleteTrack={requestDeleteTrack}
-          onReplaceFile={requestReplaceFile}
+          onAddTrackToPlaylist={
+            projectChangesLocked ? undefined : handleAddToPlaylist
+          }
+          onDeleteTrack={projectChangesLocked ? undefined : requestDeleteTrack}
+          onReplaceFile={projectChangesLocked ? undefined : requestReplaceFile}
+          draggable={!projectChangesLocked}
           emptyMessage={projectEmptyMessage}
         />
       </div>

@@ -21,6 +21,7 @@ export function usePointerTrackDrop(options: {
   setDragOverPlaylistId: (playlistId: number | null) => void;
   onTagDrop: (trackId: number, taglist: Taglist, entry: TaglistValue) => void;
   onPlaylistDrop: (trackId: number, playlistId: number) => void;
+  enabled?: boolean;
 }) {
   const {
     draggingTrackId,
@@ -31,6 +32,7 @@ export function usePointerTrackDrop(options: {
     setDragOverPlaylistId,
     onTagDrop,
     onPlaylistDrop,
+    enabled = true,
   } = options;
 
   const taglistsRef = useRef(taglists);
@@ -111,6 +113,11 @@ export function usePointerTrackDrop(options: {
   stopAutoScrollRef.current = stopAutoScroll;
 
   useEffect(() => {
+    if (!enabled) {
+      stopAutoScrollRef.current();
+      resetScrollEl();
+      return;
+    }
     if (draggingTrackId == null) {
       stopAutoScrollRef.current();
       resetScrollEl();
@@ -179,6 +186,7 @@ export function usePointerTrackDrop(options: {
     };
   }, [
     draggingTrackId,
+    enabled,
     resetScrollEl,
     setDragOverPlaylistId,
     setDragOverTaglistTarget,

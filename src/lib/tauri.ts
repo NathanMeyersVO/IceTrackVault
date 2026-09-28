@@ -277,6 +277,7 @@ export interface ProjectSummary {
   track_count: number;
   last_modified: number;
   origin: ProjectOrigin;
+  changes_locked: boolean;
 }
 
 export type DeliveryChangeKind =
@@ -600,6 +601,11 @@ export const api = {
   openProject: (projectId: string) => invoke<void>("open_project", { projectId }),
   updateProjectApplication: (projectId: string, applicationId: string) =>
     invoke<ProjectSummary>("update_project_application", { projectId, applicationId }),
+  updateProjectChangesLocked: (projectId: string, changesLocked: boolean) =>
+    invoke<ProjectSummary>("update_project_changes_locked", {
+      projectId,
+      changesLocked,
+    }),
   deleteProject: (projectId: string) =>
     invoke<PlaybackState>("delete_project", { projectId }),
   exportProject: (projectId: string, destination: string) =>
