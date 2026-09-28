@@ -1,6 +1,6 @@
 # Using the music player
 
-This chapter covers running music during a skating competition. It explains how **Events** in the sidebar relate to track tagging, how each event’s **tracklist** (skating order) works, how to **play and seek** tracks, and how to **reorder events and competitors** to match starting and event orders.
+This chapter covers running music during a skating competition. It explains how **Events** are organized in the sidebar, how each event’s **tracklist** (skating order) works, how to **play and seek** tracks, and how to **reorder events and competitors** to match starting and event orders.
 
 If you have not loaded a project yet, start with [Getting started](./getting-started).
 
@@ -8,8 +8,8 @@ If you have not loaded a project yet, start with [Getting started](./getting-sta
 
 After a project is loaded, the window has three areas of interest:
 
-1. **Sidebar (left)** — browse **Project Tracks** (every file in the project), **Project Taglists** (competition events), playlists, and stored collections.
-2. **Center** — the music tracks in the current event.
+1. **Sidebar (left)** — navigate through the project's events, playlists, and stored collections.
+2. **Center** — the music tracks (**tracklist**) in the current event.
 3. **Player bar (bottom)** — title, transport controls, volume, elapsed time, and a **waveform** for the highlighted or playing track.
 
 <figure class="screenshot-box">
@@ -21,14 +21,13 @@ After a project is loaded, the window has three areas of interest:
   <figcaption>An event selected under <strong>Events</strong>. The center lists that event’s tracks; the player bar shows the highlighted track. Click the image to view full size.</figcaption>
 </figure>
 
-In the previous section, you saw all of the music tracks under **Project Tracks**. Now, using the **Taglists**, we see the tracks organized by  **Events**.
+In the previous section, you saw all of the music tracks under **Project Tracks**. Below that, we see the tracks organized by **Events**. The list of events is called a **taglist** because the events are organized by an MP3 tag applied by EMS - similar to iTunes smartlists, but requiring much less work to set up.
 
 ## Events and the Events taglist
 
-When loading EMS projects, IceTrackVault creates a taglist named **Events** under **Project Taglists** in the sidebar. Each row under **Events** is one **event** (for example `04 - Basic 1`). IceTrackVault builds that list from tags set by EMS:
+When loading EMS projects, IceTrackVault creates the **Events** under **Project Taglists** in the sidebar. 
 
-- **Event number** comes from the **Composer** tag on each music file (the value EMS writes into the tagged ZIP).
-- **Event title** (the text after the number) comes from the EMS **Event Schedule** spreadsheet when you created the project.
+Each row under **Events** is one **event** (for example `04 - Basic 1`). IceTrackVault builds that list from the EMS-applied tags in the music tracks, plus the event names read from the EMS **Event Schedule** spreadsheet.
 
 The number in parentheses on each sidebar row, such as `(2)`, is how many tracks belong to that event.
 
@@ -40,34 +39,32 @@ You can also use **Page Up** and **Page Down** to move to the previous or next e
 
 ### NO-TAG
 
-At the bottom of the **Events** list, **NO-TAG** lists project tracks that do not have a tag placing them in any event. Those files will not appear under any numbered event until tags are fixed.
+At the bottom of the **Events** list, **NO-TAG** lists project tracks that do not have a tag placing them in any event. Those files will not appear under any numbered event until tags are set (we discuss later how to do that).
 
 ## Per-event tracklist (competitors)
 
-With an event selected, the center table is the **skating order for that event**. Each row is one track—typically one competitor’s program.
+With an event selected, the center table is the **skating order for that event**. Each row is one track - typically one competitor’s program.
 
-**Single-click** a row to **highlight** it (cursor row). The player bar updates to that track’s metadata and waveform. Highlighting does not start audio by itself.
+**Single-click** a row to **highlight** it (cursor row). The player bar updates to that track’s information and waveform.
 
-**Double-click** a row (or press **Enter** while it is highlighted) to **load and play** from the current seek position.
+**Double-click** a row (or press **Enter** while it is highlighted) to **load and play** play the track.
 
 The **⋮** menu on each row opens actions such as editing tags, moving a skater to another event, replacing a file, or deleting a track. These operations are described in [Common problems](./common-problems).
 
 ### Search within the project
 
-The **Search project…** field above the table finds tracks across the whole project. Clear the search to return to the normal event list and drag handles.
+The **Search project…** field above the table finds tracks across the whole project. Start typing a name to search for a competitor's events, and clear the search to return to the normal event list and drag handles.
 
 ### Jump to the next event
 
-When another event follows the current one in sidebar order, a footer row appears at the bottom of the table, labeled **Next project taglist (…)** with the next event name. This provides an easy way to navigate to the next event directly from the current event's tracklist.
+At the end of each event, you'll see a footer row labeled **Next project taglist (…)** with the next event name. This provides an easy way to navigate to the next event directly from the current event's tracklist - without having to mouse over to the **Events** list.
 
-- Click that row to select it, then press **Enter** to open the next event.
-- Or press **↓** until the footer is highlighted, then **Enter**.
-
-This matches moving down the **Events** list without reaching for the mouse.
 
 <!-- Screenshot opportunity: crop of the track table footer row "Next project taglist (05 - …)" with callout. Save as docs-site/docs/public/screenshots/taglist-next-event-footer.png -->
 
 ## Playing music
+
+
 
 ### Highlight vs play
 
