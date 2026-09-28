@@ -1,6 +1,7 @@
 pub mod anonymize;
 pub mod demo_dataset;
 mod app_settings;
+mod keyboard_shortcut_settings;
 mod application;
 mod archive_export_progress;
 mod audio_cache;
@@ -42,6 +43,7 @@ use commands::{
     close_project, create_collection, create_playlist, create_taglist, delete_collection,
     delete_collection_track, delete_playlist, delete_taglist, delete_track, export_collection,
     get_app_settings, get_application_settings, get_collection_playback_state, get_collection_tracks,
+    get_keyboard_shortcuts, set_keyboard_shortcuts,
     apply_staged_delivery, create_project, delete_project, export_project,     get_active_project, get_project_load_progress,
     get_project_folder, import_project_archive,
     list_projects, open_project, preview_delivery_with_mode,
@@ -181,6 +183,8 @@ pub fn run() {
             update_track_tags,
             get_app_settings,
             set_app_settings,
+            get_keyboard_shortcuts,
+            set_keyboard_shortcuts,
             get_application_settings,
             set_application_settings,
             search_project,

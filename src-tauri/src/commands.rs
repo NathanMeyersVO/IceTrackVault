@@ -1029,6 +1029,23 @@ pub fn update_track_tags(
 }
 
 #[tauri::command]
+pub fn get_keyboard_shortcuts(
+    state: State<'_, AppState>,
+) -> Result<crate::keyboard_shortcut_settings::KeyboardShortcutSettings, String> {
+    let db = state.db.lock();
+    crate::keyboard_shortcut_settings::get_keyboard_shortcuts(&db)
+}
+
+#[tauri::command]
+pub fn set_keyboard_shortcuts(
+    state: State<'_, AppState>,
+    settings: crate::keyboard_shortcut_settings::KeyboardShortcutSettings,
+) -> Result<crate::keyboard_shortcut_settings::KeyboardShortcutSettings, String> {
+    let db = state.db.lock();
+    crate::keyboard_shortcut_settings::set_keyboard_shortcuts(&db, settings)
+}
+
+#[tauri::command]
 pub fn get_app_settings(state: State<'_, AppState>) -> Result<crate::app_settings::ThemeSettings, String> {
     let db = state.db.lock();
     crate::app_settings::get_theme(&db)
