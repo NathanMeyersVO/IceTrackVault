@@ -253,6 +253,7 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
         <TrackTable
           tracks={tracks}
           playingTrackId={playback.track_id}
+          playbackIsPlaying={playback.is_playing}
           cursorTrackId={cursorTrackId}
           onCursorChange={selectTrack}
           onPlay={playTrack}
