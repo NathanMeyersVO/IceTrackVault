@@ -245,6 +245,8 @@ export const COMMON_TAG_KEYS = [
 
 export interface ThemeSettings {
   theme_id: string;
+  brightness?: number;
+  contrast?: number;
 }
 
 export type ApplicationId = "none" | "usfs_ems";
