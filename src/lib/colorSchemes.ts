@@ -10,9 +10,9 @@ export interface ColorScheme {
   colors: AppearanceSettings;
 }
 
-export const DEFAULT_SCHEME_ID = "trackvault";
+export const DEFAULT_SCHEME_ID = "icetrackvault";
 
-const trackvault: AppearanceSettings = {
+const icetrackvault: AppearanceSettings = {
   background: "#0a0a0a",
   surface: "#171717",
   surfaceHover: "#262626",
@@ -33,11 +33,11 @@ const trackvault: AppearanceSettings = {
 
 export const COLOR_SCHEMES: ColorScheme[] = [
   {
-    id: "trackvault",
+    id: "icetrackvault",
     name: "IceTrackVault",
     description: "Classic blue accent on dark gray",
     mode: "dark",
-    colors: trackvault,
+    colors: icetrackvault,
   },
   {
     id: "midnight",

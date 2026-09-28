@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use trackvault_lib::anonymize::{
+use icetrackvault_lib::anonymize::{
     anonymize_project, AnonymizeOptions, DEFAULT_OUTPUT_SUBDIR, DEFAULT_SEED,
 };
 

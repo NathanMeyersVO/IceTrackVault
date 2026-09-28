@@ -1,4 +1,4 @@
-export const COLLECTION_ARCHIVE_EXTENSION = ".tvcollection.zip";
+export const COLLECTION_ARCHIVE_EXTENSION = ".icecollection.zip";
 
 export function isCollectionArchivePath(path: string): boolean {
   const base = path.replace(/\\/g, "/").split("/").pop() ?? "";
@@ -11,6 +11,6 @@ export function collectionArchiveFileName(collectionName: string): string {
 }
 
 export const COLLECTION_ARCHIVE_DIALOG_FILTER = {
-  name: "IceTrackVault stored collection (.tvcollection.zip)",
+  name: "IceTrackVault stored collection (.icecollection.zip)",
   extensions: ["zip"],
 };

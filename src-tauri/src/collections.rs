@@ -305,7 +305,7 @@ pub fn import_collection(
 
     let mut manifest: Option<CollectionManifest> = None;
     let temp_dir = std::env::temp_dir().join(format!(
-        "trackvault-import-{}-{}",
+        "icetrackvault-import-{}-{}",
         std::process::id(),
         chrono_now()
     ));
@@ -432,7 +432,7 @@ mod tests {
         let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
         let db = Database::open(std::path::Path::new(":memory:")).expect("db");
         let dir = std::env::temp_dir().join(format!(
-            "trackvault-collections-test-{}-{unique}-{}",
+            "icetrackvault-collections-test-{}-{unique}-{}",
             std::process::id(),
             chrono_now()
         ));
@@ -511,7 +511,7 @@ mod tests {
         )
         .unwrap();
 
-        let archive = app_data.join("pack.tvcollection.zip");
+        let archive = app_data.join("pack.icecollection.zip");
         export_collection(
             &db,
             &app_data,
@@ -552,7 +552,7 @@ mod tests {
         )
         .unwrap();
 
-        let archive = app_data.join("ambient.tvcollection.zip");
+        let archive = app_data.join("ambient.icecollection.zip");
         export_collection(
             &db,
             &app_data,

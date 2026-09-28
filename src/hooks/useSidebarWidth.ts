@@ -5,7 +5,7 @@ import {
   unlockDocumentTextSelection,
 } from "../lib/documentTextSelectionLock";
 
-const STORAGE_KEY = "trackvault.sidebarWidth";
+const STORAGE_KEY = "icetrackvault.sidebarWidth";
 const DEFAULT_WIDTH = 224;
 const MIN_WIDTH = 180;
 const MAX_WIDTH = 480;

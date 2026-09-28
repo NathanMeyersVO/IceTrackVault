@@ -55,7 +55,7 @@ src-tauri/src/       Rust backend
   db.rs              SQLite project index + playlists
   scanner.rs         Folder scan + tag reading
   projects.rs        Managed project folders + manifests
-  project_archive.rs Project .tvproject.zip export/import
+  project_archive.rs Project .iceproject.zip export/import
   delivery/          Vendor delivery staging, preview, apply
   player.rs          Audio playback
 docs-site/           VitePress documentation (GitHub Pages)
