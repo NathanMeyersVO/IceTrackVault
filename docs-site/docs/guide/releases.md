@@ -44,11 +44,18 @@ Release builds sign Windows binaries and installers during `tauri build` using *
 
 Do **not** store `AZURE_CLIENT_SECRET`; the workflow uses **OIDC federated credentials** (`id-token: write` + `azure/login@v2`).
 
-### Azure setup checklist
+The Release job uses the GitHub **environment** named `release` so OIDC works for every `v*` tag without adding a new Entra federated credential per tag.
+
+### Azure and GitHub setup checklist
 
 1. Artifact Signing account, endpoint, and certificate profile (Public Trust identity verification completed).
-2. App registration with a **federated credential** whose subject matches tag releases, e.g. `repo:NathanMeyersVO/IceTrackVault:ref:refs/tags/v*`.
-3. **Artifact Signing Certificate Profile Signer** role assigned to that service principal on the signing account.
+2. GitHub repo **environment** `release` (Settings → Environments).
+3. App registration with a **federated credential** whose subject matches that environment:
+
+   `repo:NathanMeyersVO/IceTrackVault:environment:release`
+
+   Tag-scoped subjects (e.g. `ref:refs/tags/v0.16.1`) are only for one-off tests; routine releases use the environment subject above.
+4. **Artifact Signing Certificate Profile Signer** role assigned to that service principal on the signing account.
 
 After a release, verify signatures on a Windows machine:
 
