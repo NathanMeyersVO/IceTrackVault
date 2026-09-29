@@ -45,15 +45,19 @@ jobs:
           AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
           AZURE_SIGNING_PROFILE: ${{ secrets.AZURE_SIGNING_PROFILE }}
         run: |
-          $script = Join-Path $env:GITHUB_WORKSPACE 'scripts/sign-windows.ps1'
-          $signCommand = "pwsh -NoProfile -ExecutionPolicy Bypass -File `"$script`" %1"
+          # Tauri splits string signCommand on spaces (no quoting). Use { cmd, args } instead.
+          $pwsh = (Get-Command pwsh).Source
+          $script = Join-Path $env:GITHUB_WORKSPACE 'src-tauri/sign-windows.ps1'
           $config = @{
             bundle = @{
               windows = @{
-                signCommand = $signCommand
+                signCommand = @{
+                  cmd  = $pwsh
+                  args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script, '%1')
+                }
               }
             }
-          } | ConvertTo-Json -Depth 4 -Compress
+          } | ConvertTo-Json -Depth 6 -Compress
           Set-Content -Path src-tauri/tauri.windows.conf.json -Value $config -Encoding utf8NoBOM
 
       - name: Azure login (OIDC)
