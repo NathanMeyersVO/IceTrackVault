@@ -5,7 +5,7 @@ IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS
 ## Install
 
 1. Open [Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases) and download the latest installer (`.msi` and/or `.exe`).
-2. Run the installer. Because the installer is unsigned, Windows will display a security warning asking whether you want to keep or discard the file; select keep to proceed with the installation.
+2. Run the installer. If SmartScreen shows an “unknown publisher” warning on a very new release, choose **More info** → **Run anyway**, or wait for a later release once reputation builds up. Signed installers from recent releases should show **IceTrackVault** (or your publisher name from the signing profile) in the UAC prompt when applicable.
 
 ## First steps in the app
 
