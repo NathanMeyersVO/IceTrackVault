@@ -56,6 +56,7 @@ The Release job uses the GitHub **environment** named `release` so OIDC works fo
 
    Tag-scoped subjects (e.g. `ref:refs/tags/v0.16.1`) are only for one-off tests; routine releases use the environment subject above.
 4. **Artifact Signing Certificate Profile Signer** role assigned to that service principal on the signing account.
+5. **Reader** (or higher) on the **subscription** that hosts the Artifact Signing account, assigned to the same service principal. Without this, `azure/login` may fail with “No subscriptions found” even when OIDC and federated credentials are correct. The Release workflow also sets `allow-no-subscriptions: true` on the login step to avoid intermittent subscription-enumeration failures when `subscription-id` is provided.
 
 After a release, verify signatures on a Windows machine:
 
