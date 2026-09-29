@@ -28,11 +28,15 @@ jobs:
 
       - run: npm ci
 
-      - name: Install artifact-signing-cli
-        run: cargo install artifact-signing-cli --locked
-
-      - name: Add cargo bin to PATH
-        run: echo "$env:USERPROFILE\.cargo\bin" >> $env:GITHUB_PATH
+      - name: Resolve signtool path
+        shell: pwsh
+        run: |
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter 'signtool.exe' -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
+            Sort-Object { $_.FullName } -Descending |
+            Select-Object -First 1
+          if (-not $signtool) { throw 'signtool.exe not found on runner' }
+          "SIGNTOOL_PATH=$($signtool.FullName)" >> $env:GITHUB_ENV
 
       - name: Write Windows signing config
         shell: pwsh
@@ -41,7 +45,8 @@ jobs:
           AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
           AZURE_SIGNING_PROFILE: ${{ secrets.AZURE_SIGNING_PROFILE }}
         run: |
-          $signCommand = "artifact-signing-cli -e $env:AZURE_SIGNING_ENDPOINT -a $env:AZURE_SIGNING_ACCOUNT -c $env:AZURE_SIGNING_PROFILE -d IceTrackVault %1"
+          $script = Join-Path $env:GITHUB_WORKSPACE 'scripts/sign-windows.ps1'
+          $signCommand = "pwsh -NoProfile -ExecutionPolicy Bypass -File `"$script`" %1"
           $config = @{
             bundle = @{
               windows = @{
@@ -62,6 +67,10 @@ jobs:
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_SIGNING_PROFILE: ${{ secrets.AZURE_SIGNING_PROFILE }}
+          SIGNING_DESCRIPTION: IceTrackVault
         with:
           projectPath: src-tauri
           tagName: ${{ github.ref_name }}

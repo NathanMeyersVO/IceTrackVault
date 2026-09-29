@@ -29,7 +29,7 @@ Use tag names like `v0.16.1` that match the app version `0.16.1`.
 
 ## Maintainers — code signing (Azure OIDC)
 
-Release builds sign Windows binaries and installers during `tauri build` using **Azure Artifact Signing** and **`artifact-signing-cli`**, configured in the Release workflow (see [`.github/workflows/release.yml`](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/.github/workflows/release.yml)).
+Release builds sign Windows binaries and installers during `tauri build` using **Azure Artifact Signing**, **`azure/login` (OIDC)**, and [`scripts/sign-windows.ps1`](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/scripts/sign-windows.ps1) (signtool + the Artifact Signing client DLL), configured in the Release workflow (see [`.github/workflows/release.yml`](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/.github/workflows/release.yml)).
 
 ### GitHub Actions secrets
 
@@ -42,7 +42,7 @@ Release builds sign Windows binaries and installers during `tauri build` using *
 | `AZURE_SIGNING_ACCOUNT` | Artifact Signing account name |
 | `AZURE_SIGNING_PROFILE` | Certificate profile name |
 
-Do **not** store `AZURE_CLIENT_SECRET`; the workflow uses **OIDC federated credentials** (`id-token: write` + `azure/login@v2`).
+Do **not** store `AZURE_CLIENT_SECRET`. The workflow uses **OIDC federated credentials** (`id-token: write` + `azure/login@v2`). The signing script relies on that `az` session; it does **not** use `artifact-signing-cli`, which always requires a client secret and performs its own `az login --service-principal`.
 
 The Release job uses the GitHub **environment** named `release` so OIDC works for every `v*` tag without adding a new Entra federated credential per tag.
 
