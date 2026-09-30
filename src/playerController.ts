@@ -101,6 +101,15 @@ function getActiveContinuousContext(): {
   };
 }
 
+function capturePlaybackOrigin(trackId: number) {
+  const store = usePlayerStore.getState();
+  const continuous = getActiveContinuousContext();
+  const view: View = continuous
+    ? { collectionId: continuous.collectionId }
+    : store.view;
+  store.setPlaybackOrigin({ view, trackId });
+}
+
 function maybeSetContinuousContextFromView(trackId: number) {
   const { view, activeTrackIds, collections } = usePlayerStore.getState();
   const collectionId = getViewCollectionId(view);
@@ -234,6 +243,13 @@ async function loadTrack(trackId: number, startMs?: number, autoplay = true) {
       state = await ensureAutoplay(trackId, state);
     }
     store.endTrackLoad(state);
+    if (
+      requestedAutoplay &&
+      state.track_id === trackId &&
+      state.is_playing
+    ) {
+      capturePlaybackOrigin(trackId);
+    }
     if (getActiveContinuousContext()) {
       void saveContinuousPlaybackState();
     }
@@ -585,7 +601,11 @@ async function stop() {
 
   try {
     const result = await api.stopPlayback();
-    usePlayerStore.getState().completeTransport(result, 0);
+    const latest = usePlayerStore.getState();
+    latest.completeTransport(result, 0);
+    if (result.track_id == null) {
+      latest.setPlaybackOrigin(null);
+    }
   } catch {
     // Stop was queued; stay pinned until emitter confirms or fallback fires.
   }
