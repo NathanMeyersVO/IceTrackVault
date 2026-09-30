@@ -47,6 +47,17 @@ npm run tauri build
 
 If line endings look wrong after cloning, run `git add --renormalize .` once (see `.gitattributes` in the repo).
 
+## Contributing changes upstream
+
+IceTrackVault uses a **fork and pull request** workflow. You do not need write access to the main repository.
+
+1. Fork [IceTrackVault on GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
+2. Create a branch on your fork named `feature/<description>` or `bugfix/<description>`.
+3. Push to your fork and open a pull request targeting **`main`** on the upstream repo.
+4. Ensure CI passes; the maintainer reviews and merges.
+
+Full details: [CONTRIBUTING.md](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/CONTRIBUTING.md) in the repository root.
+
 ## Project structure
 
 ```

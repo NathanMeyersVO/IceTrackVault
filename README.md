@@ -25,6 +25,8 @@ npm run tauri dev
 
 Build a release installer: `npm run tauri build`
 
+**Contributing:** fork the repo, use `feature/` or `bugfix/` branches on your fork, and open a PR to `main`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 - Windows output (releases): `src-tauri/target/release/bundle/`
 - macOS output (unofficial): on a Mac, `.app` / `.dmg` under `bundle/` if a local build succeeds
 
