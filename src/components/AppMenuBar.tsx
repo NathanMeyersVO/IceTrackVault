@@ -47,7 +47,12 @@ export function AppMenuBar() {
     projectActionsDisabled,
     projectUploadDisabled,
     collectionUploadDisabled,
+    projectChangesLocked,
   } = useProjectMenuActions();
+
+  const projectLockedTitle = projectChangesLocked
+    ? "This project is locked against changes."
+    : undefined;
   const collectionUploadLabel =
     collectionName != null
       ? `Upload track to stored collection (${collectionName})…`
@@ -64,20 +69,21 @@ export function AppMenuBar() {
       label: deliveryStaging
         ? deliveryCopy.applyUpdateMenuLabelStaging
         : deliveryCopy.applyUpdateMenuLabel,
-      title: deliveryCopy.applyUpdateMenuTitle,
+      title: projectLockedTitle ?? deliveryCopy.applyUpdateMenuTitle,
       onClick: () => void applyDeliveryUpdate(),
       disabled: projectActionsDisabled || deliveryStaging,
     },
     {
       label: projectUploading ? "Uploading to project…" : "Upload track to project…",
       title:
+        projectLockedTitle ??
         "Copy audio files into the project folder (choose files, drag and drop, or upload from phone).",
       disabled: projectUploadDisabled,
       onClick: () => openProjectUpload(),
     },
     {
       label: exportingProject ? "Exporting project…" : "Export Project…",
-      title: "Save the open project (project audio, schedule, and trackvault.json) to a .tvproject.zip archive.",
+      title: "Save the open project (project audio, schedule, and icetrackvault.json) to a .iceproject.zip archive.",
       onClick: () => void exportProject(),
       disabled: projectActionsDisabled || exportingProject,
     },
@@ -86,7 +92,7 @@ export function AppMenuBar() {
   const storedCollectionItems: MenuEntry[] = [
     {
       label: importingCollection ? "Importing…" : "Import stored collection",
-      title: "Import a .tvcollection.zip stored collection from disk.",
+      title: "Import a .icecollection.zip stored collection from disk.",
       onClick: () => void importCollection(),
       disabled: actionsDisabled,
     },
@@ -125,7 +131,7 @@ export function AppMenuBar() {
   const helpItems: MenuEntry[] = [
     {
       label: "Keyboard shortcuts…",
-      title: "View keyboard shortcuts for playback and navigation.",
+      title: "View and customize keyboard shortcuts for playback and navigation.",
       onClick: () => setShortcutsOpen(true),
     },
     {
@@ -148,7 +154,7 @@ export function AppMenuBar() {
     collectionId != null && collectionName != null
       ? `Stored collection: ${collectionName}`
       : activeProject != null
-        ? `Project: ${activeProject.name}`
+        ? `Project: ${activeProject.name}${activeProject.changes_locked ? " (locked)" : ""}`
         : "No project open";
 
   return (

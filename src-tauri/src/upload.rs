@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn ensure_upload_dir_creates_subdirectory() {
-        let library = std::env::temp_dir().join(format!("trackvault-upload-{}", chrono_now()));
+        let library = std::env::temp_dir().join(format!("icetrackvault-upload-{}", chrono_now()));
         std::fs::create_dir_all(&library).unwrap();
 
         let upload_dir = ensure_upload_dir(&library).unwrap();
@@ -192,7 +192,7 @@ mod tests {
 
     #[test]
     fn unique_destination_path_avoids_collisions() {
-        let dir = std::env::temp_dir().join(format!("trackvault-upload-names-{}", chrono_now()));
+        let dir = std::env::temp_dir().join(format!("icetrackvault-upload-names-{}", chrono_now()));
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("song.mp3"), b"one").unwrap();
 
@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn upload_tracks_rejects_non_audio() {
-        let library = std::env::temp_dir().join(format!("trackvault-upload-reject-{}", chrono_now()));
+        let library = std::env::temp_dir().join(format!("icetrackvault-upload-reject-{}", chrono_now()));
         std::fs::create_dir_all(&library).unwrap();
         let db = test_db_with_library(&library);
 
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn upload_tracks_copies_and_indexes_audio() {
-        let library = std::env::temp_dir().join(format!("trackvault-upload-copy-{}", chrono_now()));
+        let library = std::env::temp_dir().join(format!("icetrackvault-upload-copy-{}", chrono_now()));
         std::fs::create_dir_all(&library).unwrap();
         let db = test_db_with_library(&library);
 
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn check_upload_conflicts_detects_existing_uploaded_file() {
-        let library = std::env::temp_dir().join(format!("trackvault-upload-conflict-{}", chrono_now()));
+        let library = std::env::temp_dir().join(format!("icetrackvault-upload-conflict-{}", chrono_now()));
         std::fs::create_dir_all(&library).unwrap();
         let db = test_db_with_library(&library);
         let upload_dir = ensure_upload_dir(&library).unwrap();
@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     fn upload_tracks_overwrite_replaces_existing_file() {
-        let library = std::env::temp_dir().join(format!("trackvault-upload-overwrite-{}", chrono_now()));
+        let library = std::env::temp_dir().join(format!("icetrackvault-upload-overwrite-{}", chrono_now()));
         std::fs::create_dir_all(&library).unwrap();
         let db = test_db_with_library(&library);
 

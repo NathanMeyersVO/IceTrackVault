@@ -1,4 +1,4 @@
-export const PROJECT_ARCHIVE_EXTENSION = ".tvproject.zip";
+export const PROJECT_ARCHIVE_EXTENSION = ".iceproject.zip";
 
 export function isProjectArchivePath(path: string): boolean {
   const base = path.replace(/\\/g, "/").split("/").pop() ?? "";
@@ -11,6 +11,6 @@ export function projectArchiveFileName(projectName: string): string {
 }
 
 export const PROJECT_ARCHIVE_DIALOG_FILTER = {
-  name: "IceTrackVault project archive (.tvproject.zip)",
+  name: "IceTrackVault project archive (.iceproject.zip)",
   extensions: ["zip"],
 };

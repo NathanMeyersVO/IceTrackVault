@@ -19,7 +19,7 @@ use crate::delivery::{
     StagingSession,
 };
 use crate::projects::{self, ProjectManifest, ProjectSummary};
-use crate::project_config::{autosave_trackvault_json, load_trackvault_json_if_present};
+use crate::project_config::{autosave_icetrackvault_json, load_icetrackvault_json_if_present};
 use crate::drop_staging::{
     new_drop_staging_cache, new_drop_staging_failures, DropStagingCache, DropStagingFailures,
 };
@@ -39,10 +39,15 @@ pub struct AppState {
     pub project_load: Arc<Mutex<Option<ProjectLoadProgress>>>,
 }
 
+fn guard_active_project_changes(state: &AppState) -> Result<(), String> {
+    let db = state.db.lock();
+    projects::require_active_project_changes_allowed(&state.app_data_dir, &db)
+}
+
 fn try_autosave_project_config(state: &AppState) {
     let db = state.db.lock();
     if let Ok(Some(path)) = db.get_project_folder() {
-        let _ = autosave_trackvault_json(&db, Path::new(&path));
+        let _ = autosave_icetrackvault_json(&db, Path::new(&path));
     }
 }
 
@@ -140,6 +145,7 @@ pub fn set_project_folder(
 
 #[tauri::command]
 pub fn save_project_config(state: State<'_, AppState>) -> Result<String, String> {
+    guard_active_project_changes(&state)?;
     let db = state.db.lock();
     let library = db
         .get_project_folder()
@@ -151,6 +157,7 @@ pub fn save_project_config(state: State<'_, AppState>) -> Result<String, String>
 
 #[tauri::command]
 pub fn load_project_config(app: AppHandle, state: State<'_, AppState>) -> Result<String, String> {
+    guard_active_project_changes(&state)?;
     let (library_root, config) = {
         let db = state.db.lock();
         let library = db
@@ -266,6 +273,7 @@ pub fn upload_tracks(
     source_paths: Vec<String>,
     overwrite: Option<bool>,
 ) -> Result<UploadResult, String> {
+    guard_active_project_changes(&state)?;
     let paths: Vec<PathBuf> = source_paths.into_iter().map(PathBuf::from).collect();
     let paths = crate::drop_staging::resolve_paths(
         &state.app_data_dir,
@@ -289,6 +297,7 @@ pub fn preview_replace_project_track_file(
     track_id: i64,
     source_path: String,
 ) -> Result<crate::replace_track::ReplaceTrackFilePreview, String> {
+    guard_active_project_changes(&state)?;
     let db = state.db.lock();
     crate::replace_track::preview_replace_project_track_file(
         &db,
@@ -306,6 +315,7 @@ pub fn replace_project_track_file(
     replace_tag_keys: Vec<String>,
     replace_file_name: bool,
 ) -> Result<Track, String> {
+    guard_active_project_changes(&state)?;
     if state.player.state().track_id == Some(track_id) {
         state.player.stop();
     }
@@ -333,6 +343,7 @@ pub fn start_replace_remote_upload(
     state: State<'_, AppState>,
     track_id: i64,
 ) -> Result<crate::replace_remote_upload::ReplaceRemoteUploadStartInfo, String> {
+    guard_active_project_changes(&state)?;
     state.replace_remote_upload.start(
         app,
         Arc::clone(&state.db),
@@ -346,6 +357,7 @@ pub fn start_project_remote_upload(
     app: AppHandle,
     state: State<'_, AppState>,
 ) -> Result<crate::replace_remote_upload::ReplaceRemoteUploadStartInfo, String> {
+    guard_active_project_changes(&state)?;
     state.replace_remote_upload.start_project_import(
         app,
         Arc::clone(&state.db),
@@ -462,6 +474,7 @@ pub fn delete_track(
     state: State<'_, AppState>,
     track_id: i64,
 ) -> Result<PlaybackState, String> {
+    guard_active_project_changes(&state)?;
     let path = {
         let db = state.db.lock();
         let path = db
@@ -498,6 +511,7 @@ pub fn delete_track(
 
 #[tauri::command]
 pub fn create_playlist(state: State<'_, AppState>, name: String) -> Result<i64, String> {
+    guard_active_project_changes(&state)?;
     let id = state
         .db
         .lock()
@@ -509,6 +523,7 @@ pub fn create_playlist(state: State<'_, AppState>, name: String) -> Result<i64, 
 
 #[tauri::command]
 pub fn delete_playlist(state: State<'_, AppState>, id: i64) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     state
         .db
         .lock()
@@ -542,6 +557,7 @@ pub fn add_track_to_playlist(
     playlist_id: i64,
     track_id: i64,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     let db = state.db.lock();
     if !db.is_project_track(track_id).map_err(|e| e.to_string())? {
         return Err("Collection tracks cannot be added to playlists".to_string());
@@ -559,6 +575,7 @@ pub fn remove_track_from_playlist(
     playlist_id: i64,
     track_id: i64,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     state
         .db
         .lock()
@@ -574,6 +591,7 @@ pub fn reorder_playlist_tracks(
     playlist_id: i64,
     track_ids: Vec<i64>,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     state
         .db
         .lock()
@@ -590,6 +608,7 @@ pub fn rename_playlist(
     id: i64,
     name: String,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     let name = name.trim();
     if name.is_empty() {
         return Err("Name cannot be empty".to_string());
@@ -610,6 +629,7 @@ pub fn reorder_playlists(
     state: State<'_, AppState>,
     playlist_ids: Vec<i64>,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     state
         .db
         .lock()
@@ -628,6 +648,7 @@ pub fn create_taglist(
     entry_tag_key: String,
     value_singular_name: String,
 ) -> Result<i64, String> {
+    guard_active_project_changes(&state)?;
     let tag_key = tag_key.trim();
     let entry_tag_key = entry_tag_key.trim();
     if tag_key.is_empty() || entry_tag_key.is_empty() {
@@ -650,6 +671,7 @@ pub fn create_taglist(
 
 #[tauri::command]
 pub fn delete_taglist(state: State<'_, AppState>, id: i64) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     state
         .db
         .lock()
@@ -689,6 +711,7 @@ pub fn import_taglist_titles(
     taglist_id: i64,
     path: String,
 ) -> Result<u32, String> {
+    guard_active_project_changes(&state)?;
     let application = {
         let db = state.db.lock();
         if db.get_taglist(taglist_id).map_err(|e| e.to_string())?.is_none() {
@@ -714,6 +737,7 @@ pub fn set_taglist_value_title(
     tag_value: String,
     display_title: Option<String>,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     {
         let db = state.db.lock();
         if db.get_taglist(taglist_id).map_err(|e| e.to_string())?.is_none() {
@@ -759,6 +783,7 @@ pub fn reorder_taglist_values(
     taglist_id: i64,
     tag_values: Vec<String>,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     {
         let db = state.db.lock();
         if db.get_taglist(taglist_id).map_err(|e| e.to_string())?.is_none() {
@@ -779,6 +804,7 @@ pub fn reorder_taglist_tracks(
     value: Option<String>,
     track_ids: Vec<i64>,
 ) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
     state
         .db
         .lock()
@@ -811,6 +837,7 @@ pub fn preview_swap_taglist_entries(
     swap_project_paths: bool,
     swap_basenames: bool,
 ) -> Result<crate::taglist_swap::SwapTaglistPreview, String> {
+    guard_active_project_changes(&state)?;
     let db = state.db.lock();
     crate::taglist_swap::preview_swap_taglist_entries(
         &db,
@@ -835,6 +862,7 @@ pub fn swap_taglist_entries(
     swap_project_paths: bool,
     swap_basenames: bool,
 ) -> Result<Vec<Track>, String> {
+    guard_active_project_changes(&state)?;
     {
         let db = state.db.lock();
         crate::tag_index::backfill_unindexed_tracks(&db)?;
@@ -991,6 +1019,7 @@ pub fn update_track_tags(
     track_id: i64,
     fields: Vec<crate::tags::TagFieldInput>,
 ) -> Result<Track, String> {
+    guard_active_project_changes(&state)?;
     let path = {
         let db = state.db.lock();
         let track = db
@@ -1026,6 +1055,23 @@ pub fn update_track_tags(
 
     let _ = app.emit("project-updated", ());
     Ok(track)
+}
+
+#[tauri::command]
+pub fn get_keyboard_shortcuts(
+    state: State<'_, AppState>,
+) -> Result<crate::keyboard_shortcut_settings::KeyboardShortcutSettings, String> {
+    let db = state.db.lock();
+    crate::keyboard_shortcut_settings::get_keyboard_shortcuts(&db)
+}
+
+#[tauri::command]
+pub fn set_keyboard_shortcuts(
+    state: State<'_, AppState>,
+    settings: crate::keyboard_shortcut_settings::KeyboardShortcutSettings,
+) -> Result<crate::keyboard_shortcut_settings::KeyboardShortcutSettings, String> {
+    let db = state.db.lock();
+    crate::keyboard_shortcut_settings::set_keyboard_shortcuts(&db, settings)
 }
 
 #[tauri::command]
@@ -1425,16 +1471,8 @@ pub fn create_project(
     }
     let id = uuid::Uuid::new_v4().to_string();
     let manifest = ProjectManifest::new(id.clone(), name.to_string(), application_id);
-    projects::create_project_dirs(&state.app_data_dir, &manifest)?;
-    Ok(ProjectSummary {
-        id,
-        name: manifest.name,
-        created_at: manifest.created_at,
-        application_id: manifest.application_id,
-        track_count: 0,
-        last_modified: manifest.created_at,
-        origin: manifest.origin,
-    })
+    let project_root = projects::create_project_dirs(&state.app_data_dir, &manifest)?;
+    Ok(projects::summary_from_manifest(&manifest, &project_root))
 }
 
 #[tauri::command]
@@ -1497,6 +1535,9 @@ pub fn update_project_application(
     }
     let normalized = crate::application::normalize_application_id(&application_id);
     let mut manifest = projects::load_manifest(&project_root)?;
+    if manifest.changes_locked {
+        return Err(projects::PROJECT_CHANGES_LOCKED_MSG.to_string());
+    }
     manifest.application_id = normalized.as_str().to_string();
     projects::save_manifest(&project_root, &manifest)?;
 
@@ -1508,6 +1549,36 @@ pub fn update_project_application(
 
     if is_active {
         reapply_project_application(&app, &state, &project_root, &manifest)?;
+    }
+
+    projects::list_projects(&state.app_data_dir)?
+        .into_iter()
+        .find(|p| p.id == project_id)
+        .ok_or_else(|| "Project not found".to_string())
+}
+
+#[tauri::command]
+pub fn update_project_changes_locked(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    project_id: String,
+    changes_locked: bool,
+) -> Result<ProjectSummary, String> {
+    let project_root = projects::project_dir(&state.app_data_dir, &project_id);
+    if !project_root.is_dir() {
+        return Err("Project not found".to_string());
+    }
+    let mut manifest = projects::load_manifest(&project_root)?;
+    manifest.changes_locked = changes_locked;
+    projects::save_manifest(&project_root, &manifest)?;
+
+    let is_active = {
+        let db = state.db.lock();
+        projects::get_active_project_id(&db)?
+            .is_some_and(|active_id| active_id == project_id)
+    };
+    if is_active {
+        let _ = app.emit("project-updated", ());
     }
 
     projects::list_projects(&state.app_data_dir)?
@@ -1542,7 +1613,7 @@ fn reapply_project_application(
             application,
             schedule_ref,
         )?;
-        autosave_trackvault_json(&db, &library_root)?;
+        autosave_icetrackvault_json(&db, &library_root)?;
     }
     let _ = app.emit("project-updated", ());
     state.audio_cache.kick();
@@ -1768,6 +1839,7 @@ pub fn apply_staged_delivery(
 
     let for_update = session.target_project_id.is_some();
     let project_id = if let Some(pid) = session.target_project_id.clone() {
+        projects::require_project_changes_allowed(&state.app_data_dir, &pid)?;
         pid
     } else {
         let name = new_project_name
@@ -1921,7 +1993,7 @@ fn open_project_internal(app: &AppHandle, state: &AppState, project_id: &str) ->
     ctx.emit(ProjectLoadPhase::LoadingConfig, 0, 0, false, None);
     {
         let db = state.db.lock();
-        let _ = load_trackvault_json_if_present(&db, &library_root);
+        let _ = load_icetrackvault_json_if_present(&db, &library_root);
     }
 
     ctx.emit(ProjectLoadPhase::ApplyingSetup, 0, 0, false, None);
@@ -1948,7 +2020,7 @@ pub fn init_state(app: &AppHandle) -> Result<(AppState, Option<String>), String>
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
-    let db_path = data_dir.join("trackvault.db");
+    let db_path = data_dir.join("icetrackvault.db");
     let db = Arc::new(Mutex::new(Database::open(&db_path).map_err(|e| e.to_string())?));
     let player = Arc::new(AudioPlayer::new()?);
     player.start_position_emitter(app.clone());

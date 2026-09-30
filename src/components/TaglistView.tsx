@@ -9,6 +9,7 @@ import { useReplaceProjectTrackFile } from "../hooks/useReplaceProjectTrackFile"
 import { formatProjectSearchSubtitle } from "../lib/projectSearchCopy";
 import { useProjectSearch } from "../hooks/useProjectSearch";
 import { scrollToTrackRowWithRetry } from "../hooks/useProjectSearchNavigation";
+import { useProjectChangesLocked } from "../hooks/useProjectChangesLocked";
 import { usePlayerStore, serializeView } from "../store/playerStore";
 import { playerController } from "../playerController";
 import { scrollSidebarItem, sidebarSublistId } from "../lib/sidebarNavigation";
@@ -55,6 +56,7 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
     searchError,
     globalHitCount,
   } = useProjectSearch();
+  const projectChangesLocked = useProjectChangesLocked();
 
   const taglist = taglists.find((entry) => entry.id === taglistId);
   const changeTaglistValueLabel = taglist
@@ -253,17 +255,31 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
         <TrackTable
           tracks={tracks}
           playingTrackId={playback.track_id}
+          playbackIsPlaying={playback.is_playing}
           cursorTrackId={cursorTrackId}
           onCursorChange={selectTrack}
           onPlay={playTrack}
-          onEditTags={setEditingTrackId}
-          changeTaglistValueLabel={changeTaglistValueLabel}
-          onChangeTaglistValue={setChangingTrackId}
-          swapTaglistEntryLabel={swapTaglistEntryLabel}
-          onSwapTaglistEntry={swapTaglistEntryLabel ? setSwappingTrackId : undefined}
-          onDeleteTrack={requestDeleteTrack}
-          onReplaceFile={requestReplaceFile}
-          onReorderTracks={isSearching ? undefined : reorderTracks}
+          onEditTags={projectChangesLocked ? undefined : setEditingTrackId}
+          changeTaglistValueLabel={
+            projectChangesLocked ? undefined : changeTaglistValueLabel
+          }
+          onChangeTaglistValue={
+            projectChangesLocked ? undefined : setChangingTrackId
+          }
+          swapTaglistEntryLabel={
+            projectChangesLocked ? undefined : swapTaglistEntryLabel
+          }
+          onSwapTaglistEntry={
+            projectChangesLocked || !swapTaglistEntryLabel
+              ? undefined
+              : setSwappingTrackId
+          }
+          onDeleteTrack={projectChangesLocked ? undefined : requestDeleteTrack}
+          onReplaceFile={projectChangesLocked ? undefined : requestReplaceFile}
+          onReorderTracks={
+            projectChangesLocked || isSearching ? undefined : reorderTracks
+          }
+          draggable={!projectChangesLocked}
           emptyMessage={
             value == null
               ? "No tracks without this tag."

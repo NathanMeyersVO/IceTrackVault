@@ -47,6 +47,29 @@ npm run tauri build
 
 If line endings look wrong after cloning, run `git add --renormalize .` once (see `.gitattributes` in the repo).
 
+### Git shows many files modified (Windows / Cygwin)
+
+On **NTFS** (Windows paths and Cygwin `/cygdrive/...`), Git may report permission-only diffs (`git diff --summary` shows `mode change`) even when file contents are unchanged. Cygwin often marks the working tree executable (`100755`) while the repository uses normal `100644` modes.
+
+In this clone, run once (stored in `.git/config`, shared by Windows Git and Cygwin Git in the same folder):
+
+```bash
+git config core.filemode false
+```
+
+Then `git status` should be clean. Use one Git per clone when possible; if you mix Cygwin and Windows Git on the same tree, keep `core.filemode` set to `false` for that repo.
+
+## Contributing changes upstream
+
+IceTrackVault uses a **fork and pull request** workflow. You do not need write access to the main repository.
+
+1. Fork [IceTrackVault on GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
+2. Create a branch on your fork named `feature/<description>` or `bugfix/<description>`.
+3. Push to your fork and open a pull request targeting **`main`** on the upstream repo.
+4. Ensure CI passes; the maintainer reviews and merges.
+
+Full details: [CONTRIBUTING.md](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/CONTRIBUTING.md) in the repository root.
+
 ## Project structure
 
 ```
@@ -55,7 +78,7 @@ src-tauri/src/       Rust backend
   db.rs              SQLite project index + playlists
   scanner.rs         Folder scan + tag reading
   projects.rs        Managed project folders + manifests
-  project_archive.rs Project .tvproject.zip export/import
+  project_archive.rs Project .iceproject.zip export/import
   delivery/          Vendor delivery staging, preview, apply
   player.rs          Audio playback
 ```

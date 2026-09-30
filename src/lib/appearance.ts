@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { DEFAULT_SCHEME_ID, getSchemeColors } from "./colorSchemes";
 
 export interface AppearanceSettings {
@@ -42,6 +44,34 @@ const CSS_VAR_MAP: Record<AppearanceSettingKey, string> = {
   waveformProgress: "--tv-waveform-progress",
   waveformCursor: "--tv-waveform-cursor",
 };
+
+export function trackRowSelectionStyle(
+  isPlaying: boolean,
+  isCursor: boolean,
+  settings: AppearanceSettings,
+): CSSProperties | undefined {
+  if (!isPlaying && !isCursor) return undefined;
+
+  return {
+    color: isPlaying ? settings.playingText : undefined,
+    backgroundColor: isCursor
+      ? isPlaying
+        ? settings.cursorBackgroundPlaying
+        : settings.cursorBackground
+      : undefined,
+  };
+}
+
+export function navItemSelectionStyle(
+  isActive: boolean,
+  settings: AppearanceSettings,
+): CSSProperties | undefined {
+  if (!isActive) return undefined;
+  return {
+    backgroundColor: settings.cursorBackgroundPlaying,
+    color: settings.playingText,
+  };
+}
 
 export function applyAppearance(settings: AppearanceSettings): void {
   const root = document.documentElement;

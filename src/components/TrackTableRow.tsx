@@ -1,8 +1,9 @@
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { usePointerTrackDragRow } from "../hooks/usePointerTrackDrag";
 import type { Playlist, Track } from "../lib/tauri";
 import { formatDuration } from "../lib/tauri";
+import { trackRowSelectionStyle } from "../lib/appearance";
 import { useAppearance } from "../hooks/useAppearance";
 import { TrackRowMenu } from "./TrackRowMenu";
 
@@ -15,10 +16,11 @@ interface ReorderGripProps {
 interface TrackTableRowProps {
   track: Track;
   isPlaying: boolean;
+  isActivelyPlaying: boolean;
   isCursor: boolean;
   onCursorChange: (trackId: number) => void;
   onPlay: (trackId: number) => void;
-  onEditTags: (trackId: number) => void;
+  onEditTags?: (trackId: number) => void;
   changeTaglistValueLabel?: string;
   onChangeTaglistValue?: (trackId: number) => void;
   swapTaglistEntryLabel?: string;
@@ -35,25 +37,6 @@ interface TrackTableRowProps {
   dropIndicator?: "before" | "after" | null;
   reorderGripProps?: ReorderGripProps;
   reorderRowProps?: Record<string, string>;
-}
-
-function rowStyle(
-  isPlaying: boolean,
-  isCursor: boolean,
-  playingText: string,
-  cursorBackground: string,
-  cursorBackgroundPlaying: string,
-): CSSProperties | undefined {
-  if (!isPlaying && !isCursor) return undefined;
-
-  return {
-    color: isPlaying ? playingText : undefined,
-    backgroundColor: isCursor
-      ? isPlaying
-        ? cursorBackgroundPlaying
-        : cursorBackground
-      : undefined,
-  };
 }
 
 function GripIcon() {
@@ -76,6 +59,7 @@ function GripIcon() {
 export function TrackTableRow({
   track,
   isPlaying,
+  isActivelyPlaying,
   isCursor,
   onCursorChange,
   onPlay,
@@ -99,13 +83,7 @@ export function TrackTableRow({
 }: TrackTableRowProps) {
   const { settings } = useAppearance();
   const { onRowPointerDown } = usePointerTrackDragRow(track.id, draggable);
-  const style = rowStyle(
-    isPlaying,
-    isCursor,
-    settings.playingText,
-    settings.cursorBackground,
-    settings.cursorBackgroundPlaying,
-  );
+  const style = trackRowSelectionStyle(isPlaying, isCursor, settings);
 
   return (
       <tr
@@ -138,7 +116,16 @@ export function TrackTableRow({
           </td>
         )}
         <td className="px-4 py-2">
-          <div className="truncate font-medium">{track.title}</div>
+          <div
+            className={`truncate font-medium ${isActivelyPlaying ? "underline underline-offset-2" : ""}`}
+            style={
+              isActivelyPlaying
+                ? { textDecorationColor: settings.playingText }
+                : undefined
+            }
+          >
+            {track.title}
+          </div>
         </td>
         <td className="px-4 py-2">
           <div
@@ -161,7 +148,7 @@ export function TrackTableRow({
         </td>
         <td className="w-12 px-2 py-2 text-right">
           <TrackRowMenu
-            onEditTags={() => onEditTags(track.id)}
+            onEditTags={onEditTags ? () => onEditTags(track.id) : undefined}
             changeTaglistValueLabel={changeTaglistValueLabel}
             onChangeTaglistValue={
               onChangeTaglistValue

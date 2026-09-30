@@ -25,6 +25,8 @@ npm run tauri dev
 
 Build a release installer: `npm run tauri build`
 
+**Contributing:** fork the repo, use `feature/` or `bugfix/` branches on your fork, and open a PR to `main`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 - Windows output (releases): `src-tauri/target/release/bundle/`
 - macOS output (unofficial): on a Mac, `.app` / `.dmg` under `bundle/` if a local build succeeds
 
@@ -55,7 +57,7 @@ src-tauri/src/       Rust backend
   db.rs              SQLite project index + playlists
   scanner.rs         Folder scan + tag reading
   projects.rs        Managed project folders + manifests
-  project_archive.rs Project .tvproject.zip export/import
+  project_archive.rs Project .iceproject.zip export/import
   delivery/          Vendor delivery staging, preview, apply
   player.rs          Audio playback
 docs-site/           VitePress documentation (GitHub Pages)

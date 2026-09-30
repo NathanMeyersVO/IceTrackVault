@@ -38,7 +38,7 @@ function activeCollectionId(
 }
 
 const CLOSE_LIBRARY_MESSAGE =
-  "Remove the current project folder and clear all indexed tracks, project playlists, and project taglists from the app? Audio files on disk are not deleted. Stored collections are kept.\n\nSave configuration first if you want project playlists and project taglists written to trackvault.json.";
+  "Remove the current project folder and clear all indexed tracks, project playlists, and project taglists from the app? Audio files on disk are not deleted. Stored collections are kept.\n\nSave configuration first if you want project playlists and project taglists written to icetrackvault.json.";
 
 export function useProjectMenuActions() {
   const {
@@ -443,7 +443,7 @@ export function useProjectMenuActions() {
   const loadConfigConfirmDialog = loadConfigConfirmOpen ? (
     <ConfirmDialog
       title="Load configuration"
-      message="Replace all current project playlists and project taglists with the contents of trackvault.json? Indexed tracks are not affected."
+      message="Replace all current project playlists and project taglists with the contents of icetrackvault.json? Indexed tracks are not affected."
       confirmLabel="Load"
       cancelLabel="Cancel"
       destructive
@@ -536,10 +536,14 @@ export function useProjectMenuActions() {
     exportingProject;
   const fileOperationBusy = coreFileOperationBusy || uploadModalOpen;
   const actionsDisabled = fileOperationBusy;
-  const projectActionsDisabled = fileOperationBusy || !projectFolder;
-  const projectUploadDisabled = fileOperationBusy || !projectFolder;
+  const projectChangesLocked = activeProject?.changes_locked === true;
+  const projectActionsDisabled =
+    fileOperationBusy || !projectFolder || projectChangesLocked;
+  const projectUploadDisabled =
+    fileOperationBusy || !projectFolder || projectChangesLocked;
   const collectionUploadDisabled = fileOperationBusy || collectionId == null;
-  const projectUploadModalEnabled = !coreFileOperationBusy && !!projectFolder;
+  const projectUploadModalEnabled =
+    !coreFileOperationBusy && !!projectFolder && !projectChangesLocked;
   const collectionUploadModalEnabled =
     !coreFileOperationBusy && collectionId != null;
 
@@ -615,5 +619,6 @@ export function useProjectMenuActions() {
     projectActionsDisabled,
     projectUploadDisabled,
     collectionUploadDisabled,
+    projectChangesLocked,
   };
 }

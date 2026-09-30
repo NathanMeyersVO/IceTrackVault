@@ -14,6 +14,12 @@ import {
   type AppearanceSettings,
 } from "../lib/appearance";
 import {
+  adjustAppearanceSettings,
+  clampAdjustment,
+  DEFAULT_BRIGHTNESS,
+  DEFAULT_CONTRAST,
+} from "../lib/appearanceAdjust";
+import {
   DEFAULT_SCHEME_ID,
   getScheme,
   getSchemeColors,
@@ -23,9 +29,14 @@ import { api, type ThemeSettings } from "../lib/tauri";
 
 interface AppearanceContextValue {
   themeId: string;
+  brightness: number;
+  contrast: number;
   settings: AppearanceSettings;
   loaded: boolean;
   selectTheme: (themeId: string) => void;
+  setBrightness: (value: number) => void;
+  setContrast: (value: number) => void;
+  resetAdjustments: () => void;
 }
 
 const AppearanceContext = createContext<AppearanceContextValue | null>(null);
@@ -35,14 +46,34 @@ function resolveThemeId(raw: ThemeSettings): string {
   return themeId && isValidSchemeId(themeId) ? themeId : DEFAULT_SCHEME_ID;
 }
 
+function resolveAdjustment(raw: number | undefined, fallback: number): number {
+  if (raw == null || Number.isNaN(raw)) return fallback;
+  return clampAdjustment(raw);
+}
+
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [themeId, setThemeId] = useState(DEFAULT_SCHEME_ID);
+  const [brightness, setBrightnessState] = useState(DEFAULT_BRIGHTNESS);
+  const [contrast, setContrastState] = useState(DEFAULT_CONTRAST);
   const [loaded, setLoaded] = useState(false);
   const themeIdRef = useRef(themeId);
+  const brightnessRef = useRef(brightness);
+  const contrastRef = useRef(contrast);
   const saveTimerRef = useRef<number | null>(null);
 
   themeIdRef.current = themeId;
-  const settings = useMemo(() => getSchemeColors(themeId), [themeId]);
+  brightnessRef.current = brightness;
+  contrastRef.current = contrast;
+
+  const settings = useMemo(
+    () =>
+      adjustAppearanceSettings(getSchemeColors(themeId), brightness, contrast),
+    [themeId, brightness, contrast],
+  );
+
+  useEffect(() => {
+    applyAppearance(settings);
+  }, [settings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,11 +82,26 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       try {
         const raw = await api.getAppSettings();
         if (cancelled) return;
-        const resolved = resolveThemeId(raw);
-        setThemeId(resolved);
-        applyAppearance(getSchemeColors(resolved));
+        const resolvedThemeId = resolveThemeId(raw);
+        const resolvedBrightness = resolveAdjustment(
+          raw.brightness,
+          DEFAULT_BRIGHTNESS,
+        );
+        const resolvedContrast = resolveAdjustment(raw.contrast, DEFAULT_CONTRAST);
+        setThemeId(resolvedThemeId);
+        setBrightnessState(resolvedBrightness);
+        setContrastState(resolvedContrast);
+        themeIdRef.current = resolvedThemeId;
+        brightnessRef.current = resolvedBrightness;
+        contrastRef.current = resolvedContrast;
       } catch {
-        applyAppearance(getSchemeColors(DEFAULT_SCHEME_ID));
+        applyAppearance(
+          adjustAppearanceSettings(
+            getSchemeColors(DEFAULT_SCHEME_ID),
+            DEFAULT_BRIGHTNESS,
+            DEFAULT_CONTRAST,
+          ),
+        );
       } finally {
         if (!cancelled) setLoaded(true);
       }
@@ -66,14 +112,20 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const persist = useCallback((nextThemeId: string) => {
+  const persist = useCallback(() => {
     if (saveTimerRef.current != null) {
       window.clearTimeout(saveTimerRef.current);
     }
     saveTimerRef.current = window.setTimeout(() => {
-      void api.setAppSettings({ theme_id: nextThemeId }).catch(() => {
-        /* keep local theme even if save fails */
-      });
+      void api
+        .setAppSettings({
+          theme_id: themeIdRef.current,
+          brightness: brightnessRef.current,
+          contrast: contrastRef.current,
+        })
+        .catch(() => {
+          /* keep local theme even if save fails */
+        });
     }, 300);
   }, []);
 
@@ -82,11 +134,38 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       if (!isValidSchemeId(nextThemeId)) return;
       setThemeId(nextThemeId);
       themeIdRef.current = nextThemeId;
-      applyAppearance(getSchemeColors(nextThemeId));
-      persist(nextThemeId);
+      persist();
     },
     [persist],
   );
+
+  const setBrightness = useCallback(
+    (value: number) => {
+      const next = clampAdjustment(value);
+      setBrightnessState(next);
+      brightnessRef.current = next;
+      persist();
+    },
+    [persist],
+  );
+
+  const setContrast = useCallback(
+    (value: number) => {
+      const next = clampAdjustment(value);
+      setContrastState(next);
+      contrastRef.current = next;
+      persist();
+    },
+    [persist],
+  );
+
+  const resetAdjustments = useCallback(() => {
+    setBrightnessState(DEFAULT_BRIGHTNESS);
+    setContrastState(DEFAULT_CONTRAST);
+    brightnessRef.current = DEFAULT_BRIGHTNESS;
+    contrastRef.current = DEFAULT_CONTRAST;
+    persist();
+  }, [persist]);
 
   useEffect(() => {
     return () => {
@@ -97,8 +176,28 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ themeId, settings, loaded, selectTheme }),
-    [themeId, settings, loaded, selectTheme],
+    () => ({
+      themeId,
+      brightness,
+      contrast,
+      settings,
+      loaded,
+      selectTheme,
+      setBrightness,
+      setContrast,
+      resetAdjustments,
+    }),
+    [
+      themeId,
+      brightness,
+      contrast,
+      settings,
+      loaded,
+      selectTheme,
+      setBrightness,
+      setContrast,
+      resetAdjustments,
+    ],
   );
 
   return (

@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::phone_upload_settings::{port_bind_error, PhoneUploadTunnelConfig, public_upload_url};
 use crate::upload_relay::{resolve_cloudflared_path, UploadRelayProcess};
 
-pub const PROBE_BODY: &str = "trackvault-phone-upload-probe";
+pub const PROBE_BODY: &str = "icetrackvault-phone-upload-probe";
 
 const LOCAL_HTTP_TIMEOUT: Duration = Duration::from_secs(5);
 const PUBLIC_HTTP_TIMEOUT: Duration = Duration::from_secs(20);

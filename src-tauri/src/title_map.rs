@@ -288,7 +288,7 @@ mod tests {
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
         let library = std::env::temp_dir().join(format!(
-            "trackvault-title-map-test-{}-{unique}",
+            "icetrackvault-title-map-test-{}-{unique}",
             std::process::id()
         ));
         std::fs::create_dir_all(&library).expect("create library dir");

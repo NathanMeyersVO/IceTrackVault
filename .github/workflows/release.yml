@@ -7,8 +7,10 @@ on:
 
 jobs:
   publish-windows:
+    environment: release
     permissions:
       contents: write
+      id-token: write
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
@@ -26,9 +28,53 @@ jobs:
 
       - run: npm ci
 
+      - name: Resolve signtool path
+        shell: pwsh
+        run: |
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter 'signtool.exe' -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
+            Sort-Object { $_.FullName } -Descending |
+            Select-Object -First 1
+          if (-not $signtool) { throw 'signtool.exe not found on runner' }
+          "SIGNTOOL_PATH=$($signtool.FullName)" >> $env:GITHUB_ENV
+
+      - name: Write Windows signing config
+        shell: pwsh
+        env:
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_SIGNING_PROFILE: ${{ secrets.AZURE_SIGNING_PROFILE }}
+        run: |
+          # Tauri splits string signCommand on spaces (no quoting). Use { cmd, args } instead.
+          $pwsh = (Get-Command pwsh).Source
+          $script = Join-Path $env:GITHUB_WORKSPACE 'src-tauri/sign-windows.ps1'
+          $config = @{
+            bundle = @{
+              windows = @{
+                signCommand = @{
+                  cmd  = $pwsh
+                  args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script, '%1')
+                }
+              }
+            }
+          } | ConvertTo-Json -Depth 6 -Compress
+          Set-Content -Path src-tauri/tauri.windows.conf.json -Value $config -Encoding utf8NoBOM
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: true
+
       - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_SIGNING_PROFILE: ${{ secrets.AZURE_SIGNING_PROFILE }}
+          SIGNING_DESCRIPTION: IceTrackVault
         with:
           projectPath: src-tauri
           tagName: ${{ github.ref_name }}
@@ -36,4 +82,4 @@ jobs:
           releaseBody: See the assets below to download and install this version on Windows.
           releaseDraft: true
           prerelease: false
-          args: --target x86_64-pc-windows-msvc
+          args: --target x86_64-pc-windows-msvc --config tauri.windows.conf.json

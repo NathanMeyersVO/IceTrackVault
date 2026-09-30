@@ -31,8 +31,11 @@ import {
   sidebarPlaylistId,
   sidebarSublistId,
 } from "../lib/sidebarNavigation";
+import { useAppearance } from "../hooks/useAppearance";
 import { useProject } from "../hooks/usePlayer";
+import { useProjectChangesLocked } from "../hooks/useProjectChangesLocked";
 import { useTagDropConfirm } from "../hooks/useTagDropConfirm";
+import { navItemSelectionStyle } from "../lib/appearance";
 import { usePlayerStore, type View } from "../store/playerStore";
 
 interface TaglistDropTarget {
@@ -62,6 +65,7 @@ function TaglistGroup({
   supportsTitleImport,
   titleImportDialog,
   scrollContainerRef,
+  changesLocked,
 }: {
   taglist: Taglist;
   view: View;
@@ -74,7 +78,9 @@ function TaglistGroup({
     filters: { name: string; extensions: string[] }[];
   };
   scrollContainerRef: RefObject<HTMLElement | null>;
+  changesLocked: boolean;
 }) {
+  const { settings } = useAppearance();
   const { refresh } = useProject();
   const [values, setValues] = useState<TaglistValue[]>([]);
   const [editingValue, setEditingValue] = useState<string | null>(null);
@@ -102,7 +108,7 @@ function TaglistGroup({
 
   const { activeIndex, dropTarget, getGripProps, getRowProps } =
     usePointerListReorder({
-      enabled: taggedValues.length > 1,
+      enabled: !changesLocked && taggedValues.length > 1,
       containerRef: sublistContainerRef,
       scrollContainerRef,
       onCommit: (fromIndex, toIndex, position) => {
@@ -274,8 +280,13 @@ function TaglistGroup({
         : isTrackDragging
           ? "border border-dashed border-border bg-surface-hover/50 text-foreground"
           : active
-            ? "border border-transparent bg-cursor-background text-foreground"
-            : "border border-transparent text-foreground hover:bg-surface-hover/60";
+            ? "border border-transparent text-foreground"
+            : "border border-transparent text-foreground hover:bg-surface/70";
+
+    const selectionStyle = navItemSelectionStyle(
+      active && !dropIndicator && !isDragOver,
+      settings,
+    );
 
     return (
       <div
@@ -285,13 +296,16 @@ function TaglistGroup({
         tabIndex={0}
         onClick={handleNavigate}
         onKeyDown={handleKeyDown}
+        style={selectionStyle}
         {...(reorderable ? getRowProps(index) : {})}
-        {...{
-          [TRACK_DROP_ATTR]: "taglist",
-          "data-taglist-id": String(taglist.id),
-          "data-tag-value": tagValueAttr,
-          "data-tag-display-title": entry.display_title ?? "",
-        }}
+        {...(changesLocked
+          ? {}
+          : {
+              [TRACK_DROP_ATTR]: "taglist",
+              "data-taglist-id": String(taglist.id),
+              "data-tag-value": tagValueAttr,
+              "data-tag-display-title": entry.display_title ?? "",
+            })}
         className={`group/sublist mb-0.5 flex w-full cursor-pointer items-center rounded-md py-1.5 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted ${
           reorderable ? "pl-2" : "pl-6"
         } ${dropBarClass} ${isDragging ? "opacity-40" : ""} ${stateClass}`}
@@ -309,9 +323,11 @@ function TaglistGroup({
         ) : null}
         <span className="min-w-0 flex-1 cursor-pointer select-none truncate">
           <span className="truncate">{label}</span>
-          <span className="ml-1 text-muted">({entry.track_count})</span>
+          <span className={active ? "ml-1 opacity-80" : "ml-1 text-muted"}>
+            ({entry.track_count})
+          </span>
         </span>
-        {entry.value != null && (
+        {entry.value != null && !changesLocked && (
           <button
             type="button"
             onClick={(event) => startEditing(event, entry.value!, entry.display_title)}
@@ -331,29 +347,33 @@ function TaglistGroup({
         <span className="truncate text-xs font-medium text-muted">
           {taglist.name}
         </span>
-        <div className="hidden group-hover:inline">
-          {supportsTitleImport ? (
+        {!changesLocked ? (
+          <div className="hidden group-hover:inline">
+            {supportsTitleImport ? (
+              <button
+                type="button"
+                onClick={(event) => void importTitles(event)}
+                className="rounded px-1 text-xs text-muted hover:text-foreground"
+                title="Import titles"
+              >
+                Titles
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={(event) => void importTitles(event)}
-              className="rounded px-1 text-xs text-muted hover:text-foreground"
-              title="Import titles"
+              onClick={(event) => void deleteTaglist(event)}
+              className="rounded px-1 text-xs text-muted hover:text-red-400"
+              title="Delete project taglist"
             >
-              Titles
+              ×
             </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={(event) => void deleteTaglist(event)}
-            className="rounded px-1 text-xs text-muted hover:text-red-400"
-            title="Delete project taglist"
-          >
-            ×
-          </button>
-        </div>
+          </div>
+        ) : null}
       </div>
       <div ref={sublistContainerRef}>
-        {taggedValues.map((entry, index) => renderSublistRow(entry, index, true))}
+        {taggedValues.map((entry, index) =>
+          renderSublistRow(entry, index, !changesLocked),
+        )}
         {noTagEntry ? renderSublistRow(noTagEntry, taggedValues.length, false) : null}
       </div>
     </div>
@@ -361,6 +381,7 @@ function TaglistGroup({
 }
 
 export function Sidebar({ width }: { width: number }) {
+  const { settings } = useAppearance();
   const {
     playlists,
     taglists,
@@ -403,6 +424,7 @@ export function Sidebar({ width }: { width: number }) {
   const [editName, setEditName] = useState("");
   const renameSkipBlurRef = useRef(false);
   const { requestTagDrop, confirmDialog: tagDropConfirmDialog } = useTagDropConfirm();
+  const projectChangesLocked = useProjectChangesLocked();
 
   const handleCollectionReorder = async (orderedCollections: Collection[]) => {
     setCollections(orderedCollections);
@@ -509,7 +531,7 @@ export function Sidebar({ width }: { width: number }) {
   });
 
   const playlistReorder = usePointerListReorder({
-    enabled: playlists.length > 1,
+    enabled: !projectChangesLocked && playlists.length > 1,
     containerRef: playlistListRef,
     scrollContainerRef: browseNavRef,
     onCommit: (fromIndex, toIndex, position) => {
@@ -523,9 +545,10 @@ export function Sidebar({ width }: { width: number }) {
     },
   });
 
-  const isTrackDragging = draggingTrackId != null;
+  const isTrackDragging = draggingTrackId != null && !projectChangesLocked;
 
   usePointerTrackDrop({
+    enabled: !projectChangesLocked,
     draggingTrackId,
     setDraggingTrackId,
     scrollContainerRef: browseNavRef,
@@ -698,12 +721,13 @@ export function Sidebar({ width }: { width: number }) {
                 }
               }}
               {...collectionReorder.getRowProps(index)}
+              style={navItemSelectionStyle(active, settings)}
               className={`group/collection mb-1 flex w-full cursor-pointer items-center rounded-md py-2 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted pl-2 ${dropBarClass} ${
                 isDragging ? "opacity-40" : ""
               } ${
                 active
-                  ? "border border-transparent bg-cursor-background text-foreground"
-                  : "border border-transparent text-foreground hover:bg-surface-hover/60"
+                  ? "border border-transparent text-foreground"
+                  : "border border-transparent text-foreground hover:bg-surface/70"
               }`}
             >
               <button
@@ -743,7 +767,9 @@ export function Sidebar({ width }: { width: number }) {
               ) : (
                 <span className="min-w-0 flex-1 cursor-pointer select-none truncate">
                   {collection.name}
-                  <span className="ml-1 text-muted">({collection.track_count})</span>
+                  <span className={active ? "ml-1 opacity-80" : "ml-1 text-muted"}>
+                    ({collection.track_count})
+                  </span>
                 </span>
               )}
               {!isEditing ? (
@@ -810,10 +836,11 @@ export function Sidebar({ width }: { width: number }) {
 
         <button
           onClick={() => setView("project_tracks")}
+          style={navItemSelectionStyle(isProjectTracksActive, settings)}
           className={`mb-1 mt-4 w-full rounded-md px-3 py-2 text-left text-sm ${
             isProjectTracksActive
-              ? "bg-cursor-background text-foreground"
-              : "text-foreground hover:bg-surface-hover/60"
+              ? "text-foreground"
+              : "text-foreground hover:bg-surface/70"
           }`}
         >
           Project Tracks
@@ -864,12 +891,20 @@ export function Sidebar({ width }: { width: number }) {
               tabIndex={0}
               onClick={handleNavigate}
               onKeyDown={handleKeyDown}
-              {...playlistReorder.getRowProps(index)}
-              {...{
-                [TRACK_DROP_ATTR]: "playlist",
-                "data-playlist-id": String(playlist.id),
-              }}
-              className={`group/playlist mb-1 flex w-full cursor-pointer items-center rounded-md py-2 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted pl-2 ${dropBarClass} ${
+              {...(projectChangesLocked ? {} : playlistReorder.getRowProps(index))}
+              {...(projectChangesLocked
+                ? {}
+                : {
+                    [TRACK_DROP_ATTR]: "playlist",
+                    "data-playlist-id": String(playlist.id),
+                  })}
+              style={navItemSelectionStyle(
+                active && !dropIndicator && !isDragOver,
+                settings,
+              )}
+              className={`group/playlist mb-1 flex w-full cursor-pointer items-center rounded-md py-2 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted ${
+                projectChangesLocked ? "pl-6" : "pl-2"
+              } ${dropBarClass} ${
                 isDragging ? "opacity-40" : ""
               } ${
                 dropIndicator
@@ -879,19 +914,21 @@ export function Sidebar({ width }: { width: number }) {
                     : isTrackDragging
                       ? "border border-dashed border-border bg-surface-hover/50 text-foreground"
                       : active
-                        ? "border border-transparent bg-cursor-background text-foreground"
-                        : "border border-transparent text-foreground hover:bg-surface-hover/60"
+                        ? "border border-transparent text-foreground"
+                        : "border border-transparent text-foreground hover:bg-surface/70"
               }`}
             >
-              <button
-                type="button"
-                aria-label={`Reorder ${playlist.name}`}
-                className="mr-1 flex shrink-0 cursor-grab items-center justify-center rounded p-0.5 text-muted hover:bg-surface-hover hover:text-foreground active:cursor-grabbing"
-                onClick={(event) => event.stopPropagation()}
-                {...playlistReorder.getGripProps(index)}
-              >
-                <SublistGripIcon />
-              </button>
+              {!projectChangesLocked ? (
+                <button
+                  type="button"
+                  aria-label={`Reorder ${playlist.name}`}
+                  className="mr-1 flex shrink-0 cursor-grab items-center justify-center rounded p-0.5 text-muted hover:bg-surface-hover hover:text-foreground active:cursor-grabbing"
+                  onClick={(event) => event.stopPropagation()}
+                  {...playlistReorder.getGripProps(index)}
+                >
+                  <SublistGripIcon />
+                </button>
+              ) : null}
               {isEditing ? (
                 <input
                   autoFocus
@@ -920,10 +957,12 @@ export function Sidebar({ width }: { width: number }) {
               ) : (
                 <span className="min-w-0 flex-1 cursor-pointer select-none truncate">
                   {playlist.name}
-                  <span className="ml-1 text-muted">({playlist.track_count})</span>
+                  <span className={active ? "ml-1 opacity-80" : "ml-1 text-muted"}>
+                    ({playlist.track_count})
+                  </span>
                 </span>
               )}
-              {!isEditing ? (
+              {!isEditing && !projectChangesLocked ? (
                 <>
                   <button
                     type="button"
@@ -948,42 +987,43 @@ export function Sidebar({ width }: { width: number }) {
         })}
         </div>
 
-        {creating ? (
-          <div className="mt-2 space-y-2 px-2">
-            <input
-              autoFocus
-              value={newPlaylistName}
-              onChange={(e) => setNewPlaylistName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") createPlaylist();
-                if (e.key === "Escape") setCreating(false);
-              }}
-              placeholder="Project playlist name"
-              className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={createPlaylist}
-                className="rounded-md bg-accent px-2 py-1 text-xs text-foreground hover:bg-accent-hover"
-              >
-                Create
-              </button>
-              <button
-                onClick={() => setCreating(false)}
-                className="rounded-md px-2 py-1 text-xs text-muted hover:text-foreground"
-              >
-                Cancel
-              </button>
+        {!projectChangesLocked &&
+          (creating ? (
+            <div className="mt-2 space-y-2 px-2">
+              <input
+                autoFocus
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") createPlaylist();
+                  if (e.key === "Escape") setCreating(false);
+                }}
+                placeholder="Project playlist name"
+                className="w-full rounded-md border border-border bg-background px-2 py-1 text-sm"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={createPlaylist}
+                  className="rounded-md bg-accent px-2 py-1 text-xs text-foreground hover:bg-accent-hover"
+                >
+                  Create
+                </button>
+                <button
+                  onClick={() => setCreating(false)}
+                  className="rounded-md px-2 py-1 text-xs text-muted hover:text-foreground"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setCreating(true)}
-            className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-muted hover:bg-surface-hover/60 hover:text-foreground"
-          >
-            + New project playlist
-          </button>
-        )}
+          ) : (
+            <button
+              onClick={() => setCreating(true)}
+              className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-muted hover:bg-surface-hover/60 hover:text-foreground"
+            >
+              + New project playlist
+            </button>
+          ))}
 
         <div className="mb-2 mt-4 px-3 text-xs font-medium uppercase tracking-wide text-muted">
           {isTrackDragging ? "Drop on a project taglist sublist" : "Project taglists"}
@@ -1000,9 +1040,11 @@ export function Sidebar({ width }: { width: number }) {
             supportsTitleImport={applicationConfig.supportsTitleImport}
             titleImportDialog={applicationConfig.titleImportDialog}
             scrollContainerRef={browseNavRef}
+            changesLocked={projectChangesLocked}
           />
         ))}
 
+        {!projectChangesLocked ? (
         <div className="mt-4 border-t border-border pt-4">
           <div className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted">
             Create new taglist
@@ -1078,6 +1120,7 @@ export function Sidebar({ width }: { width: number }) {
           </button>
         )}
         </div>
+        ) : null}
       </nav>
 
       {pendingDeletePlaylist ? (

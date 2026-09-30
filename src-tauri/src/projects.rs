@@ -31,6 +31,8 @@ pub struct ProjectManifest {
     pub schedule_last_imported_mtime: Option<i64>,
     #[serde(default)]
     pub origin: ProjectOrigin,
+    #[serde(default)]
+    pub changes_locked: bool,
 }
 
 impl ProjectManifest {
@@ -44,9 +46,12 @@ impl ProjectManifest {
             schedule_relative_path: DEFAULT_SCHEDULE_REL.to_string(),
             schedule_last_imported_mtime: None,
             origin: ProjectOrigin::Created,
+            changes_locked: false,
         }
     }
 }
+
+pub const PROJECT_CHANGES_LOCKED_MSG: &str = "This project is locked against changes.";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectSummary {
@@ -57,6 +62,7 @@ pub struct ProjectSummary {
     pub track_count: u32,
     pub last_modified: i64,
     pub origin: ProjectOrigin,
+    pub changes_locked: bool,
 }
 
 pub fn projects_root(app_data: &Path) -> PathBuf {
@@ -149,6 +155,46 @@ pub fn clear_active_project_id(db: &Database) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+pub fn require_project_changes_allowed(
+    app_data: &Path,
+    project_id: &str,
+) -> Result<(), String> {
+    let project_root = project_dir(app_data, project_id);
+    if !project_root.is_dir() {
+        return Ok(());
+    }
+    let manifest = load_manifest(&project_root)?;
+    if manifest.changes_locked {
+        return Err(PROJECT_CHANGES_LOCKED_MSG.to_string());
+    }
+    Ok(())
+}
+
+pub fn require_active_project_changes_allowed(
+    app_data: &Path,
+    db: &Database,
+) -> Result<(), String> {
+    let Some(project_id) = get_active_project_id(db)? else {
+        return Ok(());
+    };
+    require_project_changes_allowed(app_data, &project_id)
+}
+
+pub fn summary_from_manifest(manifest: &ProjectManifest, project_root: &Path) -> ProjectSummary {
+    let library = library_dir(project_root);
+    let (track_count, last_modified) = library_stats(&library);
+    ProjectSummary {
+        id: manifest.id.clone(),
+        name: manifest.name.clone(),
+        created_at: manifest.created_at,
+        application_id: manifest.application_id.clone(),
+        track_count,
+        last_modified,
+        origin: manifest.origin,
+        changes_locked: manifest.changes_locked,
+    }
+}
+
 pub fn delete_project_dir(app_data: &Path, project_id: &str) -> Result<(), String> {
     let root = project_dir(app_data, project_id);
     if root.exists() {
@@ -173,17 +219,7 @@ pub fn list_projects(app_data: &Path) -> Result<Vec<ProjectSummary>, String> {
             Ok(m) => m,
             Err(_) => continue,
         };
-        let library = library_dir(&project_root);
-        let (track_count, last_modified) = library_stats(&library);
-        out.push(ProjectSummary {
-            id: manifest.id,
-            name: manifest.name,
-            created_at: manifest.created_at,
-            application_id: manifest.application_id,
-            track_count,
-            last_modified,
-            origin: manifest.origin,
-        });
+        out.push(summary_from_manifest(&manifest, &project_root));
     }
     out.sort_by(|a, b| b.last_modified.cmp(&a.last_modified));
     Ok(out)
@@ -259,5 +295,35 @@ mod tests {
             canonical_schedule_relative_path(Path::new("event-schedule.xlsx")),
             "event-schedule.xlsx"
         );
+    }
+
+    #[test]
+    fn manifest_deserializes_without_changes_locked() {
+        let json = r#"{
+            "version": 1,
+            "id": "abc",
+            "name": "Test",
+            "created_at": 0,
+            "application_id": "none",
+            "schedule_relative_path": "event-schedule.xlsx"
+        }"#;
+        let manifest: ProjectManifest = serde_json::from_str(json).unwrap();
+        assert!(!manifest.changes_locked);
+    }
+
+    #[test]
+    fn require_project_changes_allowed_when_locked() {
+        let app_data = std::env::temp_dir().join(format!(
+            "icetrackvault-lock-test-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let manifest = ProjectManifest {
+            changes_locked: true,
+            ..ProjectManifest::new("id1".into(), "Locked".into(), "none".into())
+        };
+        create_project_dirs(&app_data, &manifest).unwrap();
+        let err = require_project_changes_allowed(&app_data, "id1").unwrap_err();
+        assert_eq!(err, PROJECT_CHANGES_LOCKED_MSG);
+        let _ = fs::remove_dir_all(&app_data);
     }
 }
