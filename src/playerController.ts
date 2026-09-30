@@ -95,6 +95,13 @@ function getActiveContinuousContext(): {
   ) {
     return null;
   }
+  const trackId = store.playback.track_id;
+  if (
+    trackId == null ||
+    !store.continuousPlaybackTrackIds.includes(trackId)
+  ) {
+    return null;
+  }
   return {
     collectionId: store.continuousPlaybackCollectionId,
     trackIds: store.continuousPlaybackTrackIds,
@@ -140,9 +147,7 @@ async function getContinuousTrackIds(collectionId: number): Promise<number[]> {
   }
 
   const tracks = await api.getCollectionTracks(collectionId);
-  const trackIds = tracks.map((track) => track.id);
-  setContinuousContext(collectionId, trackIds);
-  return trackIds;
+  return tracks.map((track) => track.id);
 }
 
 async function saveContinuousPlaybackState() {
@@ -374,8 +379,6 @@ async function syncContinuousCollectionContext(
   viewKey: string,
 ): Promise<void> {
   if (usePlayerStore.getState().transportBusy) return;
-
-  setContinuousContext(collectionId, trackIds);
 
   if (serializeView(usePlayerStore.getState().view) !== viewKey) return;
 
@@ -660,12 +663,18 @@ export function initPlayerController() {
 
   let prevTransportBusy = store.transportBusy;
   let prevIsPlaying = store.playback.is_playing;
+  let prevPlaybackTrackId = store.playback.track_id;
 
   unsubscribeStore = usePlayerStore.subscribe((state) => {
     if (prevTransportBusy && !state.transportBusy) {
       flushPendingPlayIntent();
     }
     prevTransportBusy = state.transportBusy;
+
+    if (prevPlaybackTrackId !== state.playback.track_id) {
+      prevPlaybackTrackId = state.playback.track_id;
+      reapplyVolume();
+    }
 
     if (prevIsPlaying && !state.playback.is_playing) {
       if (state.pendingPausedLoad == null && !state.transportBusy) {
