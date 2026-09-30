@@ -95,10 +95,26 @@ function getActiveContinuousContext(): {
   ) {
     return null;
   }
+  const trackId = store.playback.track_id;
+  if (
+    trackId == null ||
+    !store.continuousPlaybackTrackIds.includes(trackId)
+  ) {
+    return null;
+  }
   return {
     collectionId: store.continuousPlaybackCollectionId,
     trackIds: store.continuousPlaybackTrackIds,
   };
+}
+
+function capturePlaybackOrigin(trackId: number) {
+  const store = usePlayerStore.getState();
+  const continuous = getActiveContinuousContext();
+  const view: View = continuous
+    ? { collectionId: continuous.collectionId }
+    : store.view;
+  store.setPlaybackOrigin({ view, trackId });
 }
 
 function maybeSetContinuousContextFromView(trackId: number) {
@@ -131,9 +147,7 @@ async function getContinuousTrackIds(collectionId: number): Promise<number[]> {
   }
 
   const tracks = await api.getCollectionTracks(collectionId);
-  const trackIds = tracks.map((track) => track.id);
-  setContinuousContext(collectionId, trackIds);
-  return trackIds;
+  return tracks.map((track) => track.id);
 }
 
 async function saveContinuousPlaybackState() {
@@ -234,6 +248,13 @@ async function loadTrack(trackId: number, startMs?: number, autoplay = true) {
       state = await ensureAutoplay(trackId, state);
     }
     store.endTrackLoad(state);
+    if (
+      requestedAutoplay &&
+      state.track_id === trackId &&
+      state.is_playing
+    ) {
+      capturePlaybackOrigin(trackId);
+    }
     if (getActiveContinuousContext()) {
       void saveContinuousPlaybackState();
     }
@@ -358,8 +379,6 @@ async function syncContinuousCollectionContext(
   viewKey: string,
 ): Promise<void> {
   if (usePlayerStore.getState().transportBusy) return;
-
-  setContinuousContext(collectionId, trackIds);
 
   if (serializeView(usePlayerStore.getState().view) !== viewKey) return;
 
@@ -585,7 +604,11 @@ async function stop() {
 
   try {
     const result = await api.stopPlayback();
-    usePlayerStore.getState().completeTransport(result, 0);
+    const latest = usePlayerStore.getState();
+    latest.completeTransport(result, 0);
+    if (result.track_id == null) {
+      latest.setPlaybackOrigin(null);
+    }
   } catch {
     // Stop was queued; stay pinned until emitter confirms or fallback fires.
   }
@@ -640,12 +663,18 @@ export function initPlayerController() {
 
   let prevTransportBusy = store.transportBusy;
   let prevIsPlaying = store.playback.is_playing;
+  let prevPlaybackTrackId = store.playback.track_id;
 
   unsubscribeStore = usePlayerStore.subscribe((state) => {
     if (prevTransportBusy && !state.transportBusy) {
       flushPendingPlayIntent();
     }
     prevTransportBusy = state.transportBusy;
+
+    if (prevPlaybackTrackId !== state.playback.track_id) {
+      prevPlaybackTrackId = state.playback.track_id;
+      reapplyVolume();
+    }
 
     if (prevIsPlaying && !state.playback.is_playing) {
       if (state.pendingPausedLoad == null && !state.transportBusy) {

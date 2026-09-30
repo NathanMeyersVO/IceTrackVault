@@ -3,12 +3,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { PlaybackState } from "../lib/tauri";
 import {
   getContextTrackId,
+  isAtPlaybackOrigin,
   isProjectSourcedView,
   mergeBackendPlaybackState,
   serializeView,
   shouldClearPositionGuard,
+  shouldShowReturnToPlaying,
   usePlayerStore,
   viewsEqual,
+  type PlaybackOriginState,
 } from "./playerStore";
 
 function playback(
@@ -141,6 +144,62 @@ describe("applyBackendPlayback seek transport", () => {
     usePlayerStore.getState().applyBackendPlayback(playback(50_000, true));
 
     expect(usePlayerStore.getState().transportBusy).toBe(true);
+  });
+});
+
+describe("playback origin visibility", () => {
+  const originView = { taglistId: 1, value: "evt-1" } as const;
+  const base: PlaybackOriginState = {
+    playback: {
+      track_id: 42,
+      position_ms: 0,
+      duration_ms: 60_000,
+      is_playing: true,
+    },
+    playbackOrigin: { view: originView, trackId: 42 },
+    view: originView,
+    cursorTrackId: 42,
+    cursorTaglistFooter: false,
+  };
+
+  it("is at origin when view, cursor, and track align", () => {
+    expect(isAtPlaybackOrigin(base)).toBe(true);
+    expect(shouldShowReturnToPlaying(base)).toBe(false);
+  });
+
+  it("is away when cursor is on another row", () => {
+    const state = { ...base, cursorTrackId: 99 };
+    expect(isAtPlaybackOrigin(state)).toBe(false);
+    expect(shouldShowReturnToPlaying(state)).toBe(true);
+  });
+
+  it("is away when view differs from origin", () => {
+    const state = { ...base, view: { taglistId: 1, value: "evt-2" } };
+    expect(isAtPlaybackOrigin(state)).toBe(false);
+    expect(shouldShowReturnToPlaying(state)).toBe(true);
+  });
+
+  it("is away on taglist footer focus", () => {
+    const state = { ...base, cursorTrackId: null, cursorTaglistFooter: true };
+    expect(isAtPlaybackOrigin(state)).toBe(false);
+    expect(shouldShowReturnToPlaying(state)).toBe(true);
+  });
+
+  it("hides when paused even if away", () => {
+    const state = {
+      ...base,
+      cursorTrackId: 99,
+      playback: { ...base.playback, is_playing: false },
+    };
+    expect(shouldShowReturnToPlaying(state)).toBe(false);
+  });
+
+  it("hides when origin track does not match playback", () => {
+    const state = {
+      ...base,
+      playbackOrigin: { view: originView, trackId: 1 },
+    };
+    expect(shouldShowReturnToPlaying(state)).toBe(false);
   });
 });
 

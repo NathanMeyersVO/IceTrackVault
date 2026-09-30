@@ -81,6 +81,9 @@ The player bar (bottom) provides:
 | **Jump to end (⏭)**        | End | Seeks near the music end      |
 | **Volume**                 | **←** / **→** | Slider    |
 
+While music is **playing**, if you move the highlight to another row or open a different list (another event, playlist, collection, or **Project Tracks**), the player bar shows **↩ Playing track**. Click it to return to the list where playback started and scroll to the track that is playing. Music keeps playing; this only changes what you see in the center panel and sidebar.
+
+The control’s tooltip names the list you will return to (for example, an event or playlist).
 
 ### Using the Waveform
 

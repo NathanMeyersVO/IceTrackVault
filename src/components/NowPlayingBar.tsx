@@ -5,7 +5,12 @@ import { listen } from "@tauri-apps/api/event";
 import { api, formatDuration, type AudioCacheTrackReady } from "../lib/tauri";
 import { usePlayer } from "../hooks/usePlayer";
 import {
+  formatReturnToPlayingTooltip,
+  returnToPlaybackOrigin,
+} from "../lib/returnToPlaybackOrigin";
+import {
   getDisplayPositionMs,
+  shouldShowReturnToPlaying,
   usePlayerStore,
 } from "../store/playerStore";
 import { TransportControls } from "./TransportControls";
@@ -19,6 +24,11 @@ export function NowPlayingBar() {
     tracks,
     playback,
     cursorTrackId,
+    cursorTaglistFooter,
+    playbackOrigin,
+    taglists,
+    playlists,
+    collections,
     transportBusy,
     transportMode,
     volume,
@@ -171,6 +181,23 @@ export function NowPlayingBar() {
 
   const canSeek = (hasLoadedTrack || cursorTrackId !== null) && !transportBusy;
 
+  const showReturnToPlaying = shouldShowReturnToPlaying({
+    playback,
+    playbackOrigin,
+    view: store.view,
+    cursorTrackId,
+    cursorTaglistFooter,
+  });
+
+  const returnToPlayingTooltip =
+    showReturnToPlaying && playbackOrigin
+      ? formatReturnToPlayingTooltip(
+          playbackOrigin,
+          displayTrack?.title ?? null,
+          { taglists, playlists, collections },
+        )
+      : null;
+
   return (
     <footer className="border-t border-border bg-surface px-4 py-3">
       <div className="mb-3 flex items-center gap-4">
@@ -193,6 +220,19 @@ export function NowPlayingBar() {
             )}
           </div>
         </div>
+        {showReturnToPlaying && (
+          <button
+            type="button"
+            onClick={() => returnToPlaybackOrigin()}
+            disabled={transportBusy}
+            className="flex h-9 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium text-foreground hover:bg-surface-hover disabled:opacity-40"
+            aria-label={returnToPlayingTooltip ?? "Return to playing track"}
+            title={returnToPlayingTooltip ?? undefined}
+          >
+            <span aria-hidden="true">↩</span>
+            <span>Playing track</span>
+          </button>
+        )}
         <TransportControls
           isPlaying={isPlaying}
           hasLoadedTrack={hasLoadedTrack}

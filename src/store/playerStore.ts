@@ -73,6 +73,39 @@ export interface PendingPartitionFocus {
   trackId: number;
 }
 
+export interface PlaybackOrigin {
+  view: View;
+  trackId: number;
+}
+
+export type PlaybackOriginState = Pick<
+  PlayerStore,
+  | "playback"
+  | "playbackOrigin"
+  | "view"
+  | "cursorTrackId"
+  | "cursorTaglistFooter"
+>;
+
+export function isAtPlaybackOrigin(state: PlaybackOriginState): boolean {
+  const playingId = state.playback.track_id;
+  if (playingId == null) return false;
+
+  const origin = state.playbackOrigin;
+  if (origin == null || origin.trackId !== playingId) return false;
+  if (!viewsEqual(state.view, origin.view)) return false;
+  if (state.cursorTaglistFooter) return false;
+
+  return state.cursorTrackId === playingId;
+}
+
+export function shouldShowReturnToPlaying(state: PlaybackOriginState): boolean {
+  const { playback, playbackOrigin: origin } = state;
+  if (!playback.is_playing || playback.track_id == null) return false;
+  if (origin == null || origin.trackId !== playback.track_id) return false;
+  return !isAtPlaybackOrigin(state);
+}
+
 export interface PlayIntent {
   trackId: number;
   startMs: number;
@@ -143,6 +176,7 @@ interface PlayerStore {
   cursorTaglistFooter: boolean;
   projectSearchQuery: string;
   pendingPartitionFocus: PendingPartitionFocus | null;
+  playbackOrigin: PlaybackOrigin | null;
   continuousPlaybackCollectionId: number | null;
   continuousPlaybackTrackIds: number[];
   previewPositionMs: number;
@@ -181,6 +215,7 @@ interface PlayerStore {
   setCursorTaglistFooter: (active: boolean) => void;
   setProjectSearchQuery: (query: string) => void;
   setPendingPartitionFocus: (focus: PendingPartitionFocus | null) => void;
+  setPlaybackOrigin: (origin: PlaybackOrigin | null) => void;
   setContinuousPlaybackContext: (
     collectionId: number | null,
     trackIds: number[],
@@ -241,6 +276,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   cursorTaglistFooter: false,
   projectSearchQuery: "",
   pendingPartitionFocus: null,
+  playbackOrigin: null,
   continuousPlaybackCollectionId: null,
   continuousPlaybackTrackIds: [],
   previewPositionMs: 0,
@@ -389,6 +425,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   setProjectSearchQuery: (projectSearchQuery) =>
     set({ projectSearchQuery }),
   setPendingPartitionFocus: (pendingPartitionFocus) => set({ pendingPartitionFocus }),
+  setPlaybackOrigin: (playbackOrigin) => set({ playbackOrigin }),
   setContinuousPlaybackContext: (continuousPlaybackCollectionId, continuousPlaybackTrackIds) =>
     set({ continuousPlaybackCollectionId, continuousPlaybackTrackIds }),
   setPreviewPositionMs: (previewPositionMs) => set({ previewPositionMs }),
