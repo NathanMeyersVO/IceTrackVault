@@ -47,6 +47,10 @@ npm run tauri build
 
 If line endings look wrong after cloning, run `git add --renormalize .` once (see `.gitattributes` in the repo).
 
+### Git shows many files modified (Windows)
+
+If `git status` lists hundreds of changed files but you did not edit them, check whether the diff is permission-only: `git diff --summary` may show `mode change 100755 => 100644`. The repository stores normal files as non-executable (`100644`). If you still see this after pulling latest `main`, use one Git installation per clone (do not mix Cygwin Git and Windows Git on the same working tree), or on Windows only run `git config core.filemode false` locally to ignore execute-bit differences.
+
 ## Contributing changes upstream
 
 IceTrackVault uses a **fork and pull request** workflow. You do not need write access to the main repository.
