@@ -18,14 +18,14 @@ The source is Tauri-based and a local macOS build may be possible, but that is n
 3. Tag and push the tag (triggers the Release workflow):
 
    ```powershell
-   git tag v0.16.1
-   git push github v0.16.1
+   git tag v1.0.0
+   git push github v1.0.0
    ```
 
 4. In GitHub **Actions**, wait for the **Release** workflow to finish.
 5. Open the new **draft** release under **Releases**, verify the Windows assets, then **Publish release**.
 
-Use tag names like `v0.16.1` that match the app version `0.16.1`.
+Use tag names like `v1.0.0` that match the app version `1.0.0`.
 
 ## Maintainers — code signing (Azure OIDC)
 
@@ -54,7 +54,7 @@ The Release job uses the GitHub **environment** named `release` so OIDC works fo
 
    `repo:NathanMeyersVO/IceTrackVault:environment:release`
 
-   Tag-scoped subjects (e.g. `ref:refs/tags/v0.16.1`) are only for one-off tests; routine releases use the environment subject above.
+   Tag-scoped subjects (e.g. `ref:refs/tags/v1.0.0`) are only for one-off tests; routine releases use the environment subject above.
 4. **Artifact Signing Certificate Profile Signer** role assigned to that service principal on the signing account.
 5. **Reader** (or higher) on the **subscription** that hosts the Artifact Signing account, assigned to the same service principal. Without this, `azure/login` may fail with “No subscriptions found” even when OIDC and federated credentials are correct. The Release workflow also sets `allow-no-subscriptions: true` on the login step to avoid intermittent subscription-enumeration failures when `subscription-id` is provided.
 
