@@ -47,9 +47,17 @@ npm run tauri build
 
 If line endings look wrong after cloning, run `git add --renormalize .` once (see `.gitattributes` in the repo).
 
-### Git shows many files modified (Windows)
+### Git shows many files modified (Windows / Cygwin)
 
-If `git status` lists hundreds of changed files but you did not edit them, check whether the diff is permission-only: `git diff --summary` may show `mode change 100755 => 100644`. The repository stores normal files as non-executable (`100644`). If you still see this after pulling latest `main`, use one Git installation per clone (do not mix Cygwin Git and Windows Git on the same working tree), or on Windows only run `git config core.filemode false` locally to ignore execute-bit differences.
+On **NTFS** (Windows paths and Cygwin `/cygdrive/...`), Git may report permission-only diffs (`git diff --summary` shows `mode change`) even when file contents are unchanged. Cygwin often marks the working tree executable (`100755`) while the repository uses normal `100644` modes.
+
+In this clone, run once (stored in `.git/config`, shared by Windows Git and Cygwin Git in the same folder):
+
+```bash
+git config core.filemode false
+```
+
+Then `git status` should be clean. Use one Git per clone when possible; if you mix Cygwin and Windows Git on the same tree, keep `core.filemode` set to `false` for that repo.
 
 ## Contributing changes upstream
 
