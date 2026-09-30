@@ -1,6 +1,6 @@
 # User manual
 
-This manual is for competition staff and music volunteers who run **IceTrackVault** during figure skating events. It focuses on day-to-day tasks: loading projects, playing music, fixing common EMS issues, and maintaining stored collections outside a single competition.
+This manual is for competition staff and music volunteers who run **IceTrackVault** during figure skating events. It focuses on day-to-day tasks: loading projects, playing music, fixing common issues, and maintaining stored collections outside a single competition.
 
 If you are setting up the app for the first time, start with [Getting started](./getting-started) for installation and your first project.
 

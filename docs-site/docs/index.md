@@ -18,12 +18,12 @@ hero:
 
 ## About
 
-**IceTrackVault** is a Windows desktop music player built specifically for figure skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — it creates a massive amount of extra work. IceTrackVault eliminates this heavy workload and tedious change management, streamlining the entire competition music workflow.
+**IceTrackVault** is a Windows desktop music player built specifically for figure skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — setting up and managing the music creates a lot of extra work. IceTrackVault greatly reduces the heavy workload and tedious change management, streamlining the entire competition music workflow.
 
 Here is how the application simplifies competition management:
 
 ### 🔄 Automated Event Management
-* **EMS Integration:** Automatically loads music tracks and event data to build playlists instantly (EntryEeze support is planned for the future).
+* **EMS Integration:** Automatically loads music tracks and event data from EMS to build playlists instantly (EntryEeze support is planned for the future).
 * **Flexible Sequencing:** Makes it simple to set the skater start order and adjust the overall event schedule on the fly.
 * **Project Dashboard:** Manages multiple competition projects at the same time within a single interface.
 
@@ -43,6 +43,6 @@ Here is how the application simplifies competition management:
 
 ---
 
-Pre-built **Windows installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS is not supported for end users today. The codebase is OS-independent (Tauri); a local macOS build may work, but Windows is the focus and macOS delivery is not a current priority. Contributions from macOS developers who want to help enable macOS are welcome—open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault). See [Build from source](/guide/development) for prerequisites.
+Pre-built **Windows installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS is not supported for end users today - but the codebase is OS-independent and a macOS build should be possible. Contributions from macOS developers who want to help enable macOS are welcome: open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault). See [Build from source](/guide/development) for prerequisites.
 
 **Documentation:** [User manual](/guide/user-manual/) · [Source on GitHub](https://github.com/NathanMeyersVO/IceTrackVault)
