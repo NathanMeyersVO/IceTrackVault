@@ -5,7 +5,7 @@ IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS
 ## Install
 
 1. Open [Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases) and download the latest installer (`.msi` and/or `.exe`).
-2. Run the installer. If SmartScreen shows an “unknown publisher” warning on a very new release, choose **More info** → **Run anyway**, or wait for a later release once reputation builds up. Signed installers from recent releases should show **IceTrackVault** (or your publisher name from the signing profile) in the UAC prompt when applicable.
+2. Run the installer. Because the installer is "not downloaded frequently", Windows SmartScreen will probably display a security warning asking whether you want to keep or discard the file; select keep to proceed with the installation.
 
 ## First steps in the app
 
@@ -18,7 +18,7 @@ IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS
   <figcaption>Main window after a fresh installation, with no music loaded. Click the image to view full size.</figcaption>
 </figure>
 
-A new competition project is created using one or more ZIP archives of tracks—tagged and packaged by EMS—along with an EMS-generated schedule report. The schedule report provides the names for each event. To start, you will select the directory where these files are located. IceTrackVault reads only files **directly in that folder** (not in subfolders)—open the folder that contains your ZIPs and schedule, or navigate into a subfolder in the import browser if your download layout nests them.
+A new competition project is created using one or more ZIP archives of tracks - tagged and packaged by EMS - along with an EMS-generated schedule report. The schedule report provides the names for each event. To start, you will select the directory where these files are located.
 
 
 1. Open **Project → Projects…** and select "New Project"
@@ -41,7 +41,7 @@ A new competition project is created using one or more ZIP archives of tracks—
   <figcaption>Set up the project name and application.</figcaption>
 </figure>
 
-3. Either click **Import EMS Download...** or drag and drop an EMS download folder from Windows Explorer. For this example, we clicked the import button. From there, navigate to the folder containing your tagged music ZIP(s) and EMS schedule report.
+3. Either click **Import EMS Download...** or drag and drop an EMS download folder from Windows Explorer. For this example, we clicked the import button. From there, navigate to the folder containing your tagged music ZIP archive(s) and EMS schedule report.
 
 <figure class="screenshot-box">
   <img
