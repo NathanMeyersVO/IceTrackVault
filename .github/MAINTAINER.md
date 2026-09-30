@@ -25,7 +25,7 @@ Enable:
 | Require status checks to pass | On — select **frontend** and **rust** after they appear from a PR (from [ci.yml](workflows/ci.yml)) |
 | Require conversation resolution | On (recommended) |
 | Do not allow bypassing the above settings | Off for administrators — so you can still push to `main` directly |
-| Restrict who can push to matching branches | On — only **NathanMeyersVO** |
+| Restrict who can push to matching branches | **Org repos only.** On a personal repo, skip this; use no Write/Maintain collaborators plus PR requirements below. |
 | Allow force pushes | Off |
 | Allow deletions | Off |
 
@@ -45,4 +45,20 @@ If [GitHub CLI](https://cli.github.com/) is installed, you can inspect collabora
 gh api repos/NathanMeyersVO/IceTrackVault/collaborators --jq '.[].login'
 ```
 
-Branch protection is easiest to configure completely in the GitHub web UI because required status check IDs vary by repository.
+### Apply via GitHub CLI (personal repo)
+
+After CI has run at least once on `main`, protection can be applied with:
+
+```bash
+gh api --method PUT repos/NathanMeyersVO/IceTrackVault/branches/main/protection \
+  --input .github/branch-protection-main.json
+```
+
+Use `restrictions: null` in that JSON (user/team push restrictions are not available on personal repositories).
+
+Fork PR workflow approval:
+
+```bash
+gh api -X PUT repos/NathanMeyersVO/IceTrackVault/actions/permissions/fork-pr-contributor-approval \
+  -f approval_policy=first_time_contributors
+```
