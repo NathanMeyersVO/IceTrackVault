@@ -305,9 +305,8 @@ pub fn import_collection(
 
     let mut manifest: Option<CollectionManifest> = None;
     let temp_dir = std::env::temp_dir().join(format!(
-        "icetrackvault-import-{}-{}",
-        std::process::id(),
-        chrono_now()
+        "icetrackvault-import-{}",
+        uuid::Uuid::new_v4()
     ));
     std::fs::create_dir_all(&temp_dir)
         .map_err(|e| format!("Failed to create temp directory: {e}"))?;
