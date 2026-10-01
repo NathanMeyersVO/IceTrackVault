@@ -270,7 +270,7 @@ pub fn apply_config(
             )
             .map_err(|e| e.to_string())?;
         if !taglist.value_titles.is_empty() {
-            db.import_taglist_titles(taglist_id, &taglist.value_titles)
+            db.import_taglist_titles(taglist_id, &taglist.value_titles, false)
                 .map_err(|e| e.to_string())?;
         }
         if !taglist.value_order.is_empty() {
@@ -452,6 +452,51 @@ mod tests {
         assert_eq!(sublist_tracks.len(), 2);
         assert_eq!(sublist_tracks[0].title, "Bridge");
         assert_eq!(sublist_tracks[1].title, "Intro");
+
+        std::fs::remove_dir_all(&library).ok();
+    }
+
+    #[test]
+    fn export_includes_implicit_partition_order_and_title() {
+        let (db, library) = test_db_with_library();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "").unwrap();
+        let track_id = db.list_tracks().unwrap()[0].id;
+        db.replace_track_tags(
+            track_id,
+            &[("Comment".to_string(), "99".to_string())],
+        )
+        .unwrap();
+        db.sync_taglist_partition_order_for_tag_keys(&["Comment".to_string()])
+            .unwrap();
+        db.set_taglist_value_title(taglist_id, "99", Some("Late addition"))
+            .unwrap();
+        db.sync_taglist_partition_order(taglist_id).unwrap();
+
+        let exported = export_config(&db, &library).unwrap();
+        assert_eq!(exported.taglists.len(), 1);
+        assert_eq!(
+            exported.taglists[0].value_titles.get("99"),
+            Some(&"Late addition".to_string())
+        );
+        assert!(
+            exported.taglists[0]
+                .value_order
+                .iter()
+                .any(|value| value == "99")
+        );
+
+        db.clear_user_config().unwrap();
+        apply_config(&db, &library, &exported).unwrap();
+        let taglists = db.list_taglists().unwrap();
+        assert_eq!(taglists.len(), 1);
+        let titles = db.list_taglist_value_titles(taglists[0].id).unwrap();
+        assert_eq!(titles.get("99"), Some(&"Late addition".to_string()));
+        assert!(
+            db.list_taglist_value_order(taglists[0].id)
+                .unwrap()
+                .iter()
+                .any(|value| value == "99")
+        );
 
         std::fs::remove_dir_all(&library).ok();
     }

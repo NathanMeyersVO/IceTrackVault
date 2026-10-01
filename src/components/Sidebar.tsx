@@ -21,12 +21,15 @@ import {
   type TaglistValue,
 } from "../lib/tauri";
 import { getApplicationConfig } from "../lib/applicationConfig";
-import { formatTaglistLabel } from "../lib/taglistLabels";
+import { AddTaglistValueModal } from "./AddTaglistValueModal";
+import { formatTaglistLabel, getTaglistValueSingularLabel } from "../lib/taglistLabels";
+import { visibleTaggedTaglistValues } from "../lib/taglistVisibility";
 import { usePointerListReorder } from "../hooks/usePointerListReorder";
 import { usePointerTrackDrop } from "../hooks/usePointerTrackDrop";
 import { reorderItemsByIndex } from "../lib/dragDrop";
 import { TRACK_DROP_ATTR } from "../lib/pointerDrag";
 import {
+  scrollSidebarItem,
   sidebarCollectionId,
   sidebarPlaylistId,
   sidebarSublistId,
@@ -82,14 +85,68 @@ function TaglistGroup({
 }) {
   const { settings } = useAppearance();
   const { refresh } = useProject();
+  const hideEmpty =
+    usePlayerStore((state) => state.hideEmptyTaglistPartitions[taglist.id]) ??
+    false;
+  const setHideEmptyTaglistPartitions = usePlayerStore(
+    (state) => state.setHideEmptyTaglistPartitions,
+  );
   const [values, setValues] = useState<TaglistValue[]>([]);
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [addDefinitionOpen, setAddDefinitionOpen] = useState(false);
   const skipBlurSaveRef = useRef(false);
   const sublistContainerRef = useRef<HTMLDivElement>(null);
 
+  const singularLabel = getTaglistValueSingularLabel(taglist);
   const taggedValues = values.filter((entry) => entry.value != null);
+  const visibleTaggedValues = visibleTaggedTaglistValues(values, hideEmpty);
   const noTagEntry = values.find((entry) => entry.value == null);
+
+  const projectLockedTooltip = "Project is locked; cannot change taglist options";
+  const hideEmptyTooltip = changesLocked
+    ? projectLockedTooltip
+    : `Hide ${singularLabel} rows with no tracks`;
+  const addDefinitionDisabled = changesLocked || hideEmpty;
+  const addDefinitionTooltip = changesLocked
+    ? projectLockedTooltip
+    : hideEmpty
+      ? "Turn off hide empty to add definitions safely"
+      : `Add a new ${singularLabel} definition`;
+
+  const navigateAwayFromHiddenEmpty = useCallback(
+    (nextHideEmpty: boolean) => {
+      if (!nextHideEmpty) return;
+      if (
+        typeof view !== "object" ||
+        !("taglistId" in view) ||
+        view.taglistId !== taglist.id ||
+        view.value == null
+      ) {
+        return;
+      }
+      const entry = values.find((item) => item.value === view.value);
+      if (!entry || entry.track_count > 0) return;
+
+      const visible = visibleTaggedTaglistValues(values, true);
+      const firstTagged = visible.find((item) => item.value != null);
+      if (firstTagged) {
+        setView({ taglistId: taglist.id, value: firstTagged.value });
+        return;
+      }
+      if (noTagEntry) {
+        setView({ taglistId: taglist.id, value: null });
+        return;
+      }
+      setView("project_tracks");
+    },
+    [noTagEntry, setView, taglist.id, values, view],
+  );
+
+  const handleHideEmptyChange = (checked: boolean) => {
+    setHideEmptyTaglistPartitions(taglist.id, checked);
+    navigateAwayFromHiddenEmpty(checked);
+  };
 
   const handleSublistReorder = async (orderedValues: TaglistValue[]) => {
     const nextValues = [...orderedValues];
@@ -106,9 +163,12 @@ function TaglistGroup({
     }
   };
 
+  const reorderEnabled =
+    !changesLocked && !hideEmpty && taggedValues.length > 1;
+
   const { activeIndex, dropTarget, getGripProps, getRowProps } =
     usePointerListReorder({
-      enabled: !changesLocked && taggedValues.length > 1,
+      enabled: reorderEnabled,
       containerRef: sublistContainerRef,
       scrollContainerRef,
       onCommit: (fromIndex, toIndex, position) => {
@@ -343,39 +403,87 @@ function TaglistGroup({
 
   return (
     <div className="mb-2">
-      <div className="group flex items-center justify-between px-3 py-1">
-        <span className="truncate text-xs font-medium text-muted">
-          {taglist.name}
-        </span>
-        {!changesLocked ? (
-          <div className="hidden group-hover:inline">
-            {supportsTitleImport ? (
-              <button
-                type="button"
-                onClick={(event) => void importTitles(event)}
-                className="rounded px-1 text-xs text-muted hover:text-foreground"
-                title="Import titles"
-              >
-                Titles
-              </button>
-            ) : null}
+      <div className="group px-3 py-1">
+        <div className="flex items-center justify-between gap-1">
+          <span className="truncate text-xs font-medium text-muted">
+            {taglist.name}
+          </span>
+          <div className="hidden shrink-0 items-center group-hover:flex">
             <button
               type="button"
-              onClick={(event) => void deleteTaglist(event)}
-              className="rounded px-1 text-xs text-muted hover:text-red-400"
-              title="Delete project taglist"
+              disabled={addDefinitionDisabled}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (!addDefinitionDisabled) setAddDefinitionOpen(true);
+              }}
+              className="rounded px-1 text-xs text-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              title={addDefinitionTooltip}
             >
-              ×
+              +{singularLabel}
             </button>
+            {!changesLocked ? (
+              <>
+                {supportsTitleImport ? (
+                  <button
+                    type="button"
+                    onClick={(event) => void importTitles(event)}
+                    className="rounded px-1 text-xs text-muted hover:text-foreground"
+                    title="Import titles"
+                  >
+                    Titles
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={(event) => void deleteTaglist(event)}
+                  className="rounded px-1 text-xs text-muted hover:text-red-400"
+                  title="Delete project taglist"
+                >
+                  ×
+                </button>
+              </>
+            ) : null}
           </div>
-        ) : null}
+        </div>
+        <label
+          className={`mt-0.5 flex cursor-pointer items-center gap-1.5 text-[11px] text-muted ${
+            changesLocked ? "cursor-not-allowed opacity-60" : ""
+          }`}
+          title={hideEmptyTooltip}
+        >
+          <input
+            type="checkbox"
+            checked={hideEmpty}
+            disabled={changesLocked}
+            onChange={(event) => handleHideEmptyChange(event.target.checked)}
+            className="rounded border-border"
+          />
+          <span>Hide empty {singularLabel} rows</span>
+        </label>
       </div>
       <div ref={sublistContainerRef}>
-        {taggedValues.map((entry, index) =>
-          renderSublistRow(entry, index, !changesLocked),
+        {visibleTaggedValues.map((entry, index) =>
+          renderSublistRow(entry, index, reorderEnabled),
         )}
-        {noTagEntry ? renderSublistRow(noTagEntry, taggedValues.length, false) : null}
+        {noTagEntry
+          ? renderSublistRow(
+              noTagEntry,
+              visibleTaggedValues.length,
+              false,
+            )
+          : null}
       </div>
+      {addDefinitionOpen ? (
+        <AddTaglistValueModal
+          taglist={taglist}
+          existingValues={values}
+          onClose={() => setAddDefinitionOpen(false)}
+          onAdded={(tagValue) => {
+            setView({ taglistId: taglist.id, value: tagValue });
+            scrollSidebarItem(sidebarSublistId(taglist.id, tagValue));
+          }}
+        />
+      ) : null}
     </div>
   );
 }

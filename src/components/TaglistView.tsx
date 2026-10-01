@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 
 import { api, type TaglistValue, type Track } from "../lib/tauri";
 import { formatTaglistLabel, getTaglistValueSingularLabel } from "../lib/taglistLabels";
+import { navigationTaglistValues } from "../lib/taglistVisibility";
 import { usePlayer } from "../hooks/usePlayer";
 import { useDeleteTrack } from "../hooks/useDeleteTrack";
 import { useReplaceProjectTrackFile } from "../hooks/useReplaceProjectTrackFile";
@@ -36,6 +37,7 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
     setCursorTaglistFooter,
     pendingPartitionFocus,
     setPendingPartitionFocus,
+    hideEmptyTaglistPartitions,
   } = usePlayerStore();
   const { playTrack, selectTrack } = usePlayer();
   const { requestDeleteTrack, confirmDialog: deleteConfirmDialog } = useDeleteTrack();
@@ -70,19 +72,26 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
     swappingTrackId != null
       ? tracks.find((track) => track.id === swappingTrackId)
       : undefined;
+  const hideEmpty = hideEmptyTaglistPartitions[taglistId] ?? false;
+
+  const navValues = useMemo(
+    () => navigationTaglistValues(values, hideEmpty),
+    [hideEmpty, values],
+  );
+
   const currentValue = values.find((entry) => entry.value === value);
   const displayName = formatTaglistLabel(value, currentValue?.display_title);
 
   const currentIndex = useMemo(
-    () => values.findIndex((entry) => entry.value === value),
-    [values, value],
+    () => navValues.findIndex((entry) => entry.value === value),
+    [navValues, value],
   );
   const nextSublist =
-    currentIndex >= 0 && currentIndex < values.length - 1
-      ? values[currentIndex + 1]
+    currentIndex >= 0 && currentIndex < navValues.length - 1
+      ? navValues[currentIndex + 1]
       : null;
   const previousSublist =
-    currentIndex > 0 ? values[currentIndex - 1] : null;
+    currentIndex > 0 ? navValues[currentIndex - 1] : null;
   const hasNextSublist = nextSublist != null && !isSearching;
   const hasPreviousSublist = previousSublist != null && !isSearching;
   const nextSublistLabel = nextSublist
@@ -126,6 +135,25 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
     setView({ taglistId, value: previousSublist.value });
     scrollSidebarItem(sidebarSublistId(taglistId, previousSublist.value));
   }, [previousSublist, setCursorTaglistFooter, setView, taglistId]);
+
+  useEffect(() => {
+    if (!hideEmpty || value == null) return;
+    const entry = values.find((item) => item.value === value);
+    if (!entry || entry.track_count > 0) return;
+
+    const visible = navigationTaglistValues(values, true);
+    const firstTagged = visible.find((item) => item.value != null);
+    if (firstTagged) {
+      setView({ taglistId, value: firstTagged.value });
+      return;
+    }
+    const noTag = values.find((item) => item.value == null);
+    if (noTag) {
+      setView({ taglistId, value: null });
+      return;
+    }
+    setView("project_tracks");
+  }, [hideEmpty, setView, taglistId, value, values]);
 
   useEffect(() => {
     refreshTracks();

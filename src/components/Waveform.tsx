@@ -3,6 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 
 import { useAppearance } from "../hooks/useAppearance";
 import { SEEK_CONFIRM_TOLERANCE_MS } from "../store/playerStore";
+import { WaveformPlaceholder } from "./WaveformPlaceholder";
 
 interface WaveformProps {
   trackId: number | null;
@@ -141,6 +142,18 @@ export function Waveform({
       <div className="flex h-[72px] items-center justify-center rounded-md bg-surface text-xs text-muted">
         Select a track to view waveform
       </div>
+    );
+  }
+
+  if (peaks.length === 0) {
+    return (
+      <WaveformPlaceholder
+        trackId={trackId}
+        durationMs={durationMs}
+        positionMs={positionMs}
+        waveColor={settings.waveformWave}
+        cursorColor={settings.waveformCursor}
+      />
     );
   }
 

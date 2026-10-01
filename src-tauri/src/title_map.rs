@@ -8,6 +8,13 @@ const TAG_COLUMN: &str = "#";
 const TITLE_COLUMN: &str = "Title";
 const GROUP_COLUMN: &str = "Group";
 
+#[derive(Clone, Debug, Default)]
+pub struct ScheduleTitleMap {
+    pub mappings: HashMap<String, String>,
+    /// `#` column values in sheet row order (first occurrence per tag).
+    pub ordered_keys: Vec<String>,
+}
+
 fn is_excel_extension(path: &Path) -> bool {
     matches!(
         path.extension()
@@ -19,7 +26,7 @@ fn is_excel_extension(path: &Path) -> bool {
 
 pub fn find_top_level_event_schedule(
     library_root: &Path,
-) -> Result<Option<(PathBuf, HashMap<String, String>)>, String> {
+) -> Result<Option<(PathBuf, ScheduleTitleMap)>, String> {
     let candidates: Vec<PathBuf> = std::fs::read_dir(library_root)
         .map_err(|e| e.to_string())?
         .filter_map(|entry| entry.ok())
@@ -38,7 +45,7 @@ pub fn find_top_level_event_schedule(
     }
 }
 
-pub fn parse_usfs_ems_schedule(path: &Path) -> Result<HashMap<String, String>, String> {
+pub fn parse_usfs_ems_schedule(path: &Path) -> Result<ScheduleTitleMap, String> {
     let ext = path
         .extension()
         .and_then(|e| e.to_str())
@@ -52,7 +59,7 @@ pub fn parse_usfs_ems_schedule(path: &Path) -> Result<HashMap<String, String>, S
     }
 }
 
-fn parse_excel(path: &Path) -> Result<HashMap<String, String>, String> {
+fn parse_excel(path: &Path) -> Result<ScheduleTitleMap, String> {
     let mut workbook = match open_workbook_auto(path) {
         Ok(wb) => wb,
         Err(e) => {
@@ -86,7 +93,7 @@ fn parse_excel(path: &Path) -> Result<HashMap<String, String>, String> {
     parse_title_map_from_rows(&header_cells, &data_rows)
 }
 
-fn parse_csv(path: &Path) -> Result<HashMap<String, String>, String> {
+fn parse_csv(path: &Path) -> Result<ScheduleTitleMap, String> {
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(true)
         .from_path(path)
@@ -116,7 +123,7 @@ fn parse_csv(path: &Path) -> Result<HashMap<String, String>, String> {
 fn parse_title_map_from_rows(
     headers: &[String],
     rows: &[Vec<String>],
-) -> Result<HashMap<String, String>, String> {
+) -> Result<ScheduleTitleMap, String> {
     let tag_idx = headers
         .iter()
         .position(|header| header.trim() == TAG_COLUMN)
@@ -130,6 +137,7 @@ fn parse_title_map_from_rows(
         .position(|header| header.trim() == GROUP_COLUMN);
 
     let mut map = HashMap::new();
+    let mut ordered_keys = Vec::new();
     for row in rows {
         let tag = row.get(tag_idx).map(|s| s.trim()).unwrap_or("");
         let title = row.get(title_idx).map(|s| s.trim()).unwrap_or("");
@@ -143,14 +151,21 @@ fn parse_title_map_from_rows(
             Some(group) => format!("{title} {group}"),
             None => title.to_string(),
         };
-        map.insert(tag.to_string(), display_title);
+        let tag_owned = tag.to_string();
+        if !map.contains_key(&tag_owned) {
+            ordered_keys.push(tag_owned.clone());
+        }
+        map.insert(tag_owned, display_title);
     }
 
     if map.is_empty() {
         return Err("No title mappings found".to_string());
     }
 
-    Ok(map)
+    Ok(ScheduleTitleMap {
+        mappings: map,
+        ordered_keys,
+    })
 }
 
 fn cell_to_string(cell: &Data) -> String {
@@ -202,9 +217,9 @@ mod tests {
             "".to_string(),
         ]];
 
-        let map = parse_title_map_from_rows(&headers, &rows).unwrap();
+        let parsed = parse_title_map_from_rows(&headers, &rows).unwrap();
         assert_eq!(
-            map.get("01"),
+            parsed.mappings.get("01"),
             Some(&"Showcase: Pre-Preliminary".to_string())
         );
     }
@@ -222,9 +237,9 @@ mod tests {
             "F".to_string(),
         ]];
 
-        let map = parse_title_map_from_rows(&headers, &rows).unwrap();
+        let parsed = parse_title_map_from_rows(&headers, &rows).unwrap();
         assert_eq!(
-            map.get("01"),
+            parsed.mappings.get("01"),
             Some(&"Showcase: Pre-Preliminary F".to_string())
         );
     }
@@ -237,9 +252,9 @@ mod tests {
             "Showcase: Pre-Preliminary".to_string(),
         ]];
 
-        let map = parse_title_map_from_rows(&headers, &rows).unwrap();
+        let parsed = parse_title_map_from_rows(&headers, &rows).unwrap();
         assert_eq!(
-            map.get("01"),
+            parsed.mappings.get("01"),
             Some(&"Showcase: Pre-Preliminary".to_string())
         );
     }
@@ -252,8 +267,23 @@ mod tests {
             vec!["01".to_string(), "Second".to_string()],
         ];
 
-        let map = parse_title_map_from_rows(&headers, &rows).unwrap();
-        assert_eq!(map.get("01"), Some(&"Second".to_string()));
+        let parsed = parse_title_map_from_rows(&headers, &rows).unwrap();
+        assert_eq!(parsed.mappings.get("01"), Some(&"Second".to_string()));
+    }
+
+    #[test]
+    fn ordered_keys_follow_sheet_row_order() {
+        let headers = vec!["#".to_string(), "Title".to_string()];
+        let rows = vec![
+            vec!["01".to_string(), "First".to_string()],
+            vec!["02".to_string(), "Second".to_string()],
+            vec!["03".to_string(), "Third".to_string()],
+        ];
+        let parsed = parse_title_map_from_rows(&headers, &rows).unwrap();
+        assert_eq!(
+            parsed.ordered_keys,
+            vec!["01".to_string(), "02".to_string(), "03".to_string()]
+        );
     }
 
     #[test]
@@ -328,10 +358,10 @@ mod tests {
         write_event_schedule_xlsx(&path, &[("01", "Showcase: Pre-Preliminary")]);
 
         let result = find_top_level_event_schedule(&library).unwrap();
-        let (found_path, mappings) = result.expect("expected schedule");
+        let (found_path, schedule) = result.expect("expected schedule");
         assert_eq!(found_path, path);
         assert_eq!(
-            mappings.get("01"),
+            schedule.mappings.get("01"),
             Some(&"Showcase: Pre-Preliminary".to_string())
         );
     }

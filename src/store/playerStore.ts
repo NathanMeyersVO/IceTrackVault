@@ -180,6 +180,8 @@ interface PlayerStore {
   continuousPlaybackCollectionId: number | null;
   continuousPlaybackTrackIds: number[];
   previewPositionMs: number;
+  hideEmptyTaglistPartitions: Record<number, boolean>;
+  setHideEmptyTaglistPartitions: (taglistId: number, hide: boolean) => void;
   setTracks: (tracks: Track[]) => void;
   setPlaylists: (playlists: Playlist[]) => void;
   setTaglists: (taglists: Taglist[]) => void;
@@ -280,6 +282,14 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   continuousPlaybackCollectionId: null,
   continuousPlaybackTrackIds: [],
   previewPositionMs: 0,
+  hideEmptyTaglistPartitions: {},
+  setHideEmptyTaglistPartitions: (taglistId, hide) =>
+    set((state) => ({
+      hideEmptyTaglistPartitions: {
+        ...state.hideEmptyTaglistPartitions,
+        [taglistId]: hide,
+      },
+    })),
   setTracks: (tracks) => set({ tracks }),
   setPlaylists: (playlists) => set({ playlists }),
   setTaglists: (taglists) => set({ taglists }),

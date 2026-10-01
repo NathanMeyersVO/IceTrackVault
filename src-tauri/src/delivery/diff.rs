@@ -138,9 +138,10 @@ pub fn build_preview(
                     library_root,
                     existing_library_schedule,
                 )?;
-            } else if let Ok(mappings) = application::parse_title_map_for_application(application, &schedule)
+            } else if let Ok(schedule_map) =
+                application::parse_title_map_for_application(application, &schedule)
             {
-                for (tag, title) in mappings {
+                for (tag, title) in schedule_map.mappings {
                     changes.push(change(
                         DeliveryChangeKind::ScheduleEventAdd,
                         format!("Event {tag}: {title}"),
@@ -295,13 +296,15 @@ fn diff_schedule(
     library_root: &Path,
     existing_library_schedule: Option<&Path>,
 ) -> Result<(), String> {
-    let new_map = application::parse_title_map_for_application(application, staged_schedule)?;
+    let new_map = application::parse_title_map_for_application(application, staged_schedule)?.mappings;
     let canonical = existing_library_schedule
         .filter(|p| p.is_file())
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| library_root.join(crate::projects::DEFAULT_SCHEDULE_REL));
     let old_map = if canonical.is_file() {
-        application::parse_title_map_for_application(application, &canonical).unwrap_or_default()
+        application::parse_title_map_for_application(application, &canonical)
+            .map(|import| import.mappings)
+            .unwrap_or_default()
     } else {
         HashMap::new()
     };
