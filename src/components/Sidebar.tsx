@@ -223,6 +223,45 @@ function TaglistGroup({
     }
   };
 
+  const navigateAwayFromSublist = useCallback(
+    (removedValue: string) => {
+      if (
+        typeof view !== "object" ||
+        !("taglistId" in view) ||
+        view.taglistId !== taglist.id ||
+        view.value !== removedValue
+      ) {
+        return;
+      }
+      const remaining = values.filter(
+        (item) => item.value != null && item.value !== removedValue,
+      );
+      const visible = visibleTaggedTaglistValues(remaining, hideEmpty);
+      const firstTagged = visible.find((item) => item.value != null);
+      if (firstTagged) {
+        setView({ taglistId: taglist.id, value: firstTagged.value });
+        return;
+      }
+      if (noTagEntry) {
+        setView({ taglistId: taglist.id, value: null });
+        return;
+      }
+      setView("project_tracks");
+    },
+    [hideEmpty, noTagEntry, setView, taglist.id, values, view],
+  );
+
+  const deleteEmptySublist = async (event: MouseEvent, tagValue: string) => {
+    event.stopPropagation();
+    try {
+      await api.deleteTaglistValueDefinition(taglist.id, tagValue);
+      navigateAwayFromSublist(tagValue);
+      loadValues();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const deleteTaglist = async (event: MouseEvent) => {
     event.stopPropagation();
     await api.deleteTaglist(taglist.id);
@@ -387,16 +426,30 @@ function TaglistGroup({
             ({entry.track_count})
           </span>
         </span>
-        {entry.value != null && !changesLocked && (
-          <button
-            type="button"
-            onClick={(event) => startEditing(event, entry.value!, entry.display_title)}
-            className="ml-1 hidden shrink-0 rounded px-1 text-xs text-muted hover:text-foreground group-hover/sublist:inline"
-            title="Edit title"
-          >
-            ✎
-          </button>
-        )}
+        {entry.value != null && !changesLocked ? (
+          <div className="ml-1 hidden shrink-0 items-center group-hover/sublist:flex">
+            <button
+              type="button"
+              onClick={(event) =>
+                startEditing(event, entry.value!, entry.display_title)
+              }
+              className="rounded px-1 text-xs text-muted hover:text-foreground"
+              title="Edit title"
+            >
+              ✎
+            </button>
+            {entry.track_count === 0 ? (
+              <button
+                type="button"
+                onClick={(event) => void deleteEmptySublist(event, entry.value!)}
+                className="rounded px-1 text-xs text-muted hover:text-red-400"
+                title="Delete empty sublist"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     );
   };

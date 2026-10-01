@@ -524,6 +524,8 @@ export const api = {
       tagValue,
       displayTitle,
     }),
+  deleteTaglistValueDefinition: (taglistId: number, tagValue: string) =>
+    invoke<void>("delete_taglist_value_definition", { taglistId, tagValue }),
   getTaglistTracks: (taglistId: number, value: string | null) =>
     invoke<Track[]>("get_taglist_tracks", { taglistId, value }),
   reorderTaglistTracks: (

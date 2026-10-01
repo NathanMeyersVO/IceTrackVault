@@ -1466,6 +1466,45 @@ impl Database {
         self.sync_taglist_partition_order(taglist_id)
     }
 
+    pub fn delete_taglist_value_definition(
+        &self,
+        taglist_id: i64,
+        tag_value: &str,
+    ) -> Result<(), DbError> {
+        let tag_value = tag_value.trim();
+        if tag_value.is_empty() {
+            return Err(DbError::InvalidOperation(
+                "Tag value cannot be empty".to_string(),
+            ));
+        }
+
+        let taglist = self
+            .get_taglist(taglist_id)?
+            .ok_or(DbError::InvalidOperation("Taglist not found".to_string()))?;
+        let tag_key = taglist.tag_key;
+
+        let track_count: i64 = self.conn.query_row(
+            "SELECT COUNT(DISTINCT tt.track_id)
+             FROM track_tags tt
+             JOIN tracks t ON t.id = tt.track_id
+             WHERE tt.tag_key = ?1 AND tt.tag_value = ?2 AND t.collection_id IS NULL",
+            params![tag_key, tag_value],
+            |row| row.get(0),
+        )?;
+        if track_count > 0 {
+            return Err(DbError::InvalidOperation(
+                "Cannot delete a sublist that has tracks".to_string(),
+            ));
+        }
+
+        self.set_taglist_value_title(taglist_id, tag_value, None)?;
+        self.conn.execute(
+            "DELETE FROM taglist_track_order WHERE taglist_id = ?1 AND tag_value = ?2",
+            params![taglist_id, tag_value],
+        )?;
+        self.sync_taglist_partition_order(taglist_id)
+    }
+
     pub fn reorder_taglist_values(
         &self,
         taglist_id: i64,
@@ -2429,6 +2468,58 @@ mod tests {
             Some("Empty slot")
         );
         assert_eq!(values[2].value, None);
+    }
+
+    #[test]
+    fn delete_taglist_value_definition_removes_empty_sublist() {
+        let db = test_db();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "Event").unwrap();
+        let track_id = insert_track(&db, "Event Track");
+        db.replace_track_tags(
+            track_id,
+            &[("Comment".to_string(), "01".to_string())],
+        )
+        .unwrap();
+        db.set_taglist_value_title(taglist_id, "01", Some("First"))
+            .unwrap();
+        db.set_taglist_value_title(taglist_id, "02", Some("Empty slot"))
+            .unwrap();
+
+        db.delete_taglist_value_definition(taglist_id, "02").unwrap();
+
+        let values = db.list_taglist_values("Comment", taglist_id).unwrap();
+        assert_eq!(values.len(), 2);
+        assert_eq!(values[0].value.as_deref(), Some("01"));
+        assert_eq!(values[1].value, None);
+        assert!(db
+            .get_taglist_value_titles(taglist_id)
+            .unwrap()
+            .get("02")
+            .is_none());
+        assert!(!db
+            .list_taglist_value_order(taglist_id)
+            .unwrap()
+            .iter()
+            .any(|value| value == "02"));
+    }
+
+    #[test]
+    fn delete_taglist_value_definition_rejects_sublist_with_tracks() {
+        let db = test_db();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "Event").unwrap();
+        let track_id = insert_track(&db, "Event Track");
+        db.replace_track_tags(
+            track_id,
+            &[("Comment".to_string(), "01".to_string())],
+        )
+        .unwrap();
+        db.set_taglist_value_title(taglist_id, "01", Some("First"))
+            .unwrap();
+
+        let err = db
+            .delete_taglist_value_definition(taglist_id, "01")
+            .unwrap_err();
+        assert!(err.to_string().contains("tracks"));
     }
 
     #[test]

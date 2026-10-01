@@ -4,7 +4,6 @@ use std::path::Path;
 
 use crate::application::ApplicationId;
 use crate::db::Database;
-use crate::title_map;
 
 pub const EVENTS_PARTITION_TAG_KEY: &str = "Composer";
 
@@ -15,60 +14,23 @@ const EVENTS_VALUE_SINGULAR_NAME: &str = "Event";
 
 pub fn apply_application_project_setup(
     db: &Database,
-    library_root: &Path,
+    _library_root: &Path,
     application: ApplicationId,
-) -> Result<(), String> {
-    apply_application_project_setup_with_schedule(db, library_root, application, None)
-}
-
-pub fn apply_application_project_setup_with_schedule(
-    db: &Database,
-    library_root: &Path,
-    application: ApplicationId,
-    schedule_path: Option<&Path>,
 ) -> Result<(), String> {
     match application {
         ApplicationId::None => Ok(()),
-        ApplicationId::UsFigureSkatingEms => {
-            setup_usfs_ems(db, library_root, schedule_path)
-        }
+        ApplicationId::UsFigureSkatingEms => setup_usfs_ems(db),
     }
 }
 
-fn setup_usfs_ems(
-    db: &Database,
-    library_root: &Path,
-    schedule_path: Option<&Path>,
-) -> Result<(), String> {
-    let taglist_id = ensure_events_taglist(db)?;
-
-    let schedule = if let Some(path) = schedule_path {
-        if path.is_file() {
-            Some(crate::application::parse_title_map_for_application(
-                ApplicationId::UsFigureSkatingEms,
-                path,
-            )?)
-        } else {
-            None
-        }
-    } else if let Some((_path, schedule)) = title_map::find_top_level_event_schedule(library_root)? {
-        Some(schedule)
-    } else {
-        None
-    };
-
-    if let Some(schedule) = schedule {
-        let mut merged = db
-            .get_taglist_value_titles(taglist_id)
-            .map_err(|e| e.to_string())?;
-        for (tag_value, display_title) in &schedule.mappings {
-            merged.insert(tag_value.clone(), display_title.clone());
-        }
-        db.import_taglist_titles(taglist_id, &merged, true)
-            .map_err(|e| e.to_string())?;
-    }
-
+fn setup_usfs_ems(db: &Database) -> Result<(), String> {
+    let _taglist_id = ensure_ems_events_taglist(db)?;
     Ok(())
+}
+
+/// Ensures the EMS Events taglist exists (no schedule import). Used on open and before delivery schedule merge.
+pub fn ensure_ems_events_taglist(db: &Database) -> Result<i64, String> {
+    ensure_events_taglist(db)
 }
 
 fn ensure_events_taglist(db: &Database) -> Result<i64, String> {
@@ -176,30 +138,34 @@ mod tests {
     }
 
     #[test]
-    fn ems_setup_preserves_manual_titles_not_in_schedule() {
+    fn ems_setup_does_not_reimport_schedule_on_second_pass() {
         let (db, library) = test_library();
-        write_event_schedule_xlsx(
-            &library.join("schedule.xlsx"),
-            &[("01", "Showcase: Pre-Preliminary")],
-        );
+        let schedule_path = library.join("schedule.xlsx");
+        write_event_schedule_xlsx(&schedule_path, &[("01", "Showcase: Pre-Preliminary")]);
 
         apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
         let taglist_id = db.get_taglist_by_name("Events").unwrap().unwrap().id;
+        let schedule = crate::application::parse_title_map_for_application(
+            ApplicationId::UsFigureSkatingEms,
+            &schedule_path,
+        )
+        .unwrap();
+        db.import_taglist_titles(taglist_id, &schedule.mappings, true)
+            .unwrap();
         db.set_taglist_value_title(taglist_id, "99", Some("Manual Event"))
+            .unwrap();
+        db.set_taglist_value_title(taglist_id, "01", Some("Edited title"))
             .unwrap();
 
         apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
 
         let titles = db.list_taglist_value_titles(taglist_id).unwrap();
         assert_eq!(titles.get("99").map(String::as_str), Some("Manual Event"));
-        assert_eq!(
-            titles.get("01").map(String::as_str),
-            Some("Showcase: Pre-Preliminary")
-        );
+        assert_eq!(titles.get("01").map(String::as_str), Some("Edited title"));
     }
 
     #[test]
-    fn ems_imports_xls_when_present() {
+    fn ems_setup_does_not_read_library_schedule_without_explicit_import() {
         let (db, library) = test_library();
         write_event_schedule_xlsx(
             &library.join("schedule.xlsx"),
@@ -208,12 +174,26 @@ mod tests {
 
         apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
 
+        let taglist_id = db.get_taglist_by_name("Events").unwrap().unwrap().id;
+        assert!(db.list_taglist_value_titles(taglist_id).unwrap().is_empty());
+    }
+
+    #[test]
+    fn explicit_import_applies_schedule_titles() {
+        let (db, library) = test_library();
+        let schedule_path = library.join("schedule.xlsx");
+        write_event_schedule_xlsx(&schedule_path, &[("01", "Showcase: Pre-Preliminary")]);
+
+        apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
         let taglists = db.list_taglists().unwrap();
-        assert_eq!(taglists.len(), 1);
-        assert_eq!(taglists[0].name, "Events");
-        assert_eq!(taglists[0].tag_key, "Composer");
-        assert_eq!(taglists[0].entry_tag_key, "Track Title");
-        assert_eq!(taglists[0].value_singular_name, "Event");
+        let taglist_id = taglists[0].id;
+        let schedule = crate::application::parse_title_map_for_application(
+            ApplicationId::UsFigureSkatingEms,
+            &schedule_path,
+        )
+        .unwrap();
+        db.import_taglist_titles(taglist_id, &schedule.mappings, true)
+            .unwrap();
 
         let (track_id, _) = db
             .upsert_track(
@@ -231,7 +211,7 @@ mod tests {
         )
         .unwrap();
 
-        let values = db.list_taglist_values("Composer", taglists[0].id).unwrap();
+        let values = db.list_taglist_values("Composer", taglist_id).unwrap();
         let tagged = values.iter().find(|v| v.value.as_deref() == Some("01"));
         assert!(tagged.is_some());
         assert_eq!(
@@ -241,7 +221,7 @@ mod tests {
     }
 
     #[test]
-    fn ems_reuses_existing_events_taglist_and_imports_xls() {
+    fn ems_reuses_existing_events_taglist_without_importing_schedule() {
         let (db, library) = test_library();
         db.create_taglist("Events", "Comment", "", "").unwrap();
         write_event_schedule_xlsx(
@@ -255,6 +235,10 @@ mod tests {
         assert_eq!(taglists.len(), 1);
         assert_eq!(taglists[0].tag_key, "Comment");
         assert_eq!(taglists[0].value_singular_name, "Event");
+        assert!(db
+            .list_taglist_value_titles(taglists[0].id)
+            .unwrap()
+            .is_empty());
     }
 
     #[test]
@@ -268,6 +252,36 @@ mod tests {
         let taglists = db.list_taglists().unwrap();
         assert_eq!(taglists.len(), 1);
         assert_eq!(taglists[0].name, "Events");
+    }
+
+    #[test]
+    fn ems_setup_does_not_restore_deleted_empty_sublist() {
+        let (db, library) = test_library();
+        let schedule_path = library.join("schedule.xlsx");
+        write_event_schedule_xlsx(
+            &schedule_path,
+            &[("01", "First"), ("02", "Empty slot")],
+        );
+
+        apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
+        let taglist_id = db.get_taglist_by_name("Events").unwrap().unwrap().id;
+        let schedule = crate::application::parse_title_map_for_application(
+            ApplicationId::UsFigureSkatingEms,
+            &schedule_path,
+        )
+        .unwrap();
+        db.import_taglist_titles(taglist_id, &schedule.mappings, true)
+            .unwrap();
+        db.delete_taglist_value_definition(taglist_id, "02").unwrap();
+
+        apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
+
+        let values = db.list_taglist_values("Composer", taglist_id).unwrap();
+        assert!(
+            values
+                .iter()
+                .all(|entry| entry.value.as_deref() != Some("02"))
+        );
     }
 
     #[test]

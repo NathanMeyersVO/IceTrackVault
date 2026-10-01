@@ -11,6 +11,7 @@ use crate::application::{self, ApplicationId};
 use crate::models::DeliveryProgressPhase;
 use crate::config;
 use crate::project_config::autosave_icetrackvault_json;
+use crate::project_setup;
 use crate::projects::{self, ProjectManifest};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -127,6 +128,9 @@ pub fn apply_delivery(
                 fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
             fs::copy(&staged_schedule, &dest).map_err(|e| e.to_string())?;
+            if application == ApplicationId::UsFigureSkatingEms {
+                project_setup::ensure_ems_events_taglist(db)?;
+            }
             import_schedule_merge(db, application, &dest, selected.iter().copied())?;
             if let Ok(meta) = fs::metadata(&dest) {
                 if let Ok(modified) = meta.modified() {
@@ -324,6 +328,70 @@ mod tests {
 
         assert_eq!(result.applied, 1);
         assert!(library.join(track_rel).is_file());
+
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    fn write_ems_schedule_xlsx(path: &std::path::Path) {
+        use rust_xlsxwriter::{Workbook, Worksheet};
+        let mut workbook = Workbook::new();
+        let mut worksheet = Worksheet::new();
+        worksheet.set_name("Event Schedule").unwrap();
+        worksheet.write_string(0, 0, "#").unwrap();
+        worksheet.write_string(0, 1, "Title").unwrap();
+        worksheet.write_string(1, 0, "01").unwrap();
+        worksheet.write_string(1, 1, "Test Event").unwrap();
+        workbook.push_worksheet(worksheet);
+        workbook.save(path).unwrap();
+    }
+
+    #[test]
+    fn apply_delivery_imports_schedule_titles_before_events_taglist_exists() {
+        let base = std::env::temp_dir().join(format!("tv-apply-sched-{}", uuid::Uuid::new_v4()));
+        let project_root = base.join("project");
+        let library = project_root.join("library");
+        let staging = base.join("staging");
+        std::fs::create_dir_all(&library).unwrap();
+        std::fs::create_dir_all(&staging).unwrap();
+        write_ems_schedule_xlsx(&staging.join("event-schedule.xlsx"));
+
+        let change_id = stable_change_id(DeliveryChangeKind::ScheduleEventAdd, "01");
+        let changes = vec![DeliveryChange {
+            change_id: change_id.clone(),
+            kind: DeliveryChangeKind::ScheduleEventAdd,
+            summary: "Event 01: Test Event".to_string(),
+            details: "01".to_string(),
+            default_selected: true,
+        }];
+
+        let db = crate::db::Database::open(std::path::Path::new(":memory:")).unwrap();
+        db.set_project_folder(library.to_string_lossy().as_ref())
+            .unwrap();
+        assert!(db.list_taglists().unwrap().is_empty());
+
+        let mut manifest = ProjectManifest::new(
+            "proj".to_string(),
+            "Test".to_string(),
+            "usfs_ems".to_string(),
+        );
+        projects::save_manifest(&project_root, &manifest).unwrap();
+
+        apply_delivery(
+            &db,
+            &project_root,
+            &mut manifest,
+            &staging,
+            &changes,
+            &HashSet::from([change_id]),
+            ApplyMode::Merge,
+            ApplicationId::UsFigureSkatingEms,
+            &DeliveryProgressCtx::none(),
+        )
+        .unwrap();
+
+        let taglist = db.get_taglist_by_name("Events").unwrap().unwrap();
+        let titles = db.list_taglist_value_titles(taglist.id).unwrap();
+        assert_eq!(titles.get("01").map(String::as_str), Some("Test Event"));
 
         let _ = std::fs::remove_dir_all(&base);
     }
