@@ -214,7 +214,7 @@ pub fn replace_project_track_file(
 
 
 
-    crate::tag_index::index_track_tags(db, track_id, &target_path)?;
+    crate::tag_index::index_track_tags_and_sync_taglists(db, track_id, &target_path)?;
 
     db.sync_taglist_order_for_track(track_id)
 

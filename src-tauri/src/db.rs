@@ -1290,6 +1290,7 @@ impl Database {
         &self,
         taglist_id: i64,
         mappings: &std::collections::HashMap<String, String>,
+        sync_partition_order: bool,
     ) -> Result<u32, DbError> {
         let tx = self.conn.unchecked_transaction()?;
         tx.execute(
@@ -1304,7 +1305,59 @@ impl Database {
             )?;
         }
         tx.commit()?;
+
+        if sync_partition_order {
+            self.sync_taglist_partition_order(taglist_id)?;
+        }
+
         Ok(mappings.len() as u32)
+    }
+
+    pub fn sync_taglist_partition_order(&self, taglist_id: i64) -> Result<(), DbError> {
+        let taglist = self
+            .get_taglist(taglist_id)?
+            .ok_or(DbError::InvalidOperation("Taglist not found".to_string()))?;
+        let stored = self.list_taglist_value_order(taglist_id)?;
+        let all_values =
+            self.partition_tag_values_for_taglist(taglist_id, &taglist.tag_key)?;
+        let merged = merge_taglist_value_order(&stored, &all_values);
+        self.set_taglist_value_order_exact(taglist_id, &merged)
+    }
+
+    pub fn sync_taglist_partition_order_for_tag_keys(
+        &self,
+        tag_keys: &[String],
+    ) -> Result<(), DbError> {
+        if tag_keys.is_empty() {
+            return Ok(());
+        }
+        for taglist in self.list_taglists()? {
+            if tag_keys.iter().any(|key| key == &taglist.tag_key) {
+                self.sync_taglist_partition_order(taglist.id)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn set_taglist_value_order_exact(
+        &self,
+        taglist_id: i64,
+        tag_values: &[String],
+    ) -> Result<(), DbError> {
+        let tx = self.conn.unchecked_transaction()?;
+        tx.execute(
+            "DELETE FROM taglist_value_order WHERE taglist_id = ?1",
+            params![taglist_id],
+        )?;
+        for (position, tag_value) in tag_values.iter().enumerate() {
+            tx.execute(
+                "INSERT INTO taglist_value_order (taglist_id, tag_value, position)
+                 VALUES (?1, ?2, ?3)",
+                params![taglist_id, tag_value, position as i64],
+            )?;
+        }
+        tx.commit()?;
+        Ok(())
     }
 
     pub fn set_taglist_value_title(
@@ -1356,6 +1409,63 @@ impl Database {
         Ok(rows.filter_map(Result::ok).collect())
     }
 
+    pub fn partition_tag_values_for_taglist(
+        &self,
+        taglist_id: i64,
+        tag_key: &str,
+    ) -> Result<Vec<String>, DbError> {
+        let titles = self.get_taglist_value_titles(taglist_id)?;
+        let mut values: std::collections::HashSet<String> = titles.keys().cloned().collect();
+
+        let mut stmt = self.conn.prepare(
+            "SELECT DISTINCT tt.tag_value
+             FROM track_tags tt
+             JOIN tracks t ON t.id = tt.track_id
+             WHERE tt.tag_key = ?1 AND t.collection_id IS NULL",
+        )?;
+        let rows = stmt.query_map(params![tag_key], |row| row.get::<_, String>(0))?;
+        for row in rows.filter_map(Result::ok) {
+            values.insert(row);
+        }
+
+        Ok(values.into_iter().collect())
+    }
+
+    pub fn add_taglist_value_definition(
+        &self,
+        taglist_id: i64,
+        tag_value: &str,
+        display_title: &str,
+    ) -> Result<(), DbError> {
+        let tag_value = tag_value.trim();
+        let display_title = display_title.trim();
+        if tag_value.is_empty() {
+            return Err(DbError::InvalidOperation(
+                "Tag value cannot be empty".to_string(),
+            ));
+        }
+        if display_title.is_empty() {
+            return Err(DbError::InvalidOperation(
+                "Display title cannot be empty".to_string(),
+            ));
+        }
+
+        let taglist = self
+            .get_taglist(taglist_id)?
+            .ok_or(DbError::InvalidOperation("Taglist not found".to_string()))?;
+        let tag_key = taglist.tag_key;
+
+        let existing = self.partition_tag_values_for_taglist(taglist_id, &tag_key)?;
+        if existing.iter().any(|value| value == tag_value) {
+            return Err(DbError::InvalidOperation(format!(
+                "A definition with tag value \"{tag_value}\" already exists"
+            )));
+        }
+
+        self.set_taglist_value_title(taglist_id, tag_value, Some(display_title))?;
+        self.sync_taglist_partition_order(taglist_id)
+    }
+
     pub fn reorder_taglist_values(
         &self,
         taglist_id: i64,
@@ -1366,41 +1476,15 @@ impl Database {
             .ok_or(DbError::Sqlite(rusqlite::Error::QueryReturnedNoRows))?;
         let tag_key = taglist.tag_key;
 
-        let current: Vec<String> = self
-            .conn
-            .prepare(
-                "SELECT DISTINCT tag_value FROM track_tags WHERE tag_key = ?1
-                 ORDER BY tag_value COLLATE NOCASE",
-            )?
-            .query_map(params![tag_key], |row| row.get(0))?
-            .filter_map(Result::ok)
-            .collect();
+        let current = self.partition_tag_values_for_taglist(taglist_id, &tag_key)?;
 
-        let mut ordered: Vec<String> = tag_values
+        let ordered: Vec<String> = tag_values
             .iter()
             .filter(|value| current.contains(value))
             .cloned()
             .collect();
-        for value in &current {
-            if !ordered.contains(value) {
-                ordered.push(value.clone());
-            }
-        }
-
-        let tx = self.conn.unchecked_transaction()?;
-        tx.execute(
-            "DELETE FROM taglist_value_order WHERE taglist_id = ?1",
-            params![taglist_id],
-        )?;
-        for (position, tag_value) in ordered.iter().enumerate() {
-            tx.execute(
-                "INSERT INTO taglist_value_order (taglist_id, tag_value, position)
-                 VALUES (?1, ?2, ?3)",
-                params![taglist_id, tag_value, position as i64],
-            )?;
-        }
-        tx.commit()?;
-        Ok(())
+        let merged = merge_taglist_value_order(&ordered, &current);
+        self.set_taglist_value_order_exact(taglist_id, &merged)
     }
 
     pub fn list_taglist_values(
@@ -1426,7 +1510,7 @@ impl Database {
         }
 
         let stored_order = self.list_taglist_value_order(taglist_id)?;
-        let all_values: Vec<String> = counts.keys().cloned().collect();
+        let all_values = self.partition_tag_values_for_taglist(taglist_id, tag_key)?;
         let ordered_values = merge_taglist_value_order(&stored_order, &all_values);
         let mut values: Vec<TaglistValue> = ordered_values
             .into_iter()
@@ -2309,7 +2393,7 @@ mod tests {
             "01".to_string(),
             "Showcase: Pre-Preliminary".to_string(),
         );
-        db.import_taglist_titles(taglist_id, &mappings).unwrap();
+        db.import_taglist_titles(taglist_id, &mappings, false).unwrap();
 
         let values = db.list_taglist_values("Comment", taglist_id).unwrap();
         assert_eq!(values[0].value.as_deref(), Some("01"));
@@ -2317,6 +2401,152 @@ mod tests {
             values[0].display_title.as_deref(),
             Some("Showcase: Pre-Preliminary")
         );
+    }
+
+    #[test]
+    fn taglist_values_include_title_only_definitions_without_tracks() {
+        let db = test_db();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "Event").unwrap();
+        let track_id = insert_track(&db, "Event Track");
+        db.replace_track_tags(
+            track_id,
+            &[("Comment".to_string(), "01".to_string())],
+        )
+        .unwrap();
+        db.set_taglist_value_title(taglist_id, "01", Some("First"))
+            .unwrap();
+        db.set_taglist_value_title(taglist_id, "02", Some("Empty slot"))
+            .unwrap();
+
+        let values = db.list_taglist_values("Comment", taglist_id).unwrap();
+        assert_eq!(values.len(), 3);
+        assert_eq!(values[0].value.as_deref(), Some("01"));
+        assert_eq!(values[0].track_count, 1);
+        assert_eq!(values[1].value.as_deref(), Some("02"));
+        assert_eq!(values[1].track_count, 0);
+        assert_eq!(
+            values[1].display_title.as_deref(),
+            Some("Empty slot")
+        );
+        assert_eq!(values[2].value, None);
+    }
+
+    #[test]
+    fn add_taglist_value_definition_preserves_existing_display_order() {
+        let db = test_db();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "").unwrap();
+        db.set_taglist_value_title(taglist_id, "01", Some("First"))
+            .unwrap();
+        db.set_taglist_value_title(taglist_id, "03", Some("Third"))
+            .unwrap();
+        db.set_taglist_value_title(taglist_id, "02", Some("Second"))
+            .unwrap();
+        db.reorder_taglist_values(
+            taglist_id,
+            &[
+                "01".to_string(),
+                "03".to_string(),
+                "02".to_string(),
+            ],
+        )
+        .unwrap();
+
+        db.add_taglist_value_definition(taglist_id, "04", "Fourth")
+            .unwrap();
+
+        let values = db.list_taglist_values("Comment", taglist_id).unwrap();
+        let order: Vec<_> = values
+            .iter()
+            .filter_map(|entry| entry.value.clone())
+            .collect();
+        assert_eq!(
+            order,
+            vec!["01", "03", "02", "04"]
+                .into_iter()
+                .map(String::from)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn import_taglist_titles_sync_uses_merge_order_not_input_order() {
+        let db = test_db();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "").unwrap();
+        let mut mappings = std::collections::HashMap::new();
+        mappings.insert("02".to_string(), "Second".to_string());
+        mappings.insert("01".to_string(), "First".to_string());
+        mappings.insert("03".to_string(), "Third".to_string());
+        db.import_taglist_titles(taglist_id, &mappings, true).unwrap();
+
+        assert_eq!(
+            db.list_taglist_value_order(taglist_id).unwrap(),
+            vec!["01", "02", "03"]
+                .into_iter()
+                .map(String::from)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn sync_taglist_partition_order_inserts_new_track_tag_without_reordering_stored() {
+        let db = test_db();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "").unwrap();
+        let track_a = insert_track(&db, "A");
+        let track_b = insert_track(&db, "B");
+        db.replace_track_tags(
+            track_a,
+            &[("Comment".to_string(), "03".to_string())],
+        )
+        .unwrap();
+        db.replace_track_tags(
+            track_b,
+            &[("Comment".to_string(), "01".to_string())],
+        )
+        .unwrap();
+        db.reorder_taglist_values(
+            taglist_id,
+            &["03".to_string(), "01".to_string()],
+        )
+        .unwrap();
+
+        let track_c = insert_track(&db, "C");
+        db.replace_track_tags(
+            track_c,
+            &[("Comment".to_string(), "02".to_string())],
+        )
+        .unwrap();
+        db.sync_taglist_partition_order_for_tag_keys(&["Comment".to_string()])
+            .unwrap();
+
+        assert_eq!(
+            db.list_taglist_value_order(taglist_id).unwrap(),
+            vec!["03", "01", "02"]
+                .into_iter()
+                .map(String::from)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn add_taglist_value_definition_appends_and_rejects_duplicates() {
+        let db = test_db();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "").unwrap();
+        db.set_taglist_value_title(taglist_id, "01", Some("First"))
+            .unwrap();
+
+        db.add_taglist_value_definition(taglist_id, "02", "Second")
+            .unwrap();
+        let values = db.list_taglist_values("Comment", taglist_id).unwrap();
+        assert_eq!(values.len(), 3);
+        assert_eq!(values[0].value.as_deref(), Some("01"));
+        assert_eq!(values[1].value.as_deref(), Some("02"));
+        assert_eq!(values[1].track_count, 0);
+        assert_eq!(values[2].value, None);
+
+        let err = db
+            .add_taglist_value_definition(taglist_id, "02", "Duplicate")
+            .unwrap_err();
+        assert!(err.to_string().contains("already exists"));
     }
 
     #[test]

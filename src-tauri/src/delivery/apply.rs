@@ -216,7 +216,8 @@ fn import_schedule_merge<'a>(
     schedule_path: &Path,
     selected: impl Iterator<Item = &'a DeliveryChange>,
 ) -> Result<(), String> {
-    let mappings = application::parse_title_map_for_application(application, schedule_path)?;
+    let schedule = application::parse_title_map_for_application(application, schedule_path)?;
+    let mappings = &schedule.mappings;
     let taglist = db
         .get_taglist_by_name("Events")
         .map_err(|e| e.to_string())?;
@@ -258,7 +259,7 @@ fn import_schedule_merge<'a>(
         }
     }
 
-    db.import_taglist_titles(taglist.id, &merged)
+    db.import_taglist_titles(taglist.id, &merged, true)
         .map_err(|e| e.to_string())?;
     Ok(())
 }
