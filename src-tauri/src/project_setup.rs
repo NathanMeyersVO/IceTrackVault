@@ -42,7 +42,7 @@ fn setup_usfs_ems(
 ) -> Result<(), String> {
     let taglist_id = ensure_events_taglist(db)?;
 
-    let mappings = if let Some(path) = schedule_path {
+    let schedule = if let Some(path) = schedule_path {
         if path.is_file() {
             Some(crate::application::parse_title_map_for_application(
                 ApplicationId::UsFigureSkatingEms,
@@ -51,14 +51,20 @@ fn setup_usfs_ems(
         } else {
             None
         }
-    } else if let Some((_path, mappings)) = title_map::find_top_level_event_schedule(library_root)? {
-        Some(mappings)
+    } else if let Some((_path, schedule)) = title_map::find_top_level_event_schedule(library_root)? {
+        Some(schedule)
     } else {
         None
     };
 
-    if let Some(mappings) = mappings {
-        db.import_taglist_titles(taglist_id, &mappings)
+    if let Some(schedule) = schedule {
+        let mut merged = db
+            .get_taglist_value_titles(taglist_id)
+            .map_err(|e| e.to_string())?;
+        for (tag_value, display_title) in &schedule.mappings {
+            merged.insert(tag_value.clone(), display_title.clone());
+        }
+        db.import_taglist_titles(taglist_id, &merged, true)
             .map_err(|e| e.to_string())?;
     }
 
@@ -167,6 +173,29 @@ mod tests {
         assert_eq!(taglists[0].tag_key, "Composer");
         assert_eq!(taglists[0].entry_tag_key, "Track Title");
         assert_eq!(taglists[0].value_singular_name, "Event");
+    }
+
+    #[test]
+    fn ems_setup_preserves_manual_titles_not_in_schedule() {
+        let (db, library) = test_library();
+        write_event_schedule_xlsx(
+            &library.join("schedule.xlsx"),
+            &[("01", "Showcase: Pre-Preliminary")],
+        );
+
+        apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
+        let taglist_id = db.get_taglist_by_name("Events").unwrap().unwrap().id;
+        db.set_taglist_value_title(taglist_id, "99", Some("Manual Event"))
+            .unwrap();
+
+        apply_application_project_setup(&db, &library, ApplicationId::UsFigureSkatingEms).unwrap();
+
+        let titles = db.list_taglist_value_titles(taglist_id).unwrap();
+        assert_eq!(titles.get("99").map(String::as_str), Some("Manual Event"));
+        assert_eq!(
+            titles.get("01").map(String::as_str),
+            Some("Showcase: Pre-Preliminary")
+        );
     }
 
     #[test]

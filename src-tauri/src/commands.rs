@@ -286,6 +286,7 @@ pub fn upload_tracks(
         let db = state.db.lock();
         crate::upload::upload_tracks(&db, &paths, overwrite)?
     };
+    try_autosave_project_config(&state);
     let _ = app.emit("project-updated", ());
     state.audio_cache.kick();
     Ok(result)
@@ -332,6 +333,7 @@ pub fn replace_project_track_file(
         )?
     };
 
+    try_autosave_project_config(&state);
     let _ = app.emit("project-updated", ());
     state.audio_cache.kick();
     Ok(track)
@@ -720,13 +722,15 @@ pub fn import_taglist_titles(
         crate::application::get_application(&db)?
     };
 
-    let mappings =
+    let schedule =
         crate::application::parse_title_map_for_application(application, Path::new(&path))?;
-    state
-        .db
-        .lock()
-        .import_taglist_titles(taglist_id, &mappings)
-        .map_err(|e| e.to_string())
+    {
+        let db = state.db.lock();
+        db.import_taglist_titles(taglist_id, &schedule.mappings, true)
+        .map_err(|e| e.to_string())?;
+    }
+    try_autosave_project_config(&state);
+    Ok(schedule.mappings.len() as u32)
 }
 
 #[tauri::command]
@@ -749,7 +753,32 @@ pub fn set_taglist_value_title(
             display_title.as_deref(),
         )
         .map_err(|e| e.to_string())?;
+        db.sync_taglist_partition_order(taglist_id)
+            .map_err(|e| e.to_string())?;
     }
+    try_autosave_project_config(&state);
+    let _ = app.emit("project-updated", ());
+    Ok(())
+}
+
+#[tauri::command]
+pub fn add_taglist_value_definition(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    taglist_id: i64,
+    tag_value: String,
+    display_title: String,
+) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
+    {
+        let db = state.db.lock();
+        if db.get_taglist(taglist_id).map_err(|e| e.to_string())?.is_none() {
+            return Err("Taglist not found".to_string());
+        }
+        db.add_taglist_value_definition(taglist_id, &tag_value, &display_title)
+            .map_err(|e| e.to_string())?;
+    }
+    try_autosave_project_config(&state);
     let _ = app.emit("project-updated", ());
     Ok(())
 }
@@ -1051,8 +1080,12 @@ pub fn update_track_tags(
         crate::tag_index::index_track_tags(&db, track_id, Path::new(&path))?;
         db.sync_taglist_order_for_track(track_id)
             .map_err(|e| e.to_string())?;
+        let updated_keys: Vec<String> = fields.iter().map(|field| field.key.clone()).collect();
+        db.sync_taglist_partition_order_for_tag_keys(&updated_keys)
+            .map_err(|e| e.to_string())?;
     }
 
+    try_autosave_project_config(&state);
     let _ = app.emit("project-updated", ());
     Ok(track)
 }

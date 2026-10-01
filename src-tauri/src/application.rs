@@ -106,7 +106,7 @@ pub fn get_application_settings(db: &Database) -> Result<ApplicationSettings, St
 pub fn parse_title_map_for_application(
     application: ApplicationId,
     path: &Path,
-) -> Result<HashMap<String, String>, String> {
+) -> Result<crate::title_map::ScheduleTitleMap, String> {
     match application {
         ApplicationId::None => Err(
             "Title import is not available when Application is None".to_string(),

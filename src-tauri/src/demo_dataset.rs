@@ -65,7 +65,7 @@ pub fn generate_demo_dataset(opts: GenerateDemoOptions) -> Result<GenerateDemoRe
     validate_options(&opts)?;
 
     let schedule_map = title_map::parse_usfs_ems_schedule(&opts.schedule_path)?;
-    let event_ids = sort_event_ids(schedule_map.keys().cloned().collect());
+    let event_ids = sort_event_ids(schedule_map.ordered_keys.clone());
 
     let (roster, roster_trims) = build_roster(
         &event_ids,

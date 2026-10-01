@@ -514,6 +514,16 @@ export const api = {
       tagValue,
       displayTitle,
     }),
+  addTaglistValueDefinition: (
+    taglistId: number,
+    tagValue: string,
+    displayTitle: string,
+  ) =>
+    invoke<void>("add_taglist_value_definition", {
+      taglistId,
+      tagValue,
+      displayTitle,
+    }),
   getTaglistTracks: (taglistId: number, value: string | null) =>
     invoke<Track[]>("get_taglist_tracks", { taglistId, value }),
   reorderTaglistTracks: (

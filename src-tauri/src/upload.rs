@@ -152,7 +152,9 @@ fn upload_one_track(
         )
         .map_err(|e| format!("Failed to index {}: {e}", destination.to_string_lossy()))?;
 
-    if let Err(error) = crate::tag_index::index_track_tags(db, track_id, &destination) {
+    if let Err(error) =
+        crate::tag_index::index_track_tags_and_sync_taglists(db, track_id, &destination)
+    {
         eprintln!("Failed to index tags for {path_str}: {error}");
     }
 
