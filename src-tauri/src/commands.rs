@@ -784,6 +784,27 @@ pub fn add_taglist_value_definition(
 }
 
 #[tauri::command]
+pub fn delete_taglist_value_definition(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    taglist_id: i64,
+    tag_value: String,
+) -> Result<(), String> {
+    guard_active_project_changes(&state)?;
+    {
+        let db = state.db.lock();
+        if db.get_taglist(taglist_id).map_err(|e| e.to_string())?.is_none() {
+            return Err("Taglist not found".to_string());
+        }
+        db.delete_taglist_value_definition(taglist_id, &tag_value)
+            .map_err(|e| e.to_string())?;
+    }
+    try_autosave_project_config(&state);
+    let _ = app.emit("project-updated", ());
+    Ok(())
+}
+
+#[tauri::command]
 pub fn get_taglist_tracks(
     state: State<'_, AppState>,
     taglist_id: i64,
@@ -1620,6 +1641,7 @@ pub fn update_project_changes_locked(
         .ok_or_else(|| "Project not found".to_string())
 }
 
+/// Application shell setup on project open. Event titles come from icetrackvault.json, not the library schedule file.
 fn reapply_project_application(
     app: &AppHandle,
     state: &AppState,
@@ -1634,17 +1656,10 @@ fn reapply_project_application(
         };
         crate::application::set_application(&db, app_settings)?;
         let application = crate::application::normalize_application_id(&manifest.application_id);
-        let schedule = projects::schedule_path(project_root, manifest);
-        let schedule_ref = if schedule.is_file() {
-            Some(schedule.as_path())
-        } else {
-            None
-        };
-        crate::project_setup::apply_application_project_setup_with_schedule(
+        crate::project_setup::apply_application_project_setup(
             &db,
             &library_root,
             application,
-            schedule_ref,
         )?;
         autosave_icetrackvault_json(&db, &library_root)?;
     }
@@ -2023,6 +2038,7 @@ fn open_project_internal(app: &AppHandle, state: &AppState, project_id: &str) ->
 
     scanner::scan_project_folder(&state.db.lock(), app, None, Some(&ctx))?;
 
+    // Titles and taglist layout: icetrackvault.json only. Do not parse event-schedule.xlsx on open.
     ctx.emit(ProjectLoadPhase::LoadingConfig, 0, 0, false, None);
     {
         let db = state.db.lock();
