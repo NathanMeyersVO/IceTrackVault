@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { listen } from "@tauri-apps/api/event";
 
@@ -45,7 +45,6 @@ export function NowPlayingBar() {
   } = usePlayer();
   const [peaks, setPeaks] = useState<number[]>([]);
   const [peakDurationMs, setPeakDurationMs] = useState(0);
-  const [peaksEpoch, setPeaksEpoch] = useState(0);
   const [fetchedTrack, setFetchedTrack] = useState<Awaited<
     ReturnType<typeof api.getTrack>
   > | null>(null);
@@ -56,6 +55,8 @@ export function NowPlayingBar() {
     transportMode === "load" && cursorTrackId != null
       ? cursorTrackId
       : playback.track_id ?? cursorTrackId;
+  const displayTrackIdRef = useRef(displayTrackId);
+  displayTrackIdRef.current = displayTrackId;
   const libraryTrack = tracks.find((t) => t.id === displayTrackId);
   const displayTrack =
     libraryTrack ??
@@ -105,11 +106,15 @@ export function NowPlayingBar() {
       return;
     }
 
+    setPeaks([]);
+    setPeakDurationMs(0);
+
     let cancelled = false;
+    const trackId = displayTrackId;
     api
-      .getTrackPeaks(displayTrackId)
+      .getTrackPeaks(trackId)
       .then((data) => {
-        if (!cancelled) {
+        if (!cancelled && displayTrackIdRef.current === trackId) {
           setPeaks(data.peaks);
           setPeakDurationMs(data.duration_ms);
         }
@@ -119,19 +124,34 @@ export function NowPlayingBar() {
     return () => {
       cancelled = true;
     };
-  }, [displayTrackId, transportMode, peaksEpoch]);
+  }, [displayTrackId, transportMode, setPreviewPositionMs]);
 
   useEffect(() => {
-    const unlisten = listen<AudioCacheTrackReady>("audio-cache-track-ready", (event) => {
-      if (event.payload.track_id === displayTrackId) {
-        setPeaksEpoch((value) => value + 1);
-      }
-    });
+    const unlistenPromise = listen<AudioCacheTrackReady>(
+      "audio-cache-track-ready",
+      (event) => {
+        const readyId = event.payload.track_id;
+        const currentId = displayTrackIdRef.current;
+        if (currentId == null || readyId !== currentId) {
+          return;
+        }
+        void api
+          .getTrackPeaks(currentId)
+          .then((data) => {
+            if (displayTrackIdRef.current !== currentId) {
+              return;
+            }
+            setPeaks(data.peaks);
+            setPeakDurationMs(data.duration_ms);
+          })
+          .catch(console.error);
+      },
+    );
 
     return () => {
-      void unlisten.then((fn) => fn());
+      void unlistenPromise.then((fn) => fn());
     };
-  }, [displayTrackId]);
+  }, []);
 
   useEffect(() => {
     if (hasLoadedTrack) {
