@@ -1,7 +1,7 @@
 {
   "name": "icetrackvault",
   "private": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Windows desktop music player (Tauri + React)",
   "author": "Nathan Meyers",
   "license": "MIT",
