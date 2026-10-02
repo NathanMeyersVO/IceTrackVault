@@ -139,6 +139,16 @@ pub fn swap_taglist_entries(
         partner_path.clone()
     };
 
+    if final_source_path != source_path || final_partner_path != partner_path {
+        db.swap_project_track_paths(
+            ctx.source_track_id,
+            ctx.partner_track_id,
+            &final_source_path.to_string_lossy(),
+            &final_partner_path.to_string_lossy(),
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
     let source_pairs = read_human_tag_pairs(&final_source_path)?;
     let partner_pairs = read_human_tag_pairs(&final_partner_path)?;
     let swap_keys = effective_swap_tag_keys(&ctx.partition_key, swap_tag_keys, &source_pairs);

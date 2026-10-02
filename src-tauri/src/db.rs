@@ -631,6 +631,45 @@ impl Database {
         })
     }
 
+    /// Updates two track paths atomically so a straight path exchange never hits `tracks.path` UNIQUE.
+    pub fn swap_project_track_paths(
+        &self,
+        source_id: i64,
+        partner_id: i64,
+        source_path_after: &str,
+        partner_path_after: &str,
+    ) -> Result<(), DbError> {
+        if source_path_after == partner_path_after {
+            return Ok(());
+        }
+        let source_before = self
+            .get_track_path(source_id)?
+            .ok_or_else(|| DbError::InvalidOperation("Source track not found".to_string()))?;
+        let partner_before = self
+            .get_track_path(partner_id)?
+            .ok_or_else(|| DbError::InvalidOperation("Partner track not found".to_string()))?;
+        if source_before == source_path_after && partner_before == partner_path_after {
+            return Ok(());
+        }
+
+        let placeholder = format!(".icetrackvault-path-swap-pending-{source_id}");
+        let tx = self.conn.unchecked_transaction()?;
+        tx.execute(
+            "UPDATE tracks SET path = ?1 WHERE id = ?2",
+            params![placeholder, source_id],
+        )?;
+        tx.execute(
+            "UPDATE tracks SET path = ?1 WHERE id = ?2",
+            params![partner_path_after, partner_id],
+        )?;
+        tx.execute(
+            "UPDATE tracks SET path = ?1 WHERE id = ?2",
+            params![source_path_after, source_id],
+        )?;
+        tx.commit()?;
+        Ok(())
+    }
+
     pub fn get_peaks(&self, id: i64) -> Result<Option<String>, DbError> {
         let mut stmt = self.conn.prepare("SELECT peaks_json FROM tracks WHERE id = ?1")?;
         let mut rows = stmt.query(params![id])?;
@@ -2857,6 +2896,25 @@ mod tests {
             )
             .unwrap();
         assert_eq!(order_count, 0);
+    }
+
+    #[test]
+    fn swap_project_track_paths_exchanges_unique_paths() {
+        let db = test_db();
+        let path_a = "/music/event01/short.mp3";
+        let path_b = "/music/event02/short.mp3";
+        let (track_a, _) = db
+            .upsert_track(path_a, "Short A", "Artist", "Album", 1000, None)
+            .unwrap();
+        let (track_b, _) = db
+            .upsert_track(path_b, "Short B", "Artist", "Album", 1000, None)
+            .unwrap();
+
+        db.swap_project_track_paths(track_a, track_b, path_b, path_a)
+            .unwrap();
+
+        assert_eq!(db.get_track_path(track_a).unwrap(), Some(path_b.to_string()));
+        assert_eq!(db.get_track_path(track_b).unwrap(), Some(path_a.to_string()));
     }
 
     #[test]
