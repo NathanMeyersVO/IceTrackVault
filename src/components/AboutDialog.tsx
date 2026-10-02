@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 
-import { APP_AUTHOR, APP_EMAIL, APP_NAME } from "../lib/appInfo";
+import { APP_AUTHOR, APP_NAME, APP_URL, APP_URL_LABEL } from "../lib/appInfo";
 import { AppLogo } from "./AppLogo";
 
 interface AboutDialogProps {
@@ -52,10 +52,12 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
           <div className="space-y-1 text-sm text-foreground">
             <p>© 2026 {APP_AUTHOR}</p>
             <a
-              href={`mailto:${APP_EMAIL}`}
+              href={APP_URL}
               className="text-accent hover:text-accent-hover hover:underline"
+              target="_blank"
+              rel="noreferrer"
             >
-              {APP_EMAIL}
+              {APP_URL_LABEL}
             </a>
           </div>
         </div>

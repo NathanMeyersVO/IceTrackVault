@@ -419,6 +419,13 @@ pub fn get_replace_remote_upload_logs_dir(
 }
 
 #[tauri::command]
+pub fn open_replace_remote_upload_logs_dir(state: State<'_, AppState>) -> Result<(), String> {
+    let dir = ReplaceRemoteUploadManager::logs_dir_path(&state.app_data_dir);
+    std::fs::create_dir_all(&dir).map_err(|e| format!("Failed to create log directory: {e}"))?;
+    open::that(&dir).map_err(|e| format!("Failed to open log folder: {e}"))
+}
+
+#[tauri::command]
 pub fn get_phone_upload_settings(
     state: State<'_, AppState>,
 ) -> Result<crate::phone_upload_settings::PhoneUploadSettingsResponse, String> {

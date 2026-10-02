@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { openPath } from "@tauri-apps/plugin-opener";
 
 import { RemoteUploadPanel } from "./RemoteUploadPanel";
 import { api } from "../lib/tauri";
@@ -114,8 +113,7 @@ export function ReplaceTrackPhoneSection({
 
   const openLogsFolder = useCallback(async () => {
     try {
-      const dir = await api.getReplaceRemoteUploadLogsDir();
-      await openPath(dir);
+      await api.openReplaceRemoteUploadLogsDir();
     } catch {
       reportError("Could not open the diagnostics log folder.");
     }

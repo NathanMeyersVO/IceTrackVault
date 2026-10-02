@@ -2070,6 +2070,7 @@ dependencies = [
  "fake",
  "flate2",
  "lofty",
+ "open",
  "parking_lot",
  "rand",
  "rodio",
