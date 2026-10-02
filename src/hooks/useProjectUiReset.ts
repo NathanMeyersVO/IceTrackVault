@@ -19,22 +19,26 @@ export function useProjectUiReset() {
     (s) => s.setProjectSearchQuery,
   );
   const setPendingPartitionFocus = usePlayerStore((s) => s.setPendingPartitionFocus);
+  const releaseTransport = usePlayerStore((s) => s.releaseTransport);
+  const setPlaybackOrigin = usePlayerStore((s) => s.setPlaybackOrigin);
 
   const resetProjectUi = useCallback(
     (playback: PlaybackState) => {
       const currentView = usePlayerStore.getState().view;
       setPlayback(playback);
+      releaseTransport();
+      setCursorTrackId(null);
+      setPlaybackOrigin(null);
+      clearPendingPlayIntent();
       setProjectFolder(null);
       setActiveProject(null);
       if (isProjectSourcedView(currentView)) {
         setView("project_tracks");
-        setCursorTrackId(null);
         setActiveTrackIds([]);
         setTaglistNav(null);
         setCursorTaglistFooter(false);
         setProjectSearchQuery("");
         setPendingPartitionFocus(null);
-        clearPendingPlayIntent();
       }
       clearPendingPausedLoad();
       clearTrackTagsCache();
@@ -42,10 +46,12 @@ export function useProjectUiReset() {
     [
       clearPendingPausedLoad,
       clearPendingPlayIntent,
+      releaseTransport,
       setActiveProject,
       setActiveTrackIds,
       setCursorTaglistFooter,
       setCursorTrackId,
+      setPlaybackOrigin,
       setProjectFolder,
       setPendingPartitionFocus,
       setPlayback,

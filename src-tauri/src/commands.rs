@@ -1641,6 +1641,44 @@ pub fn update_project_changes_locked(
         .ok_or_else(|| "Project not found".to_string())
 }
 
+#[tauri::command]
+pub fn rename_project(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    project_id: String,
+    name: String,
+) -> Result<ProjectSummary, String> {
+    let project_root = projects::project_dir(&state.app_data_dir, &project_id);
+    if !project_root.is_dir() {
+        return Err("Project not found".to_string());
+    }
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("Project name is required".to_string());
+    }
+    let mut manifest = projects::load_manifest(&project_root)?;
+    if manifest.changes_locked {
+        return Err(projects::PROJECT_CHANGES_LOCKED_MSG.to_string());
+    }
+    let is_active = {
+        let db = state.db.lock();
+        projects::get_active_project_id(&db)?
+            .is_some_and(|active_id| active_id == project_id)
+    };
+    if manifest.name != name {
+        manifest.name = name.to_string();
+        projects::save_manifest(&project_root, &manifest)?;
+        if is_active {
+            let _ = app.emit("project-updated", ());
+        }
+    }
+
+    projects::list_projects(&state.app_data_dir)?
+        .into_iter()
+        .find(|p| p.id == project_id)
+        .ok_or_else(|| "Project not found".to_string())
+}
+
 /// Application shell setup on project open. Event titles come from icetrackvault.json, not the library schedule file.
 fn reapply_project_application(
     app: &AppHandle,

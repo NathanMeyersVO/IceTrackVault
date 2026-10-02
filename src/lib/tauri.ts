@@ -618,6 +618,8 @@ export const api = {
       projectId,
       changesLocked,
     }),
+  renameProject: (projectId: string, name: string) =>
+    invoke<ProjectSummary>("rename_project", { projectId, name }),
   deleteProject: (projectId: string) =>
     invoke<PlaybackState>("delete_project", { projectId }),
   exportProject: (projectId: string, destination: string) =>
