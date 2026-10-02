@@ -16,7 +16,7 @@ import {
 import { TransportControls } from "./TransportControls";
 import { VolumeControl } from "./VolumeControl";
 import { SeekIndicator } from "./SeekIndicator";
-import { Waveform } from "./Waveform";
+import { Waveform, type WaveformPeaksStatus } from "./Waveform";
 
 export function NowPlayingBar() {
   const store = usePlayerStore();
@@ -45,6 +45,8 @@ export function NowPlayingBar() {
   } = usePlayer();
   const [peaks, setPeaks] = useState<number[]>([]);
   const [peakDurationMs, setPeakDurationMs] = useState(0);
+  const [peaksStatus, setPeaksStatus] = useState<WaveformPeaksStatus>("loading");
+  const [trackFetchFailed, setTrackFetchFailed] = useState(false);
   const [fetchedTrack, setFetchedTrack] = useState<Awaited<
     ReturnType<typeof api.getTrack>
   > | null>(null);
@@ -58,6 +60,9 @@ export function NowPlayingBar() {
   const displayTrackIdRef = useRef(displayTrackId);
   displayTrackIdRef.current = displayTrackId;
   const libraryTrack = tracks.find((t) => t.id === displayTrackId);
+  const libraryHasTrack = libraryTrack != null;
+  const trackResolved =
+    libraryHasTrack || fetchedTrack?.id === displayTrackId;
   const displayTrack =
     libraryTrack ??
     (fetchedTrack?.id === displayTrackId ? fetchedTrack : null);
@@ -65,20 +70,32 @@ export function NowPlayingBar() {
   useEffect(() => {
     if (displayTrackId == null) {
       setFetchedTrack(null);
+      setTrackFetchFailed(false);
       return;
     }
     if (libraryTrack != null) {
       setFetchedTrack(null);
+      setTrackFetchFailed(false);
       return;
     }
 
+    setTrackFetchFailed(false);
     let cancelled = false;
     api
       .getTrack(displayTrackId)
       .then((track) => {
-        if (!cancelled) setFetchedTrack(track);
+        if (!cancelled) {
+          setFetchedTrack(track);
+          setTrackFetchFailed(false);
+        }
       })
-      .catch(console.error);
+      .catch((error) => {
+        console.error(error);
+        if (!cancelled) {
+          setFetchedTrack(null);
+          setTrackFetchFailed(true);
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -97,17 +114,28 @@ export function NowPlayingBar() {
     : previewPositionMs;
 
   useEffect(() => {
-    if (!displayTrackId || transportMode === "load") {
-      if (!displayTrackId) {
-        setPeaks([]);
-        setPeakDurationMs(0);
-        setPreviewPositionMs(0);
-      }
+    if (!displayTrackId) {
+      setPeaks([]);
+      setPeakDurationMs(0);
+      setPeaksStatus("loading");
+      setPreviewPositionMs(0);
+      return;
+    }
+
+    if (transportMode === "load") {
+      return;
+    }
+
+    if (!trackResolved) {
+      setPeaks([]);
+      setPeakDurationMs(0);
+      setPeaksStatus(trackFetchFailed ? "unavailable" : "loading");
       return;
     }
 
     setPeaks([]);
     setPeakDurationMs(0);
+    setPeaksStatus("loading");
 
     let cancelled = false;
     const trackId = displayTrackId;
@@ -119,12 +147,25 @@ export function NowPlayingBar() {
           setPeakDurationMs(data.duration_ms);
         }
       })
-      .catch(console.error);
+      .catch((error) => {
+        console.error(error);
+        if (!cancelled && displayTrackIdRef.current === trackId) {
+          setPeaks([]);
+          setPeakDurationMs(0);
+          setPeaksStatus("unavailable");
+        }
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [displayTrackId, transportMode, setPreviewPositionMs]);
+  }, [
+    displayTrackId,
+    transportMode,
+    trackResolved,
+    trackFetchFailed,
+    setPreviewPositionMs,
+  ]);
 
   useEffect(() => {
     const unlistenPromise = listen<AudioCacheTrackReady>(
@@ -144,7 +185,14 @@ export function NowPlayingBar() {
             setPeaks(data.peaks);
             setPeakDurationMs(data.duration_ms);
           })
-          .catch(console.error);
+          .catch((error) => {
+            console.error(error);
+            if (displayTrackIdRef.current === currentId) {
+              setPeaks([]);
+              setPeakDurationMs(0);
+              setPeaksStatus("unavailable");
+            }
+          });
       },
     );
 
@@ -277,6 +325,7 @@ export function NowPlayingBar() {
           <Waveform
             trackId={displayTrackId}
             peaks={peaks}
+            peaksStatus={peaksStatus}
             durationMs={durationMs}
             positionMs={displayPositionMs}
             transportBusy={transportBusy}

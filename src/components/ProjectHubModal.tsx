@@ -18,6 +18,8 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
+  const [renameTarget, setRenameTarget] = useState<ProjectSummary | null>(null);
+  const [renameName, setRenameName] = useState("");
   const [busy, setBusy] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [importArchiveOpen, setImportArchiveOpen] = useState(false);
@@ -81,6 +83,34 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
     try {
       await api.updateProjectApplication(project.id, next);
       await reload();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openRename = (project: ProjectSummary) => {
+    setRenameTarget(project);
+    setRenameName(project.name);
+    setError(null);
+  };
+
+  const confirmRename = async () => {
+    if (!renameTarget) return;
+    const trimmed = renameName.trim();
+    if (!trimmed) return;
+    const renamedId = renameTarget.id;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.renameProject(renamedId, trimmed);
+      setRenameTarget(null);
+      setRenameName("");
+      await reload();
+      if (renamedId === activeProjectId) {
+        await refresh();
+      }
     } catch (e) {
       setError(String(e));
     } finally {
@@ -196,6 +226,19 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
                         </button>
                         <button
                           type="button"
+                          disabled={busy || p.changes_locked}
+                          title={
+                            p.changes_locked
+                              ? "Unlock the project to rename."
+                              : undefined
+                          }
+                          onClick={() => openRename(p)}
+                          className="rounded px-2 py-1 text-xs text-foreground hover:bg-surface-hover disabled:opacity-40"
+                        >
+                          Rename
+                        </button>
+                        <button
+                          type="button"
                           disabled={busy}
                           onClick={() => setDeleteTarget(p)}
                           className="rounded px-2 py-1 text-xs text-red-400 hover:bg-surface-hover"
@@ -258,6 +301,69 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
           onProjectsChanged={reload}
           onProjectOpened={onClose}
         />
+      )}
+
+      {renameTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div
+            className="w-full max-w-md rounded-lg border border-border bg-surface shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-project-title"
+          >
+            <div className="border-b border-border px-4 py-3">
+              <h2
+                id="rename-project-title"
+                className="text-sm font-semibold text-foreground"
+              >
+                Rename project
+              </h2>
+            </div>
+            <div className="px-4 py-3">
+              <label className="block text-xs text-muted">
+                Project name
+                <input
+                  type="text"
+                  value={renameName}
+                  disabled={busy}
+                  autoFocus
+                  onChange={(e) => setRenameName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && renameName.trim() && !busy) {
+                      void confirmRename();
+                    }
+                    if (e.key === "Escape") {
+                      setRenameTarget(null);
+                      setRenameName("");
+                    }
+                  }}
+                  className="mt-1 w-full rounded border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                />
+              </label>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-border px-4 py-3">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setRenameTarget(null);
+                  setRenameName("");
+                }}
+                className="rounded-md px-3 py-1.5 text-sm hover:bg-surface-hover disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy || !renameName.trim()}
+                onClick={() => void confirmRename()}
+                className="rounded-md bg-accent px-3 py-1.5 text-sm text-accent-foreground disabled:opacity-40"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {deleteTarget && (
