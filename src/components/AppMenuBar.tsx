@@ -8,6 +8,7 @@ import { MenuBarStatus, MenuDropdown, type MenuEntry } from "./MenuDropdown";
 import { useProjectMenuActions } from "../hooks/useProjectMenuActions";
 import { AppLogo } from "./AppLogo";
 import { APP_NAME } from "../lib/appInfo";
+import { projectLockModeStatusSuffix } from "../lib/projectLockMode";
 
 export function AppMenuBar() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -154,7 +155,7 @@ export function AppMenuBar() {
     collectionId != null && collectionName != null
       ? `Stored collection: ${collectionName}`
       : activeProject != null
-        ? `Project: ${activeProject.name}${activeProject.changes_locked ? " (locked)" : ""}`
+        ? `Project: ${activeProject.name}${projectLockModeStatusSuffix(activeProject.changes_lock_mode)}`
         : "No project open";
 
   return (

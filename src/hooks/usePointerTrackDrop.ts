@@ -22,6 +22,8 @@ export function usePointerTrackDrop(options: {
   onTagDrop: (trackId: number, taglist: Taglist, entry: TaglistValue) => void;
   onPlaylistDrop: (trackId: number, playlistId: number) => void;
   enabled?: boolean;
+  allowTagDrop?: boolean;
+  allowPlaylistDrop?: boolean;
 }) {
   const {
     draggingTrackId,
@@ -33,7 +35,14 @@ export function usePointerTrackDrop(options: {
     onTagDrop,
     onPlaylistDrop,
     enabled = true,
+    allowTagDrop = true,
+    allowPlaylistDrop = true,
   } = options;
+
+  const allowTagDropRef = useRef(allowTagDrop);
+  allowTagDropRef.current = allowTagDrop;
+  const allowPlaylistDropRef = useRef(allowPlaylistDrop);
+  allowPlaylistDropRef.current = allowPlaylistDrop;
 
   const taglistsRef = useRef(taglists);
   taglistsRef.current = taglists;
@@ -57,6 +66,11 @@ export function usePointerTrackDrop(options: {
 
       const kind = target.getAttribute(TRACK_DROP_ATTR);
       if (kind === "taglist") {
+        if (!allowTagDropRef.current) {
+          setDragOverTaglistTarget(null);
+          setDragOverPlaylistId(null);
+          return;
+        }
         const taglistId = Number.parseInt(
           target.getAttribute("data-taglist-id") ?? "",
           10,
@@ -73,6 +87,11 @@ export function usePointerTrackDrop(options: {
       }
 
       if (kind === "playlist") {
+        if (!allowPlaylistDropRef.current) {
+          setDragOverTaglistTarget(null);
+          setDragOverPlaylistId(null);
+          return;
+        }
         const playlistId = Number.parseInt(
           target.getAttribute("data-playlist-id") ?? "",
           10,
@@ -146,6 +165,7 @@ export function usePointerTrackDrop(options: {
 
       const kind = target.getAttribute(TRACK_DROP_ATTR);
       if (kind === "taglist") {
+        if (!allowTagDropRef.current) return;
         const taglistId = Number.parseInt(
           target.getAttribute("data-taglist-id") ?? "",
           10,
@@ -164,6 +184,7 @@ export function usePointerTrackDrop(options: {
       }
 
       if (kind === "playlist") {
+        if (!allowPlaylistDropRef.current) return;
         const playlistId = Number.parseInt(
           target.getAttribute("data-playlist-id") ?? "",
           10,

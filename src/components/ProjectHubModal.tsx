@@ -7,7 +7,17 @@ import { useProject } from "../hooks/usePlayer";
 import { usePlayerStore } from "../store/playerStore";
 import { APPLICATION_OPTIONS, getApplicationLabel } from "../lib/applicationLabels";
 import { formatProjectOriginLine } from "../lib/formatProjectTimestamp";
-import { api, type ApplicationId, type ProjectSummary } from "../lib/tauri";
+import {
+  PROJECT_LOCK_MODE_OPTIONS,
+  projectContentLocked,
+  projectLockModeStatusSuffix,
+} from "../lib/projectLockMode";
+import {
+  api,
+  type ApplicationId,
+  type ProjectChangesLockMode,
+  type ProjectSummary,
+} from "../lib/tauri";
 
 export interface ProjectHubModalProps {
   onClose: () => void;
@@ -56,15 +66,15 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
 
   const activeProjectId = usePlayerStore((s) => s.activeProject?.id);
 
-  const changeProjectChangesLocked = async (
+  const changeProjectLockMode = async (
     project: ProjectSummary,
-    changesLocked: boolean,
+    lockMode: ProjectChangesLockMode,
   ) => {
-    if (project.changes_locked === changesLocked) return;
+    if (project.changes_lock_mode === lockMode) return;
     setBusy(true);
     setError(null);
     try {
-      await api.updateProjectChangesLocked(project.id, changesLocked);
+      await api.updateProjectChangesLockMode(project.id, lockMode);
       await reload();
       if (project.id === activeProjectId) {
         await refresh();
@@ -162,8 +172,10 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium text-foreground">
                           {p.name}
-                          {p.changes_locked ? (
-                            <span className="ml-1.5 text-xs font-normal text-muted">(locked)</span>
+                          {projectLockModeStatusSuffix(p.changes_lock_mode) ? (
+                            <span className="ml-1.5 text-xs font-normal text-muted">
+                              {projectLockModeStatusSuffix(p.changes_lock_mode)}
+                            </span>
                           ) : null}
                           {activeProjectId === p.id ? (
                             <span className="ml-1.5 text-xs font-normal text-muted">(open)</span>
@@ -177,25 +189,33 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
                             p.application_id === "usfs_ems" ? "usfs_ems" : "none",
                           )}
                         </div>
-                        <label className="mt-1.5 flex items-center gap-2 text-xs text-muted">
-                          <input
-                            type="checkbox"
-                            checked={p.changes_locked}
+                        <label className="mt-1.5 block text-xs text-muted">
+                          Lock mode
+                          <select
+                            value={p.changes_lock_mode ?? "unlocked"}
                             disabled={busy}
                             onChange={(e) =>
-                              void changeProjectChangesLocked(p, e.target.checked)
+                              void changeProjectLockMode(
+                                p,
+                                e.target.value as ProjectChangesLockMode,
+                              )
                             }
-                            className="rounded border-border"
-                          />
-                          Lock against changes
+                            className="mt-0.5 w-full max-w-xs rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+                          >
+                            {PROJECT_LOCK_MODE_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                         <label className="mt-1.5 block text-xs text-muted">
                           Application
                           <select
                             value={p.application_id === "usfs_ems" ? "usfs_ems" : "none"}
-                            disabled={busy || p.changes_locked}
+                            disabled={busy || projectContentLocked(p.changes_lock_mode)}
                             title={
-                              p.changes_locked
+                              projectContentLocked(p.changes_lock_mode)
                                 ? "Unlock the project to change application."
                                 : undefined
                             }
@@ -226,9 +246,9 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
                         </button>
                         <button
                           type="button"
-                          disabled={busy || p.changes_locked}
+                          disabled={busy || projectContentLocked(p.changes_lock_mode)}
                           title={
-                            p.changes_locked
+                            projectContentLocked(p.changes_lock_mode)
                               ? "Unlock the project to rename."
                               : undefined
                           }

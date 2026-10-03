@@ -536,7 +536,9 @@ export function useProjectMenuActions() {
     exportingProject;
   const fileOperationBusy = coreFileOperationBusy || uploadModalOpen;
   const actionsDisabled = fileOperationBusy;
-  const projectChangesLocked = activeProject?.changes_locked === true;
+  const projectChangesLocked =
+    activeProject != null &&
+    activeProject.changes_lock_mode !== "unlocked";
   const projectActionsDisabled =
     fileOperationBusy || !projectFolder || projectChangesLocked;
   const projectUploadDisabled =

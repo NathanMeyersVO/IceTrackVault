@@ -36,7 +36,10 @@ import {
 } from "../lib/sidebarNavigation";
 import { useAppearance } from "../hooks/useAppearance";
 import { useProject } from "../hooks/usePlayer";
-import { useProjectChangesLocked } from "../hooks/useProjectChangesLocked";
+import {
+  useProjectChangesLocked,
+  useProjectPlaylistLocked,
+} from "../hooks/useProjectChangesLocked";
 import { useTagDropConfirm } from "../hooks/useTagDropConfirm";
 import { navItemSelectionStyle } from "../lib/appearance";
 import { usePlayerStore, type View } from "../store/playerStore";
@@ -586,6 +589,7 @@ export function Sidebar({ width }: { width: number }) {
   const renameSkipBlurRef = useRef(false);
   const { requestTagDrop, confirmDialog: tagDropConfirmDialog } = useTagDropConfirm();
   const projectChangesLocked = useProjectChangesLocked();
+  const projectPlaylistLocked = useProjectPlaylistLocked();
 
   const handleCollectionReorder = async (orderedCollections: Collection[]) => {
     setCollections(orderedCollections);
@@ -692,7 +696,7 @@ export function Sidebar({ width }: { width: number }) {
   });
 
   const playlistReorder = usePointerListReorder({
-    enabled: !projectChangesLocked && playlists.length > 1,
+    enabled: !projectPlaylistLocked && playlists.length > 1,
     containerRef: playlistListRef,
     scrollContainerRef: browseNavRef,
     onCommit: (fromIndex, toIndex, position) => {
@@ -706,10 +710,12 @@ export function Sidebar({ width }: { width: number }) {
     },
   });
 
-  const isTrackDragging = draggingTrackId != null && !projectChangesLocked;
+  const isTrackDragging = draggingTrackId != null && !projectPlaylistLocked;
 
   usePointerTrackDrop({
-    enabled: !projectChangesLocked,
+    enabled: !projectPlaylistLocked,
+    allowTagDrop: !projectChangesLocked,
+    allowPlaylistDrop: !projectPlaylistLocked,
     draggingTrackId,
     setDraggingTrackId,
     scrollContainerRef: browseNavRef,
@@ -1052,8 +1058,8 @@ export function Sidebar({ width }: { width: number }) {
               tabIndex={0}
               onClick={handleNavigate}
               onKeyDown={handleKeyDown}
-              {...(projectChangesLocked ? {} : playlistReorder.getRowProps(index))}
-              {...(projectChangesLocked
+              {...(projectPlaylistLocked ? {} : playlistReorder.getRowProps(index))}
+              {...(projectPlaylistLocked
                 ? {}
                 : {
                     [TRACK_DROP_ATTR]: "playlist",
@@ -1064,7 +1070,7 @@ export function Sidebar({ width }: { width: number }) {
                 settings,
               )}
               className={`group/playlist mb-1 flex w-full cursor-pointer items-center rounded-md py-2 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted ${
-                projectChangesLocked ? "pl-6" : "pl-2"
+                projectPlaylistLocked ? "pl-6" : "pl-2"
               } ${dropBarClass} ${
                 isDragging ? "opacity-40" : ""
               } ${
@@ -1079,7 +1085,7 @@ export function Sidebar({ width }: { width: number }) {
                         : "border border-transparent text-foreground hover:bg-surface/70"
               }`}
             >
-              {!projectChangesLocked ? (
+              {!projectPlaylistLocked ? (
                 <button
                   type="button"
                   aria-label={`Reorder ${playlist.name}`}
@@ -1123,7 +1129,7 @@ export function Sidebar({ width }: { width: number }) {
                   </span>
                 </span>
               )}
-              {!isEditing && !projectChangesLocked ? (
+              {!isEditing && !projectPlaylistLocked ? (
                 <>
                   <button
                     type="button"
@@ -1148,7 +1154,7 @@ export function Sidebar({ width }: { width: number }) {
         })}
         </div>
 
-        {!projectChangesLocked &&
+        {!projectPlaylistLocked &&
           (creating ? (
             <div className="mt-2 space-y-2 px-2">
               <input
