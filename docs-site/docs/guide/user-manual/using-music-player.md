@@ -44,7 +44,7 @@ With an event selected, the center table shows the music tracks for that event. 
 - **Single-click** or use the **up-** and **down-arrow** keys to position a track for playing next.
 - **Double-click** on a row, or hit the **Enter** key on the highlighted row, to start the music.
 
-The **⋮** menu on each row opens actions such as editing tags, moving a skater to another event, replacing a file, or deleting a track. These operations are described in [Common problems](./common-problems).
+The **⋮** menu on each row opens actions such as editing tags, moving a skater to another event, replacing a file, or deleting a track. These operations are described in [Common situations](./common-situations).
 
 ### Search within the project
 
@@ -131,6 +131,6 @@ Once events and competitors are in order, you can run the entire competition wit
 
 ## What to read next
 
-- [Solutions for common problems](./common-problems) — wrong file, missing music, moving skaters between events, EMS re-downloads.
+- [Solutions for common situations](./common-situations) — wrong file, missing music, moving skaters between events, EMS re-downloads.
 - [Stored collections](./stored-collections) — anthems and other libraries outside the competition project.
 

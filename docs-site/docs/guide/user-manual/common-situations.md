@@ -1,4 +1,4 @@
-# Solutions for common problems
+# Solutions for common situations
 
 
 

@@ -1,7 +1,7 @@
 ---
 next:
-  text: User manual introduction
-  link: /guide/user-manual/
+  text: Phone upload setup
+  link: /guide/user-manual/phone-upload
 ---
 
 # Stored collections
