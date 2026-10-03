@@ -1,59 +1,49 @@
 # Best practices
 
-This page collects recommendations for competition staff and music volunteers who plan to run **IceTrackVault** at a real figure skating event. It complements the task-focused chapters: use [Getting started](./getting-started) for install and first import, [Using the music player](./using-music-player) for playback and ordering, [Common problems](./common-problems) for fixes, and [Stored collections](./stored-collections) for anthems and other permanent libraries.
+This page is for experienced competition music staff who are **moving from the USFS iTunes workflow** to IceTrackVault. You already know how to run a meet; here we focus on staying safe with **new, unproven software** while you make that transition.
 
-## Before competition day
+For how to install, play music, and fix typical issues, use [Getting started](./getting-started), [Using the music player](./using-music-player), and [Common problems](./common-problems).
 
-**Install on the rink PC early.** Download the latest installer from [Download & releases](../releases) and complete setup on the machine that will play music—not only on a personal laptop. Allow time for Windows SmartScreen prompts during install (see [Getting started](./getting-started#install)).
+## Keep a backup plan
 
-**Build the project from EMS, then stay current.** Create the competition project from your EMS download folder (archives plus event schedule). Whenever EMS publishes an updated download before the event, use **Project → Apply EMS Download…**, review the summary, and apply changes—the same preview flow as creating a project.
+IceTrackVault is new. It has not been used at hundreds of competitions the way iTunes has over many years.
 
-**Run a dry rehearsal.** Open several events across the schedule, play a sample of tracks, and confirm waveforms and volume on the rink sound system. Set OS and app volume once so levels are predictable on competition day.
+**Keep your previous workflow available as a standby** on competition day—or whatever backup plan you already use for iTunes. If you routinely keep a warm spare for iTunes, it is reasonable to **leave that plan in place** until you are confident in IceTrackVault.
 
-**Match schedule order before doors open.** EMS import order may not match the published event list or start order. Drag events under **Project Taglists → Events** and drag competitor rows within each event until they match the official schedule. Order is saved in the project database when you reopen the project. See [Rearranging skating order and event order](./using-music-player#rearranging-skating-order-and-event-order).
+## Export project backups
 
-**Clear NO-TAG.** Check **NO-TAG** at the bottom of the Events list. Tracks there are not assigned to any numbered event; resolve or upload fixes before the meet so nothing is missing when you select an event.
+Use **Project → Export Project…** to save a full **`.iceproject.zip`** archive (project configuration and music files). Export when the project is in a good state and store the file somewhere safe: another folder, removable drive, or a second PC.
 
-**Prepare stored collections if you use them.** Load national anthems, continuous-play lists, or other assets into stored collections ahead of time so you are not building libraries during the competition. See [Stored collections](./stored-collections).
+That archive is your safety net if you need to recover or move the project.
 
-**Optional practice import.** Maintainers can generate a fake EMS folder with the [generate-demo-dataset](../cli-tools#generate-demo-dataset) CLI tool to practice **Import EMS download…** without real competitor music.
+## Export before EMS updates
 
-## Validate the project
+Before **Project → Apply EMS Download…**, export a backup. Applying an EMS download can have **unintended results** (unexpected merges or track changes). If something goes wrong, you can restore from the archive you made immediately beforehand.
 
-Use this checklist once the project reflects the latest EMS download and order edits:
+If the project is locked (see below), set **Lock mode** to **Unlocked** before you apply an EMS download.
 
-- Event names and counts look reasonable compared to the schedule spreadsheet.
-- Spot-check a few skater names with **Search project…** and confirm the right event and track open.
-- Play at least one track per session or day you will operate, if the schedule spans multiple days.
-- Export a backup when the project is stable: **Project → Export Project…** (full project archive for safety or transfer to another PC).
+## Use lock-down modes during the meet
 
-**Consider lock mode before play begins.** In **Project → Projects…**, each project has a **Lock mode** setting:
+Once setup is done, turn on a lock so accidental edits are harder during the competition. In **Project → Projects…**, each project has a **Lock mode** setting:
 
-- **Unlocked** — full editing; required for **Apply EMS Download…** and most structural changes.
-- **Lock all except playlists against changes** — protects events and tracklists while still allowing championship or custom playlists during the meet.
-- **Lock all against changes** — strongest guard against accidental edits; unlock temporarily if you must apply an EMS update or fix tags.
+- **Lock all against changes** — strongest protection against accidental changes to events, tracklists, and tags.
+- **Lock all except playlists against changes** — same protection, but you can still build **championship or custom playlists** during the meet.
 
 The window title shows `(locked)` or `(playlists editable)` when a lock is active.
 
-## During the competition
+Leave the project **Unlocked** while you are still importing EMS data, reordering, or fixing tags. Switch to a lock mode when you are ready to run music.
 
-**Favor keyboard control.** Once order is set, you can move between events (**Page Up** / **Page Down**), highlight the next skater (**↑** / **↓**), start music (**Enter**), and pause (**P**) with minimal mouse use. Open **Help → Keyboard shortcuts…** for the in-app list. Details are in [Keyboard shortcuts](./using-music-player#keyboard-shortcuts).
+## If the app stops responding
 
-**Use search and the next-event footer.** **Search project…** jumps to a competitor across the whole project. At the bottom of each event tracklist, **Next project taglist (…)** moves to the following event without clicking the sidebar.
+If IceTrackVault becomes unresponsive, **close it** (Task Manager if needed), **restart** the application, and reopen your project from **Project → Projects…**. That usually restores normal operation.
 
-**Follow the playing track when you browse.** If you open another event or list while music is playing, the player bar shows **↩ Playing track**. Click it to return to the list and row that is actually playing. Playback continues; only the view changes.
+Regular **Export Project…** backups remain your best protection if you ever need to recover from a bad state.
 
-**Fix problems deliberately.** Late uploads, wrong files, program swaps, and roster moves are covered in [Common problems](./common-problems). If the project is locked, unlock it (or use a lock mode that allows the change) before applying EMS updates or editing tags.
+## Phone upload: set up early
 
-## Contingency and handoff
+If you plan to use **Settings → Phone upload setup…** for late uploads, configure it and **test end-to-end well before** the competition—not between groups. The settings screen includes checks to verify your tunnel and upload path; use them during setup.
 
-**Export after major changes.** After a large EMS apply or many manual fixes, run **Project → Export Project…** again so you have a recent archive.
-
-**Plan for two operators.** A backup person who knows how to search, reorder, and follow [Common problems](./common-problems) reduces risk if the primary operator steps away.
-
-**Protect the music machine.** Disable sleep during sessions, defer non-critical Windows updates, and avoid unrelated apps that might grab audio output.
-
-**Phone upload (if used).** If your venue relies on **Settings → Phone upload setup…** for late files, configure and test the tunnel before the event—not between groups.
+Step-by-step tunnel configuration will be covered in a **future manual chapter**. Until then, treat phone upload as something to prove on a quiet day, not on first use at the rink.
 
 ## What to read next
 
