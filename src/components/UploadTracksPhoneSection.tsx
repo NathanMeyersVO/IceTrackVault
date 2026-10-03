@@ -2,10 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { listen } from "@tauri-apps/api/event";
 
-import { openPath } from "@tauri-apps/plugin-opener";
-
-
-
 import { ConfirmDialog } from "./ConfirmDialog";
 
 import { RemoteUploadPanel } from "./RemoteUploadPanel";
@@ -322,9 +318,7 @@ export function UploadTracksPhoneSection({
 
     try {
 
-      const dir = await api.getReplaceRemoteUploadLogsDir();
-
-      await openPath(dir);
+      await api.openReplaceRemoteUploadLogsDir();
 
     } catch {
 

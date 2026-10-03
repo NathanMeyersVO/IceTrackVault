@@ -391,6 +391,8 @@ export const api = {
     invoke<string>("get_replace_remote_upload_log_path"),
   getReplaceRemoteUploadLogsDir: () =>
     invoke<string>("get_replace_remote_upload_logs_dir"),
+  openReplaceRemoteUploadLogsDir: () =>
+    invoke<void>("open_replace_remote_upload_logs_dir"),
   getPhoneUploadSettings: () =>
     invoke<PhoneUploadSettingsResponse>("get_phone_upload_settings"),
   setPhoneUploadSettings: (settings: PhoneUploadSettings, tunnelToken?: string | null) =>
