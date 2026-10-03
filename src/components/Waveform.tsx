@@ -5,9 +5,12 @@ import { useAppearance } from "../hooks/useAppearance";
 import { SEEK_CONFIRM_TOLERANCE_MS } from "../store/playerStore";
 import { WaveformPlaceholder } from "./WaveformPlaceholder";
 
+export type WaveformPeaksStatus = "loading" | "unavailable";
+
 interface WaveformProps {
   trackId: number | null;
   peaks: number[];
+  peaksStatus?: WaveformPeaksStatus;
   durationMs: number;
   positionMs: number;
   transportBusy?: boolean;
@@ -18,6 +21,7 @@ interface WaveformProps {
 export function Waveform({
   trackId,
   peaks,
+  peaksStatus = "loading",
   durationMs,
   positionMs,
   transportBusy = false,
@@ -146,6 +150,13 @@ export function Waveform({
   }
 
   if (peaks.length === 0) {
+    if (peaksStatus === "unavailable") {
+      return (
+        <div className="flex h-[72px] items-center justify-center rounded-md bg-surface text-xs text-muted">
+          Waveform unavailable
+        </div>
+      );
+    }
     return (
       <WaveformPlaceholder
         trackId={trackId}

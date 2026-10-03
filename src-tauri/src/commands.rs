@@ -419,6 +419,13 @@ pub fn get_replace_remote_upload_logs_dir(
 }
 
 #[tauri::command]
+pub fn open_replace_remote_upload_logs_dir(state: State<'_, AppState>) -> Result<(), String> {
+    let dir = ReplaceRemoteUploadManager::logs_dir_path(&state.app_data_dir);
+    std::fs::create_dir_all(&dir).map_err(|e| format!("Failed to create log directory: {e}"))?;
+    open::that(&dir).map_err(|e| format!("Failed to open log folder: {e}"))
+}
+
+#[tauri::command]
 pub fn get_phone_upload_settings(
     state: State<'_, AppState>,
 ) -> Result<crate::phone_upload_settings::PhoneUploadSettingsResponse, String> {
@@ -1633,6 +1640,44 @@ pub fn update_project_changes_locked(
     };
     if is_active {
         let _ = app.emit("project-updated", ());
+    }
+
+    projects::list_projects(&state.app_data_dir)?
+        .into_iter()
+        .find(|p| p.id == project_id)
+        .ok_or_else(|| "Project not found".to_string())
+}
+
+#[tauri::command]
+pub fn rename_project(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    project_id: String,
+    name: String,
+) -> Result<ProjectSummary, String> {
+    let project_root = projects::project_dir(&state.app_data_dir, &project_id);
+    if !project_root.is_dir() {
+        return Err("Project not found".to_string());
+    }
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("Project name is required".to_string());
+    }
+    let mut manifest = projects::load_manifest(&project_root)?;
+    if manifest.changes_locked {
+        return Err(projects::PROJECT_CHANGES_LOCKED_MSG.to_string());
+    }
+    let is_active = {
+        let db = state.db.lock();
+        projects::get_active_project_id(&db)?
+            .is_some_and(|active_id| active_id == project_id)
+    };
+    if manifest.name != name {
+        manifest.name = name.to_string();
+        projects::save_manifest(&project_root, &manifest)?;
+        if is_active {
+            let _ = app.emit("project-updated", ());
+        }
     }
 
     projects::list_projects(&state.app_data_dir)?

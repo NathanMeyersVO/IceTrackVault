@@ -2061,7 +2061,7 @@ dependencies = [
 
 [[package]]
 name = "icetrackvault"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "axum",
  "calamine",
@@ -2070,6 +2070,7 @@ dependencies = [
  "fake",
  "flate2",
  "lofty",
+ "open",
  "parking_lot",
  "rand",
  "rodio",
