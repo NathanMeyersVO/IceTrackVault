@@ -56,6 +56,7 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
     setBusy(true);
     try {
       await api.openProject(id);
+      await refresh();
       onClose();
     } catch (e) {
       setError(String(e));

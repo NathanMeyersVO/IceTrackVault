@@ -31,6 +31,7 @@ interface TaglistViewProps {
 export function TaglistView({ taglistId, value }: TaglistViewProps) {
   const {
     taglists,
+    activeProject,
     playback,
     cursorTrackId,
     cursorTaglistFooter,
@@ -122,9 +123,10 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
 
   useEffect(() => {
     setTracks([]);
+    setValues([]);
     setTracksLoaded(false);
     tracksFetchGenRef.current += 1;
-  }, [taglistId, value]);
+  }, [taglistId, value, activeProject?.id]);
 
   const activateNextSublist = useCallback(() => {
     if (!nextSublist) return;

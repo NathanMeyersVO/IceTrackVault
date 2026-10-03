@@ -54,9 +54,16 @@ function MainContent() {
         ) : isCollectionView(view) ? (
           <CollectionView collectionId={view.collectionId} />
         ) : isTaglistView(view) ? (
-          <TaglistView taglistId={view.taglistId} value={view.value} />
+          <TaglistView
+            key={`${activeProject?.id ?? "none"}:${view.taglistId}:${view.value ?? ""}`}
+            taglistId={view.taglistId}
+            value={view.value}
+          />
         ) : isPlaylistView(view) ? (
-          <PlaylistView playlistId={view.playlistId} />
+          <PlaylistView
+            key={`${activeProject?.id ?? "none"}:${view.playlistId}`}
+            playlistId={view.playlistId}
+          />
         ) : null}
       </div>
 

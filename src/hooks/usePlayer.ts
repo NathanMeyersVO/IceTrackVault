@@ -13,6 +13,7 @@ import {
 } from "../lib/tauri";
 
 import { playerController } from "../playerController";
+import { reconcileProjectView } from "../lib/reconcileProjectView";
 
 import { usePlayerStore } from "../store/playerStore";
 
@@ -27,6 +28,10 @@ export function useProject() {
     setCollections,
     setProjectFolder,
     setActiveProject,
+    setView,
+    setTaglistNav,
+    setProjectSearchQuery,
+    setPendingPartitionFocus,
     setProjectScanProgress,
     setDeliveryProgress,
     setArchiveExportProgress,
@@ -34,9 +39,12 @@ export function useProject() {
     markProjectLoadChecked,
   } = usePlayerStore();
 
-
-
   const refresh = useCallback(async () => {
+    const snapshot = usePlayerStore.getState();
+    const previousProjectId = snapshot.activeProject?.id ?? null;
+    const previousView = snapshot.view;
+    const previousTaglists = snapshot.taglists;
+    const previousPlaylists = snapshot.playlists;
 
     const [tracks, playlists, taglists, collections, projectFolder, activeProject] =
       await Promise.all([
@@ -55,6 +63,26 @@ export function useProject() {
     setProjectFolder(projectFolder);
     setActiveProject(activeProject);
 
+    const nextProjectId = activeProject?.id ?? null;
+    if (
+      previousProjectId != null &&
+      nextProjectId != null &&
+      previousProjectId !== nextProjectId
+    ) {
+      setProjectSearchQuery("");
+      setTaglistNav(null);
+      setPendingPartitionFocus(null);
+      const nextView = reconcileProjectView({
+        view: previousView,
+        previousTaglists,
+        previousPlaylists,
+        nextTaglists: taglists,
+        nextPlaylists: playlists,
+      });
+      if (nextView != null) {
+        setView(nextView);
+      }
+    }
   }, [
     setTracks,
     setPlaylists,
@@ -62,6 +90,10 @@ export function useProject() {
     setCollections,
     setProjectFolder,
     setActiveProject,
+    setView,
+    setTaglistNav,
+    setProjectSearchQuery,
+    setPendingPartitionFocus,
   ]);
 
 

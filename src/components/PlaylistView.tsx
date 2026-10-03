@@ -24,6 +24,7 @@ interface PlaylistViewProps {
 export function PlaylistView({ playlistId }: PlaylistViewProps) {
   const {
     playlists,
+    activeProject,
     playback,
     cursorTrackId,
     setActiveTrackIds,
@@ -52,8 +53,9 @@ export function PlaylistView({ playlistId }: PlaylistViewProps) {
   }, [playlistId]);
 
   useEffect(() => {
+    setTracks([]);
     refreshTracks();
-  }, [refreshTracks, playlists]);
+  }, [refreshTracks, playlists, activeProject?.id]);
 
   useEffect(() => {
     const unlisten = listen("project-updated", () => {
