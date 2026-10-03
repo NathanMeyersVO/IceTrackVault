@@ -1,6 +1,6 @@
 # Best practices
 
-This page is for experienced competition music staff who are **moving from the USFS iTunes workflow** to IceTrackVault. You already know how to run a meet; here we focus on staying safe with **new, unproven software** while you make that transition.
+This page is for experienced competition music staff who are **moving from an iTunes workflow** to IceTrackVault. You already know how to run a meet; here we focus on staying safe with **new, unproven software** while you make that transition.
 
 For how to install, play music, and fix typical issues, use [Getting started](./getting-started), [Using the music player](./using-music-player), and [Common situations](./common-situations).
 
@@ -12,7 +12,7 @@ IceTrackVault is new. It has not been used at hundreds of competitions the way i
 
 ## Export project backups
 
-Use **Project → Export Project…** to save a full **`.iceproject.zip`** archive (project configuration and music files). Export when the project is in a good state and store the file somewhere safe: another folder, removable drive, or a second PC.
+Use **Project → Export Project…** to save a full `.iceproject.zip` archive (project configuration and music files). Export when the project is in a good state and store the file somewhere safe: another folder, removable drive, or a second PC.
 
 That archive is your safety net if you need to recover or move the project.
 
@@ -47,3 +47,4 @@ If you plan to use phone upload for late files, follow [Phone upload setup](./ph
 
 - [Solutions for common situations](./common-situations) — missing music, replacements, swaps, EMS re-downloads.
 - [User manual introduction](./index) — full table of contents.
+
