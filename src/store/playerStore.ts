@@ -171,6 +171,7 @@ interface PlayerStore {
   pendingPlayIntent: PlayIntent | null;
   loadAutoplayRequested: boolean;
   draggingTrackId: number | null;
+  trackDropPointerValid: boolean;
   volume: number;
   taglistNav: TaglistNav | null;
   cursorTaglistFooter: boolean;
@@ -210,6 +211,8 @@ interface PlayerStore {
   setPendingPlayIntent: (intent: PlayIntent | null) => void;
   clearPendingPlayIntent: () => void;
   setDraggingTrackId: (id: number | null) => void;
+  setTrackDropPointerValid: (valid: boolean) => void;
+  cancelTrackDrag: () => void;
   applyBackendPlayback: (incoming: PlaybackState) => void;
   setVolume: (volume: number) => void;
   patchTrack: (track: Track) => void;
@@ -273,6 +276,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   pendingPlayIntent: null,
   loadAutoplayRequested: false,
   draggingTrackId: null,
+  trackDropPointerValid: false,
   volume: 1,
   taglistNav: null,
   cursorTaglistFooter: false,
@@ -382,7 +386,15 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   clearPendingPausedLoad: () => set({ pendingPausedLoad: null }),
   setPendingPlayIntent: (intent) => set({ pendingPlayIntent: intent }),
   clearPendingPlayIntent: () => set({ pendingPlayIntent: null }),
-  setDraggingTrackId: (draggingTrackId) => set({ draggingTrackId }),
+  setDraggingTrackId: (draggingTrackId) =>
+    set({
+      draggingTrackId,
+      ...(draggingTrackId == null ? { trackDropPointerValid: false } : {}),
+    }),
+  setTrackDropPointerValid: (trackDropPointerValid) =>
+    set({ trackDropPointerValid }),
+  cancelTrackDrag: () =>
+    set({ draggingTrackId: null, trackDropPointerValid: false }),
   applyBackendPlayback: (incoming) => {
     const state = get();
 

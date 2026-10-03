@@ -46,6 +46,18 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+body.tv-track-drag-active {
+  cursor: no-drop;
+}
+
+body.tv-track-drag-active.tv-track-drop-valid {
+  cursor: copy;
+}
+
+body.tv-track-drag-active * {
+  cursor: inherit !important;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -2,6 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { usePointerTrackDragRow } from "../hooks/usePointerTrackDrag";
 import type { Playlist, Track } from "../lib/tauri";
+import { usePlayerStore } from "../store/playerStore";
 import { formatDuration } from "../lib/tauri";
 import { trackRowSelectionStyle } from "../lib/appearance";
 import { useAppearance } from "../hooks/useAppearance";
@@ -82,8 +83,11 @@ export function TrackTableRow({
   reorderRowProps,
 }: TrackTableRowProps) {
   const { settings } = useAppearance();
+  const draggingTrackId = usePlayerStore((state) => state.draggingTrackId);
   const { onRowPointerDown } = usePointerTrackDragRow(track.id, draggable);
   const style = trackRowSelectionStyle(isPlaying, isCursor, settings);
+  const isCrossViewDragging = draggingTrackId != null;
+  const isSourceOfDrag = draggingTrackId === track.id;
 
   return (
       <tr
@@ -97,8 +101,12 @@ export function TrackTableRow({
         onDoubleClick={() => onPlay(track.id)}
         style={style}
         className={`border-b border-border text-foreground hover:bg-surface/70 ${
-          draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
-        } ${isDragging ? "opacity-40" : ""} ${
+          isCrossViewDragging
+            ? ""
+            : draggable
+              ? "cursor-grab active:cursor-grabbing"
+              : "cursor-pointer"
+        } ${isDragging || isSourceOfDrag ? "opacity-40" : ""} ${
           dropIndicator === "before" ? "border-t-2 border-t-drop" : ""
         } ${dropIndicator === "after" ? "border-b-2 border-b-drop" : ""}`}
       >
@@ -107,7 +115,11 @@ export function TrackTableRow({
             <button
               type="button"
               aria-label={`Reorder ${track.title}`}
-              className="flex cursor-grab items-center justify-center rounded p-1 hover:bg-surface-hover hover:text-foreground active:cursor-grabbing"
+              className={`flex items-center justify-center rounded p-1 hover:bg-surface-hover hover:text-foreground ${
+                isCrossViewDragging
+                  ? ""
+                  : "cursor-grab active:cursor-grabbing"
+              }`}
               onClick={(event) => event.stopPropagation()}
               {...reorderGripProps}
             >
