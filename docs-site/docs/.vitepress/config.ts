@@ -8,6 +8,8 @@ export default defineConfig({
   base: "/IceTrackVault/",
   rewrites: {
     "guide/getting-started.md": "guide/user-manual/getting-started.md",
+    "guide/user-manual/common-problems.md":
+      "guide/user-manual/common-situations.md",
   },
   themeConfig: {
     nav: [
@@ -30,12 +32,16 @@ export default defineConfig({
             link: "/guide/user-manual/using-music-player",
           },
           {
-            text: "Common problems",
-            link: "/guide/user-manual/common-problems",
+            text: "Common situations",
+            link: "/guide/user-manual/common-situations",
           },
           {
             text: "Stored collections",
             link: "/guide/user-manual/stored-collections",
+          },
+          {
+            text: "Phone upload setup",
+            link: "/guide/user-manual/phone-upload",
           },
           {
             text: "Best practices",

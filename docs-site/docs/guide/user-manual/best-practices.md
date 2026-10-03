@@ -2,7 +2,7 @@
 
 This page is for experienced competition music staff who are **moving from the USFS iTunes workflow** to IceTrackVault. You already know how to run a meet; here we focus on staying safe with **new, unproven software** while you make that transition.
 
-For how to install, play music, and fix typical issues, use [Getting started](./getting-started), [Using the music player](./using-music-player), and [Common problems](./common-problems).
+For how to install, play music, and fix typical issues, use [Getting started](./getting-started), [Using the music player](./using-music-player), and [Common situations](./common-situations).
 
 ## Keep a backup plan
 
@@ -41,11 +41,9 @@ Regular **Export Project…** backups remain your best protection if you ever ne
 
 ## Phone upload: set up early
 
-If you plan to use **Settings → Phone upload setup…** for late uploads, configure it and **test end-to-end well before** the competition—not between groups. The settings screen includes checks to verify your tunnel and upload path; use them during setup.
-
-Step-by-step tunnel configuration will be covered in a **future manual chapter**. Until then, treat phone upload as something to prove on a quiet day, not on first use at the rink.
+If you plan to use phone upload for late files, follow [Phone upload setup](./phone-upload) and **test end-to-end well before** the competition—not between groups. Use **View → Phone upload setup…** and run **Test tunnel path** on a quiet day, then prove **Project → Upload track to project… → Upload from phone** once before you rely on it at the rink.
 
 ## What to read next
 
-- [Solutions for common problems](./common-problems) — missing music, replacements, swaps, EMS re-downloads.
+- [Solutions for common situations](./common-situations) — missing music, replacements, swaps, EMS re-downloads.
 - [User manual introduction](./index) — full table of contents.

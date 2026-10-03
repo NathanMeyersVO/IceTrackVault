@@ -1,7 +1,7 @@
 ---
 next:
-  text: Best practices
-  link: /guide/user-manual/best-practices
+  text: Phone upload setup
+  link: /guide/user-manual/phone-upload
 ---
 
 # Stored collections
