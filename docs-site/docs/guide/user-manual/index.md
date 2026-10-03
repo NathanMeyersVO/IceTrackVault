@@ -10,5 +10,6 @@ If you are setting up the app for the first time, start with [Getting started](.
 - [Using the music player](./using-music-player) — playback, waveforms, playlists, and event order during the competition.
 - [Solutions for common problems](./common-problems) — missing tracks, wrong uploads, swaps, and other fixes before and during the event.
 - [Stored collections](./stored-collections) — permanent libraries such as national anthems and continuous-play playlists, separate from competition projects.
+- [Best practices](./best-practices) — recommended workflow before and during a competition for the best chance of a smooth music session.
 
 For developers building from source, see [Build from source](../development).

@@ -1,7 +1,7 @@
 ---
 next:
-  text: User manual introduction
-  link: /guide/user-manual/
+  text: Best practices
+  link: /guide/user-manual/best-practices
 ---
 
 # Stored collections

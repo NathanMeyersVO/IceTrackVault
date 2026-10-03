@@ -37,6 +37,10 @@ export default defineConfig({
             text: "Stored collections",
             link: "/guide/user-manual/stored-collections",
           },
+          {
+            text: "Best practices",
+            link: "/guide/user-manual/best-practices",
+          },
         ],
       },
       {
