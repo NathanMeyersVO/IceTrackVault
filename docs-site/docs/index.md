@@ -14,6 +14,9 @@ hero:
     - theme: alt
       text: User manual
       link: /guide/user-manual/
+    - theme: alt
+      text: Contact the team
+      link: https://forms.gle/38pZySw5F1Q8KAez7
 ---
 
 ## About
@@ -45,4 +48,4 @@ Here is how the application simplifies competition management:
 
 Pre-built **Windows installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS is not supported for end users today - but the codebase is OS-independent and a macOS build should be possible. Contributions from macOS developers who want to help enable macOS are welcome: open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault). See [Build from source](/guide/development) for prerequisites.
 
-**Documentation:** [User manual](/guide/user-manual/) · [Source on GitHub](https://github.com/NathanMeyersVO/IceTrackVault)
+**Documentation:** [User manual](/guide/user-manual/) · [Source on GitHub](https://github.com/NathanMeyersVO/IceTrackVault) · [Contact the IceTrackVault team](https://forms.gle/38pZySw5F1Q8KAez7)
