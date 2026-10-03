@@ -2016,6 +2016,8 @@ pub fn apply_staged_delivery(
 
     let mut manifest = projects::load_manifest(&project_root)?;
 
+    open_project_internal(&app, &state, &project_id)?;
+
     let result = {
         let db = state.db.lock();
         apply_delivery(
@@ -2036,8 +2038,6 @@ pub fn apply_staged_delivery(
             "No audio changes were applied. Try staging the delivery again.".to_string(),
         );
     }
-
-    open_project_internal(&app, &state, &project_id)?;
 
     {
         let db = state.db.lock();

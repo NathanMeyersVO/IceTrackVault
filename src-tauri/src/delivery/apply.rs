@@ -145,7 +145,9 @@ pub fn apply_delivery(
 
     projects::save_manifest(project_root, manifest)?;
     let _ = apply_mode;
-    autosave_icetrackvault_json(db, &library_root)?;
+    if config::db_watch_folder_matches_library(db, &library_root) {
+        autosave_icetrackvault_json(db, &library_root)?;
+    }
 
     Ok(ApplyDeliveryResult { applied, skipped })
 }
@@ -328,6 +330,73 @@ mod tests {
 
         assert_eq!(result.applied, 1);
         assert!(library.join(track_rel).is_file());
+
+        let _ = std::fs::remove_dir_all(&base);
+    }
+
+    #[test]
+    fn apply_delivery_skips_autosave_when_db_library_mismatch() {
+        let base = std::env::temp_dir().join(format!("tv-apply-mismatch-{}", uuid::Uuid::new_v4()));
+        let old_library = base.join("old").join("library");
+        let project_root = base.join("new-project");
+        let new_library = project_root.join("library");
+        let staging = base.join("staging");
+        std::fs::create_dir_all(&old_library).unwrap();
+        std::fs::create_dir_all(&new_library).unwrap();
+        std::fs::create_dir_all(&staging).unwrap();
+
+        let old_track = old_library.join("legacy.mp3");
+        std::fs::write(&old_track, b"old").unwrap();
+        let old_track = old_track.canonicalize().unwrap_or(old_track);
+
+        let db = crate::db::Database::open(std::path::Path::new(":memory:")).unwrap();
+        db.set_project_folder(old_library.to_string_lossy().as_ref())
+            .unwrap();
+        let (track_id, _) = db
+            .upsert_track(old_track.to_str().unwrap(), "Legacy", "", "", 1000, None)
+            .unwrap();
+        let taglist_id = db.create_taglist("Events", "Comment", "", "").unwrap();
+        db.replace_track_tags(track_id, &[("Comment".to_string(), "01".to_string())])
+            .unwrap();
+        db.reorder_taglist_tracks(taglist_id, Some("01"), &[track_id])
+            .unwrap();
+
+        let track_rel = "tracks/new.mp3";
+        let staged_path = staging.join(track_rel);
+        std::fs::create_dir_all(staged_path.parent().unwrap()).unwrap();
+        std::fs::write(&staged_path, b"new").unwrap();
+
+        let change_id = stable_change_id(DeliveryChangeKind::AudioAdd, track_rel);
+        let changes = vec![DeliveryChange {
+            change_id: change_id.clone(),
+            kind: DeliveryChangeKind::AudioAdd,
+            summary: "Add".to_string(),
+            details: track_rel.to_string(),
+            default_selected: true,
+        }];
+
+        let mut manifest = ProjectManifest::new(
+            "proj".to_string(),
+            "Test".to_string(),
+            "none".to_string(),
+        );
+        projects::save_manifest(&project_root, &manifest).unwrap();
+
+        apply_delivery(
+            &db,
+            &project_root,
+            &mut manifest,
+            &staging,
+            &changes,
+            &HashSet::from([change_id]),
+            ApplyMode::Merge,
+            crate::application::ApplicationId::None,
+            &DeliveryProgressCtx::none(),
+        )
+        .unwrap();
+
+        assert!(new_library.join(track_rel).is_file());
+        assert!(!config::config_file_path(&new_library).is_file());
 
         let _ = std::fs::remove_dir_all(&base);
     }
