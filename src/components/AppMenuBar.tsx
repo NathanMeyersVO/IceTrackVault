@@ -46,6 +46,7 @@ export function AppMenuBar() {
     importCollection,
     actionsDisabled,
     projectActionsDisabled,
+    exportProjectDisabled,
     projectUploadDisabled,
     collectionUploadDisabled,
     projectChangesLocked,
@@ -86,7 +87,7 @@ export function AppMenuBar() {
       label: exportingProject ? "Exporting project…" : "Export Project…",
       title: "Save the open project (project audio, schedule, and icetrackvault.json) to a .iceproject.zip archive.",
       onClick: () => void exportProject(),
-      disabled: projectActionsDisabled || exportingProject,
+      disabled: exportProjectDisabled || exportingProject,
     },
   ];
 
