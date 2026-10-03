@@ -19,6 +19,34 @@ pub enum ProjectOrigin {
     Imported,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectChangesLockMode {
+    #[default]
+    Unlocked,
+    All,
+    AllExceptPlaylists,
+}
+
+impl ProjectChangesLockMode {
+    pub fn blocks_content_changes(self) -> bool {
+        !matches!(self, ProjectChangesLockMode::Unlocked)
+    }
+
+    pub fn blocks_playlist_changes(self) -> bool {
+        matches!(self, ProjectChangesLockMode::All)
+    }
+}
+
+pub fn parse_changes_lock_mode(value: &str) -> Result<ProjectChangesLockMode, String> {
+    match value.trim() {
+        "unlocked" => Ok(ProjectChangesLockMode::Unlocked),
+        "all" => Ok(ProjectChangesLockMode::All),
+        "all_except_playlists" => Ok(ProjectChangesLockMode::AllExceptPlaylists),
+        other => Err(format!("Unknown project lock mode: {other}")),
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectManifest {
     pub version: u32,
@@ -32,7 +60,7 @@ pub struct ProjectManifest {
     #[serde(default)]
     pub origin: ProjectOrigin,
     #[serde(default)]
-    pub changes_locked: bool,
+    pub changes_lock_mode: ProjectChangesLockMode,
 }
 
 impl ProjectManifest {
@@ -46,7 +74,48 @@ impl ProjectManifest {
             schedule_relative_path: DEFAULT_SCHEDULE_REL.to_string(),
             schedule_last_imported_mtime: None,
             origin: ProjectOrigin::Created,
-            changes_locked: false,
+            changes_lock_mode: ProjectChangesLockMode::Unlocked,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+struct ProjectManifestRaw {
+    version: u32,
+    id: String,
+    name: String,
+    created_at: i64,
+    application_id: String,
+    schedule_relative_path: String,
+    #[serde(default)]
+    schedule_last_imported_mtime: Option<i64>,
+    #[serde(default)]
+    origin: ProjectOrigin,
+    #[serde(default)]
+    changes_lock_mode: Option<ProjectChangesLockMode>,
+    #[serde(default)]
+    changes_locked: bool,
+}
+
+impl From<ProjectManifestRaw> for ProjectManifest {
+    fn from(raw: ProjectManifestRaw) -> Self {
+        let changes_lock_mode = raw.changes_lock_mode.unwrap_or_else(|| {
+            if raw.changes_locked {
+                ProjectChangesLockMode::All
+            } else {
+                ProjectChangesLockMode::Unlocked
+            }
+        });
+        Self {
+            version: raw.version,
+            id: raw.id,
+            name: raw.name,
+            created_at: raw.created_at,
+            application_id: raw.application_id,
+            schedule_relative_path: raw.schedule_relative_path,
+            schedule_last_imported_mtime: raw.schedule_last_imported_mtime,
+            origin: raw.origin,
+            changes_lock_mode,
         }
     }
 }
@@ -62,7 +131,7 @@ pub struct ProjectSummary {
     pub track_count: u32,
     pub last_modified: i64,
     pub origin: ProjectOrigin,
-    pub changes_locked: bool,
+    pub changes_lock_mode: ProjectChangesLockMode,
 }
 
 pub fn projects_root(app_data: &Path) -> PathBuf {
@@ -100,7 +169,8 @@ pub fn canonical_schedule_relative_path(staged: &Path) -> String {
 pub fn load_manifest(project_root: &Path) -> Result<ProjectManifest, String> {
     let path = manifest_path(project_root);
     let data = fs::read_to_string(&path).map_err(|e| format!("Read {}: {e}", path.display()))?;
-    serde_json::from_str(&data).map_err(|e| e.to_string())
+    let raw: ProjectManifestRaw = serde_json::from_str(&data).map_err(|e| e.to_string())?;
+    Ok(raw.into())
 }
 
 pub fn save_manifest(project_root: &Path, manifest: &ProjectManifest) -> Result<(), String> {
@@ -164,7 +234,22 @@ pub fn require_project_changes_allowed(
         return Ok(());
     }
     let manifest = load_manifest(&project_root)?;
-    if manifest.changes_locked {
+    if manifest.changes_lock_mode.blocks_content_changes() {
+        return Err(PROJECT_CHANGES_LOCKED_MSG.to_string());
+    }
+    Ok(())
+}
+
+pub fn require_project_playlist_changes_allowed(
+    app_data: &Path,
+    project_id: &str,
+) -> Result<(), String> {
+    let project_root = project_dir(app_data, project_id);
+    if !project_root.is_dir() {
+        return Ok(());
+    }
+    let manifest = load_manifest(&project_root)?;
+    if manifest.changes_lock_mode.blocks_playlist_changes() {
         return Err(PROJECT_CHANGES_LOCKED_MSG.to_string());
     }
     Ok(())
@@ -180,6 +265,16 @@ pub fn require_active_project_changes_allowed(
     require_project_changes_allowed(app_data, &project_id)
 }
 
+pub fn require_active_project_playlist_changes_allowed(
+    app_data: &Path,
+    db: &Database,
+) -> Result<(), String> {
+    let Some(project_id) = get_active_project_id(db)? else {
+        return Ok(());
+    };
+    require_project_playlist_changes_allowed(app_data, &project_id)
+}
+
 pub fn summary_from_manifest(manifest: &ProjectManifest, project_root: &Path) -> ProjectSummary {
     let library = library_dir(project_root);
     let (track_count, last_modified) = library_stats(&library);
@@ -191,7 +286,7 @@ pub fn summary_from_manifest(manifest: &ProjectManifest, project_root: &Path) ->
         track_count,
         last_modified,
         origin: manifest.origin,
-        changes_locked: manifest.changes_locked,
+        changes_lock_mode: manifest.changes_lock_mode,
     }
 }
 
@@ -298,7 +393,7 @@ mod tests {
     }
 
     #[test]
-    fn manifest_deserializes_without_changes_locked() {
+    fn manifest_deserializes_without_lock_mode() {
         let json = r#"{
             "version": 1,
             "id": "abc",
@@ -307,8 +402,23 @@ mod tests {
             "application_id": "none",
             "schedule_relative_path": "event-schedule.xlsx"
         }"#;
-        let manifest: ProjectManifest = serde_json::from_str(json).unwrap();
-        assert!(!manifest.changes_locked);
+        let manifest = load_manifest_from_json(json);
+        assert_eq!(manifest.changes_lock_mode, ProjectChangesLockMode::Unlocked);
+    }
+
+    #[test]
+    fn manifest_deserializes_legacy_changes_locked_true() {
+        let json = r#"{
+            "version": 1,
+            "id": "abc",
+            "name": "Test",
+            "created_at": 0,
+            "application_id": "none",
+            "schedule_relative_path": "event-schedule.xlsx",
+            "changes_locked": true
+        }"#;
+        let manifest = load_manifest_from_json(json);
+        assert_eq!(manifest.changes_lock_mode, ProjectChangesLockMode::All);
     }
 
     #[test]
@@ -318,12 +428,33 @@ mod tests {
             uuid::Uuid::new_v4()
         ));
         let manifest = ProjectManifest {
-            changes_locked: true,
+            changes_lock_mode: ProjectChangesLockMode::All,
             ..ProjectManifest::new("id1".into(), "Locked".into(), "none".into())
         };
         create_project_dirs(&app_data, &manifest).unwrap();
         let err = require_project_changes_allowed(&app_data, "id1").unwrap_err();
         assert_eq!(err, PROJECT_CHANGES_LOCKED_MSG);
         let _ = fs::remove_dir_all(&app_data);
+    }
+
+    #[test]
+    fn require_project_playlist_changes_allowed_except_playlists_mode() {
+        let app_data = std::env::temp_dir().join(format!(
+            "icetrackvault-lock-playlist-test-{}",
+            uuid::Uuid::new_v4()
+        ));
+        let manifest = ProjectManifest {
+            changes_lock_mode: ProjectChangesLockMode::AllExceptPlaylists,
+            ..ProjectManifest::new("id1".into(), "Partial".into(), "none".into())
+        };
+        create_project_dirs(&app_data, &manifest).unwrap();
+        require_project_playlist_changes_allowed(&app_data, "id1").unwrap();
+        require_project_changes_allowed(&app_data, "id1").unwrap_err();
+        let _ = fs::remove_dir_all(&app_data);
+    }
+
+    fn load_manifest_from_json(json: &str) -> ProjectManifest {
+        let raw: ProjectManifestRaw = serde_json::from_str(json).unwrap();
+        raw.into()
     }
 }

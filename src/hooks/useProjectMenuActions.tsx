@@ -536,9 +536,12 @@ export function useProjectMenuActions() {
     exportingProject;
   const fileOperationBusy = coreFileOperationBusy || uploadModalOpen;
   const actionsDisabled = fileOperationBusy;
-  const projectChangesLocked = activeProject?.changes_locked === true;
+  const projectChangesLocked =
+    activeProject != null &&
+    activeProject.changes_lock_mode !== "unlocked";
   const projectActionsDisabled =
     fileOperationBusy || !projectFolder || projectChangesLocked;
+  const exportProjectDisabled = fileOperationBusy || activeProject == null;
   const projectUploadDisabled =
     fileOperationBusy || !projectFolder || projectChangesLocked;
   const collectionUploadDisabled = fileOperationBusy || collectionId == null;
@@ -617,6 +620,7 @@ export function useProjectMenuActions() {
     importCollection,
     actionsDisabled,
     projectActionsDisabled,
+    exportProjectDisabled,
     projectUploadDisabled,
     collectionUploadDisabled,
     projectChangesLocked,

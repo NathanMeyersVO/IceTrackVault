@@ -7,7 +7,10 @@ import { useDeleteTrack } from "../hooks/useDeleteTrack";
 import { useReplaceProjectTrackFile } from "../hooks/useReplaceProjectTrackFile";
 import { useProjectSearch } from "../hooks/useProjectSearch";
 import { formatProjectSearchSubtitle } from "../lib/projectSearchCopy";
-import { useProjectChangesLocked } from "../hooks/useProjectChangesLocked";
+import {
+  useProjectChangesLocked,
+  useProjectPlaylistLocked,
+} from "../hooks/useProjectChangesLocked";
 import { usePlayerStore, serializeView } from "../store/playerStore";
 import { playerController } from "../playerController";
 import { TagEditorModal } from "./TagEditorModal";
@@ -40,6 +43,7 @@ export function PlaylistView({ playlistId }: PlaylistViewProps) {
     globalHitCount,
   } = useProjectSearch();
   const projectChangesLocked = useProjectChangesLocked();
+  const projectPlaylistLocked = useProjectPlaylistLocked();
 
   const playlist = playlists.find((p) => p.id === playlistId);
 
@@ -121,14 +125,14 @@ export function PlaylistView({ playlistId }: PlaylistViewProps) {
           onPlay={playTrack}
           onEditTags={projectChangesLocked ? undefined : setEditingTrackId}
           onRemoveTrackFromPlaylist={
-            projectChangesLocked ? undefined : removeTrack
+            projectPlaylistLocked ? undefined : removeTrack
           }
           onDeleteTrack={projectChangesLocked ? undefined : requestDeleteTrack}
           onReplaceFile={projectChangesLocked ? undefined : requestReplaceFile}
           onReorderTracks={
-            projectChangesLocked || isSearching ? undefined : reorderTracks
+            projectPlaylistLocked || isSearching ? undefined : reorderTracks
           }
-          draggable={!projectChangesLocked}
+          draggable={!projectPlaylistLocked}
           emptyMessage="No tracks in this project playlist yet. Add tracks from the project."
         />
       </div>

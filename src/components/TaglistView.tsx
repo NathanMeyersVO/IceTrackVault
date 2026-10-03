@@ -10,7 +10,10 @@ import { useReplaceProjectTrackFile } from "../hooks/useReplaceProjectTrackFile"
 import { formatProjectSearchSubtitle } from "../lib/projectSearchCopy";
 import { useProjectSearch } from "../hooks/useProjectSearch";
 import { scrollToTrackRowWithRetry } from "../hooks/useProjectSearchNavigation";
-import { useProjectChangesLocked } from "../hooks/useProjectChangesLocked";
+import {
+  useProjectChangesLocked,
+  useProjectPlaylistLocked,
+} from "../hooks/useProjectChangesLocked";
 import { usePlayerStore, serializeView } from "../store/playerStore";
 import { playerController } from "../playerController";
 import { scrollSidebarItem, sidebarSublistId } from "../lib/sidebarNavigation";
@@ -59,6 +62,7 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
     globalHitCount,
   } = useProjectSearch();
   const projectChangesLocked = useProjectChangesLocked();
+  const projectPlaylistLocked = useProjectPlaylistLocked();
 
   const taglist = taglists.find((entry) => entry.id === taglistId);
   const changeTaglistValueLabel = taglist
@@ -307,7 +311,7 @@ export function TaglistView({ taglistId, value }: TaglistViewProps) {
           onReorderTracks={
             projectChangesLocked || isSearching ? undefined : reorderTracks
           }
-          draggable={!projectChangesLocked}
+          draggable={!projectPlaylistLocked}
           emptyMessage={
             value == null
               ? "No tracks without this tag."

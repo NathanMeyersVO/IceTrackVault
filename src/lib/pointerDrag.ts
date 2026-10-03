@@ -117,3 +117,65 @@ export function findTrackDropTargetFromPoint(
   if (!hit) return null;
   return hit.closest(`[${TRACK_DROP_ATTR}]`);
 }
+
+export type TrackDropKind = "taglist" | "playlist";
+
+export type ResolvedTrackDropTarget =
+  | {
+      kind: "taglist";
+      taglistId: number;
+      value: string | null;
+      displayTitle: string | null;
+      element: Element;
+    }
+  | {
+      kind: "playlist";
+      playlistId: number;
+      element: Element;
+    };
+
+function parseTagDropValue(raw: string | null): string | null {
+  if (raw == null || raw === "none") return null;
+  return raw;
+}
+
+export function resolveTrackDropTarget(
+  clientX: number,
+  clientY: number,
+  options?: { allowTagDrop?: boolean; allowPlaylistDrop?: boolean },
+): ResolvedTrackDropTarget | null {
+  const allowTagDrop = options?.allowTagDrop ?? true;
+  const allowPlaylistDrop = options?.allowPlaylistDrop ?? true;
+  const target = findTrackDropTargetFromPoint(clientX, clientY);
+  if (!target) return null;
+
+  const kind = target.getAttribute(TRACK_DROP_ATTR);
+  if (kind === "taglist") {
+    if (!allowTagDrop) return null;
+    const taglistId = Number.parseInt(
+      target.getAttribute("data-taglist-id") ?? "",
+      10,
+    );
+    if (!Number.isFinite(taglistId)) return null;
+    const displayRaw = target.getAttribute("data-tag-display-title");
+    return {
+      kind: "taglist",
+      taglistId,
+      value: parseTagDropValue(target.getAttribute("data-tag-value")),
+      displayTitle: displayRaw ? displayRaw : null,
+      element: target,
+    };
+  }
+
+  if (kind === "playlist") {
+    if (!allowPlaylistDrop) return null;
+    const playlistId = Number.parseInt(
+      target.getAttribute("data-playlist-id") ?? "",
+      10,
+    );
+    if (!Number.isFinite(playlistId)) return null;
+    return { kind: "playlist", playlistId, element: target };
+  }
+
+  return null;
+}

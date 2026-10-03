@@ -1,39 +1,44 @@
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
-import { findTrackDropTargetFromPoint, TRACK_DROP_ATTR } from "../lib/pointerDrag";
+import { resolveTrackDropTarget } from "../lib/pointerDrag";
+import {
+  setTrackDragPointer,
+  trackDragPointerRef,
+} from "../lib/trackDragPointer";
 import type { Taglist, TaglistValue } from "../lib/tauri";
+import { usePlayerStore } from "../store/playerStore";
 import { usePointerDragAutoScroll } from "./usePointerDragAutoScroll";
 
-function parseTagValue(raw: string | null): string | null {
-  if (raw == null || raw === "none") return null;
-  return raw;
-}
-
 export function usePointerTrackDrop(options: {
-  draggingTrackId: number | null;
-  setDraggingTrackId: (trackId: number | null) => void;
   scrollContainerRef: RefObject<HTMLElement | null>;
   taglists: Taglist[];
-  setDragOverTaglistTarget: (target: {
-    taglistId: number;
-    value: string | null;
-  } | null) => void;
-  setDragOverPlaylistId: (playlistId: number | null) => void;
   onTagDrop: (trackId: number, taglist: Taglist, entry: TaglistValue) => void;
   onPlaylistDrop: (trackId: number, playlistId: number) => void;
   enabled?: boolean;
+  allowTagDrop?: boolean;
+  allowPlaylistDrop?: boolean;
 }) {
   const {
-    draggingTrackId,
-    setDraggingTrackId,
     scrollContainerRef,
     taglists,
-    setDragOverTaglistTarget,
-    setDragOverPlaylistId,
     onTagDrop,
     onPlaylistDrop,
     enabled = true,
+    allowTagDrop = true,
+    allowPlaylistDrop = true,
   } = options;
+
+  const draggingTrackId = usePlayerStore((state) => state.draggingTrackId);
+  const setTrackDropPointerValid = usePlayerStore(
+    (state) => state.setTrackDropPointerValid,
+  );
+  const cancelTrackDrag = usePlayerStore((state) => state.cancelTrackDrag);
+  const setDraggingTrackId = usePlayerStore((state) => state.setDraggingTrackId);
+
+  const allowTagDropRef = useRef(allowTagDrop);
+  allowTagDropRef.current = allowTagDrop;
+  const allowPlaylistDropRef = useRef(allowPlaylistDrop);
+  allowPlaylistDropRef.current = allowPlaylistDrop;
 
   const taglistsRef = useRef(taglists);
   taglistsRef.current = taglists;
@@ -46,52 +51,14 @@ export function usePointerTrackDrop(options: {
   const draggingTrackIdRef = useRef(draggingTrackId);
   draggingTrackIdRef.current = draggingTrackId;
 
-  const updateHover = useCallback(
-    (clientX: number, clientY: number) => {
-      const target = findTrackDropTargetFromPoint(clientX, clientY);
-      if (!target) {
-        setDragOverTaglistTarget(null);
-        setDragOverPlaylistId(null);
-        return;
-      }
-
-      const kind = target.getAttribute(TRACK_DROP_ATTR);
-      if (kind === "taglist") {
-        const taglistId = Number.parseInt(
-          target.getAttribute("data-taglist-id") ?? "",
-          10,
-        );
-        const value = parseTagValue(target.getAttribute("data-tag-value"));
-        if (!Number.isFinite(taglistId)) {
-          setDragOverTaglistTarget(null);
-          setDragOverPlaylistId(null);
-          return;
-        }
-        setDragOverPlaylistId(null);
-        setDragOverTaglistTarget({ taglistId, value });
-        return;
-      }
-
-      if (kind === "playlist") {
-        const playlistId = Number.parseInt(
-          target.getAttribute("data-playlist-id") ?? "",
-          10,
-        );
-        if (!Number.isFinite(playlistId)) {
-          setDragOverTaglistTarget(null);
-          setDragOverPlaylistId(null);
-          return;
-        }
-        setDragOverTaglistTarget(null);
-        setDragOverPlaylistId(playlistId);
-        return;
-      }
-
-      setDragOverTaglistTarget(null);
-      setDragOverPlaylistId(null);
-    },
-    [setDragOverPlaylistId, setDragOverTaglistTarget],
-  );
+  const updateHover = (clientX: number, clientY: number) => {
+    setTrackDragPointer(clientX, clientY);
+    const resolved = resolveTrackDropTarget(clientX, clientY, {
+      allowTagDrop: allowTagDropRef.current,
+      allowPlaylistDrop: allowPlaylistDropRef.current,
+    });
+    setTrackDropPointerValid(resolved != null);
+  };
 
   const updateHoverRef = useRef(updateHover);
   updateHoverRef.current = updateHover;
@@ -124,6 +91,15 @@ export function usePointerTrackDrop(options: {
       return;
     }
 
+    pointerRef.current = {
+      clientX: trackDragPointerRef.clientX,
+      clientY: trackDragPointerRef.clientY,
+    };
+    updateHoverRef.current(
+      trackDragPointerRef.clientX,
+      trackDragPointerRef.clientY,
+    );
+
     const onPointerMove = (event: PointerEvent) => {
       event.preventDefault();
       pointerRef.current = {
@@ -134,48 +110,52 @@ export function usePointerTrackDrop(options: {
       startAutoScrollRef.current();
     };
 
+    const finishDrag = () => {
+      stopAutoScrollRef.current();
+      setTrackDropPointerValid(false);
+      setDraggingTrackId(null);
+    };
+
     const onPointerUp = (event: PointerEvent) => {
       stopAutoScrollRef.current();
-      const trackId = draggingTrackId;
-      const target = findTrackDropTargetFromPoint(event.clientX, event.clientY);
-      setDragOverTaglistTarget(null);
-      setDragOverPlaylistId(null);
-      setDraggingTrackId(null);
+      const trackId = draggingTrackIdRef.current;
+      const resolved = resolveTrackDropTarget(event.clientX, event.clientY, {
+        allowTagDrop: allowTagDropRef.current,
+        allowPlaylistDrop: allowPlaylistDropRef.current,
+      });
+      finishDrag();
 
-      if (!target || trackId == null) return;
+      if (!resolved || trackId == null) return;
 
-      const kind = target.getAttribute(TRACK_DROP_ATTR);
-      if (kind === "taglist") {
-        const taglistId = Number.parseInt(
-          target.getAttribute("data-taglist-id") ?? "",
-          10,
+      if (resolved.kind === "taglist") {
+        const taglist = taglistsRef.current.find(
+          (entry) => entry.id === resolved.taglistId,
         );
-        const value = parseTagValue(target.getAttribute("data-tag-value"));
-        const taglist = taglistsRef.current.find((entry) => entry.id === taglistId);
-        if (!taglist || !Number.isFinite(taglistId)) return;
-        const displayRaw = target.getAttribute("data-tag-display-title");
+        if (!taglist) return;
         const entry: TaglistValue = {
-          value,
-          display_title: displayRaw ? displayRaw : null,
+          value: resolved.value,
+          display_title: resolved.displayTitle,
           track_count: 0,
         };
         onTagDropRef.current(trackId, taglist, entry);
         return;
       }
 
-      if (kind === "playlist") {
-        const playlistId = Number.parseInt(
-          target.getAttribute("data-playlist-id") ?? "",
-          10,
-        );
-        if (!Number.isFinite(playlistId)) return;
-        onPlaylistDropRef.current(trackId, playlistId);
-      }
+      onPlaylistDropRef.current(trackId, resolved.playlistId);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      stopAutoScrollRef.current();
+      cancelTrackDrag();
     };
 
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("keydown", onKeyDown, true);
 
     return () => {
       stopAutoScrollRef.current();
@@ -183,13 +163,14 @@ export function usePointerTrackDrop(options: {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("keydown", onKeyDown, true);
     };
   }, [
     draggingTrackId,
+    cancelTrackDrag,
     enabled,
     resetScrollEl,
-    setDragOverPlaylistId,
-    setDragOverTaglistTarget,
     setDraggingTrackId,
+    setTrackDropPointerValid,
   ]);
 }

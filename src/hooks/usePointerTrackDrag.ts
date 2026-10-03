@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useRef,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -9,6 +10,7 @@ import {
   unlockDocumentTextSelection,
 } from "../lib/documentTextSelectionLock";
 import { pointerExceededDragThreshold } from "../lib/pointerDrag";
+import { setTrackDragPointer } from "../lib/trackDragPointer";
 import { usePlayerStore } from "../store/playerStore";
 
 type Session = {
@@ -20,6 +22,7 @@ type Session = {
 };
 
 export function usePointerTrackDragRow(trackId: number, enabled: boolean) {
+  const draggingTrackId = usePlayerStore((state) => state.draggingTrackId);
   const setDraggingTrackId = usePlayerStore((state) => state.setDraggingTrackId);
   const sessionRef = useRef<Session | null>(null);
 
@@ -38,6 +41,7 @@ export function usePointerTrackDragRow(trackId: number, enabled: boolean) {
         )
       ) {
         session.dragging = true;
+        setTrackDragPointer(event.clientX, event.clientY);
         setDraggingTrackId(session.trackId);
       }
 
@@ -61,16 +65,27 @@ export function usePointerTrackDragRow(trackId: number, enabled: boolean) {
     [onWindowPointerMove],
   );
 
-  const clearSession = useCallback(() => {
-    if (sessionRef.current) {
-      unlockDocumentTextSelection();
-      window.removeEventListener("pointermove", onWindowPointerMove);
-      window.removeEventListener("pointerup", onWindowPointerUp);
-      window.removeEventListener("pointercancel", onWindowPointerUp);
+  const clearSession = useCallback(
+    (clearStore: boolean) => {
+      if (sessionRef.current) {
+        unlockDocumentTextSelection();
+        window.removeEventListener("pointermove", onWindowPointerMove);
+        window.removeEventListener("pointerup", onWindowPointerUp);
+        window.removeEventListener("pointercancel", onWindowPointerUp);
+      }
+      sessionRef.current = null;
+      if (clearStore) {
+        setDraggingTrackId(null);
+      }
+    },
+    [onWindowPointerMove, onWindowPointerUp, setDraggingTrackId],
+  );
+
+  useEffect(() => {
+    if (draggingTrackId == null && sessionRef.current?.dragging) {
+      clearSession(false);
     }
-    sessionRef.current = null;
-    setDraggingTrackId(null);
-  }, [onWindowPointerMove, onWindowPointerUp, setDraggingTrackId]);
+  }, [draggingTrackId, clearSession]);
 
   const onRowPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLTableRowElement>) => {
@@ -96,4 +111,4 @@ export function usePointerTrackDragRow(trackId: number, enabled: boolean) {
 
   return { onRowPointerDown, clearSession };
 }
-
+

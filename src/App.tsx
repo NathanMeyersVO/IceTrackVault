@@ -7,6 +7,7 @@ import { PlaylistView } from "./components/PlaylistView";
 import { TaglistView } from "./components/TaglistView";
 import { CollectionView } from "./components/CollectionView";
 import { NowPlayingBar } from "./components/NowPlayingBar";
+import { TrackDragLayer } from "./components/TrackDragLayer";
 import { AudioCacheBanner } from "./components/AudioCacheBanner";
 import { DeliveryBusyOverlay } from "./components/DeliveryBusyOverlay";
 import { useProject, usePlayer } from "./hooks/usePlayer";
@@ -98,7 +99,7 @@ export default function App() {
 
   const { selectTrack, playTrack, togglePlayPause, adjustVolume, seekToStart, seekToEnd } = usePlayer();
   const { width: sidebarWidth, onResizeStart } = useSidebarWidth();
-  const setDraggingTrackId = usePlayerStore((state) => state.setDraggingTrackId);
+  const cancelTrackDrag = usePlayerStore((state) => state.cancelTrackDrag);
   useTrackCursor({
     onSelectTrack: selectTrack,
     onPlayTrack: playTrack,
@@ -110,11 +111,11 @@ export default function App() {
 
   useEffect(() => {
     const clearDragState = () => {
-      setDraggingTrackId(null);
+      cancelTrackDrag();
     };
     window.addEventListener("dragend", clearDragState);
     return () => window.removeEventListener("dragend", clearDragState);
-  }, [setDraggingTrackId]);
+  }, [cancelTrackDrag]);
 
   return (
     <div className="flex h-full flex-col">
@@ -146,6 +147,7 @@ export default function App() {
         <MainContent />
       </div>
       <NowPlayingBar />
+      <TrackDragLayer />
     </div>
   );
 }

@@ -269,6 +269,11 @@ export interface ApplicationSettings {
 
 export type ProjectOrigin = "created" | "imported";
 
+export type ProjectChangesLockMode =
+  | "unlocked"
+  | "all"
+  | "all_except_playlists";
+
 export interface ProjectSummary {
   id: string;
   name: string;
@@ -277,7 +282,7 @@ export interface ProjectSummary {
   track_count: number;
   last_modified: number;
   origin: ProjectOrigin;
-  changes_locked: boolean;
+  changes_lock_mode: ProjectChangesLockMode;
 }
 
 export type DeliveryChangeKind =
@@ -615,10 +620,13 @@ export const api = {
   openProject: (projectId: string) => invoke<void>("open_project", { projectId }),
   updateProjectApplication: (projectId: string, applicationId: string) =>
     invoke<ProjectSummary>("update_project_application", { projectId, applicationId }),
-  updateProjectChangesLocked: (projectId: string, changesLocked: boolean) =>
-    invoke<ProjectSummary>("update_project_changes_locked", {
+  updateProjectChangesLockMode: (
+    projectId: string,
+    lockMode: ProjectChangesLockMode,
+  ) =>
+    invoke<ProjectSummary>("update_project_changes_lock_mode", {
       projectId,
-      changesLocked,
+      lockMode,
     }),
   renameProject: (projectId: string, name: string) =>
     invoke<ProjectSummary>("rename_project", { projectId, name }),

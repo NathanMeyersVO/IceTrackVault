@@ -36,15 +36,13 @@ import {
 } from "../lib/sidebarNavigation";
 import { useAppearance } from "../hooks/useAppearance";
 import { useProject } from "../hooks/usePlayer";
-import { useProjectChangesLocked } from "../hooks/useProjectChangesLocked";
+import {
+  useProjectChangesLocked,
+  useProjectPlaylistLocked,
+} from "../hooks/useProjectChangesLocked";
 import { useTagDropConfirm } from "../hooks/useTagDropConfirm";
 import { navItemSelectionStyle } from "../lib/appearance";
 import { usePlayerStore, type View } from "../store/playerStore";
-
-interface TaglistDropTarget {
-  taglistId: number;
-  value: string | null;
-}
 
 function SublistGripIcon() {
   return (
@@ -64,7 +62,6 @@ function TaglistGroup({
   view,
   setView,
   isTrackDragging,
-  dragOverTarget,
   supportsTitleImport,
   titleImportDialog,
   scrollContainerRef,
@@ -74,7 +71,6 @@ function TaglistGroup({
   view: View;
   setView: (view: View) => void;
   isTrackDragging: boolean;
-  dragOverTarget: TaglistDropTarget | null;
   supportsTitleImport: boolean;
   titleImportDialog?: {
     title: string;
@@ -362,28 +358,24 @@ function TaglistGroup({
       );
     }
 
-    const isDragOver =
-      dragOverTarget?.taglistId === taglist.id &&
-      dragOverTarget.value === entry.value;
-
     const dropBarClass =
       dropIndicator === "before"
         ? "border-t-2 border-t-drop"
         : dropIndicator === "after"
           ? "border-b-2 border-b-drop"
           : "";
+    const dropTargetHint =
+      isTrackDragging && !changesLocked
+        ? "ring-1 ring-inset ring-dashed ring-muted/70"
+        : "";
     const stateClass = dropIndicator
       ? ""
-      : isDragOver
-        ? "border-2 border-accent bg-accent-subtle/40 text-foreground ring-2 ring-accent"
-        : isTrackDragging
-          ? "border border-dashed border-border bg-surface-hover/50 text-foreground"
-          : active
-            ? "border border-transparent text-foreground"
-            : "border border-transparent text-foreground hover:bg-surface/70";
+      : active
+        ? "border border-transparent text-foreground"
+        : "border border-transparent text-foreground hover:bg-surface/70";
 
     const selectionStyle = navItemSelectionStyle(
-      active && !dropIndicator && !isDragOver,
+      active && !dropIndicator,
       settings,
     );
 
@@ -407,7 +399,7 @@ function TaglistGroup({
             })}
         className={`group/sublist mb-0.5 flex w-full cursor-pointer items-center rounded-md py-1.5 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted ${
           reorderable ? "pl-2" : "pl-6"
-        } ${dropBarClass} ${isDragging ? "opacity-40" : ""} ${stateClass}`}
+        } ${dropBarClass} ${isDragging ? "opacity-40" : ""} ${dropTargetHint} ${stateClass}`}
       >
         {reorderable && entry.value != null ? (
           <button
@@ -552,7 +544,6 @@ export function Sidebar({ width }: { width: number }) {
     setCollections,
     setPlaylists,
     draggingTrackId,
-    setDraggingTrackId,
     activeProject,
   } = usePlayerStore();
   const { refresh } = useProject();
@@ -569,9 +560,6 @@ export function Sidebar({ width }: { width: number }) {
   const [newTaglistKey, setNewTaglistKey] = useState<string>(COMMON_TAG_KEYS[0]);
   const [newTaglistEntryKey, setNewTaglistEntryKey] =
     useState<string>("Track Title");
-  const [dragOverPlaylistId, setDragOverPlaylistId] = useState<number | null>(null);
-  const [dragOverTaglistTarget, setDragOverTaglistTarget] =
-    useState<TaglistDropTarget | null>(null);
   const [pendingDeletePlaylist, setPendingDeletePlaylist] = useState<Playlist | null>(null);
   const [pendingDeleteCollection, setPendingDeleteCollection] =
     useState<Collection | null>(null);
@@ -586,6 +574,7 @@ export function Sidebar({ width }: { width: number }) {
   const renameSkipBlurRef = useRef(false);
   const { requestTagDrop, confirmDialog: tagDropConfirmDialog } = useTagDropConfirm();
   const projectChangesLocked = useProjectChangesLocked();
+  const projectPlaylistLocked = useProjectPlaylistLocked();
 
   const handleCollectionReorder = async (orderedCollections: Collection[]) => {
     setCollections(orderedCollections);
@@ -692,7 +681,7 @@ export function Sidebar({ width }: { width: number }) {
   });
 
   const playlistReorder = usePointerListReorder({
-    enabled: !projectChangesLocked && playlists.length > 1,
+    enabled: !projectPlaylistLocked && playlists.length > 1,
     containerRef: playlistListRef,
     scrollContainerRef: browseNavRef,
     onCommit: (fromIndex, toIndex, position) => {
@@ -706,16 +695,14 @@ export function Sidebar({ width }: { width: number }) {
     },
   });
 
-  const isTrackDragging = draggingTrackId != null && !projectChangesLocked;
+  const isTrackDragging = draggingTrackId != null && !projectPlaylistLocked;
 
   usePointerTrackDrop({
-    enabled: !projectChangesLocked,
-    draggingTrackId,
-    setDraggingTrackId,
+    enabled: !projectPlaylistLocked,
+    allowTagDrop: !projectChangesLocked,
+    allowPlaylistDrop: !projectPlaylistLocked,
     scrollContainerRef: browseNavRef,
     taglists,
-    setDragOverTaglistTarget: setDragOverTaglistTarget,
-    setDragOverPlaylistId,
     onTagDrop: (trackId, droppedTaglist, entry) => {
       void requestTagDrop(trackId, droppedTaglist, entry);
     },
@@ -1008,7 +995,7 @@ export function Sidebar({ width }: { width: number }) {
         </button>
 
         <div className="mb-2 mt-4 px-3 text-xs font-medium uppercase tracking-wide text-muted">
-          {isTrackDragging ? "Drop on a project playlist or project taglist" : "Project playlists"}
+          Project playlists
         </div>
 
         <div ref={playlistListRef}>
@@ -1018,7 +1005,6 @@ export function Sidebar({ width }: { width: number }) {
             "playlistId" in view &&
             view.playlistId === playlist.id;
           const isEditing = editingPlaylistId === playlist.id;
-          const isDragOver = dragOverPlaylistId === playlist.id;
           const isDragging = playlistReorder.activeIndex === index;
           const dropIndicator =
             playlistReorder.dropTarget?.index === index
@@ -1052,34 +1038,34 @@ export function Sidebar({ width }: { width: number }) {
               tabIndex={0}
               onClick={handleNavigate}
               onKeyDown={handleKeyDown}
-              {...(projectChangesLocked ? {} : playlistReorder.getRowProps(index))}
-              {...(projectChangesLocked
+              {...(projectPlaylistLocked ? {} : playlistReorder.getRowProps(index))}
+              {...(projectPlaylistLocked
                 ? {}
                 : {
                     [TRACK_DROP_ATTR]: "playlist",
                     "data-playlist-id": String(playlist.id),
                   })}
               style={navItemSelectionStyle(
-                active && !dropIndicator && !isDragOver,
+                active && !dropIndicator,
                 settings,
               )}
               className={`group/playlist mb-1 flex w-full cursor-pointer items-center rounded-md py-2 pr-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-muted ${
-                projectChangesLocked ? "pl-6" : "pl-2"
+                projectPlaylistLocked ? "pl-6" : "pl-2"
               } ${dropBarClass} ${
                 isDragging ? "opacity-40" : ""
               } ${
+                isTrackDragging && !projectPlaylistLocked
+                  ? "ring-1 ring-inset ring-dashed ring-muted/70"
+                  : ""
+              } ${
                 dropIndicator
                   ? ""
-                  : isDragOver
-                    ? "border-2 border-accent bg-accent-subtle/40 text-foreground ring-2 ring-accent"
-                    : isTrackDragging
-                      ? "border border-dashed border-border bg-surface-hover/50 text-foreground"
-                      : active
-                        ? "border border-transparent text-foreground"
-                        : "border border-transparent text-foreground hover:bg-surface/70"
+                  : active
+                    ? "border border-transparent text-foreground"
+                    : "border border-transparent text-foreground hover:bg-surface/70"
               }`}
             >
-              {!projectChangesLocked ? (
+              {!projectPlaylistLocked ? (
                 <button
                   type="button"
                   aria-label={`Reorder ${playlist.name}`}
@@ -1123,7 +1109,7 @@ export function Sidebar({ width }: { width: number }) {
                   </span>
                 </span>
               )}
-              {!isEditing && !projectChangesLocked ? (
+              {!isEditing && !projectPlaylistLocked ? (
                 <>
                   <button
                     type="button"
@@ -1148,7 +1134,7 @@ export function Sidebar({ width }: { width: number }) {
         })}
         </div>
 
-        {!projectChangesLocked &&
+        {!projectPlaylistLocked &&
           (creating ? (
             <div className="mt-2 space-y-2 px-2">
               <input
@@ -1187,7 +1173,7 @@ export function Sidebar({ width }: { width: number }) {
           ))}
 
         <div className="mb-2 mt-4 px-3 text-xs font-medium uppercase tracking-wide text-muted">
-          {isTrackDragging ? "Drop on a project taglist sublist" : "Project taglists"}
+          Project taglists
         </div>
 
         {taglists.map((taglist) => (
@@ -1197,7 +1183,6 @@ export function Sidebar({ width }: { width: number }) {
             view={view}
             setView={setView}
             isTrackDragging={isTrackDragging}
-            dragOverTarget={dragOverTaglistTarget}
             supportsTitleImport={applicationConfig.supportsTitleImport}
             titleImportDialog={applicationConfig.titleImportDialog}
             scrollContainerRef={browseNavRef}
