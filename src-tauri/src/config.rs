@@ -78,6 +78,22 @@ fn normalize_path_key(path: &Path) -> String {
         .to_string()
 }
 
+pub fn library_paths_equal(a: &Path, b: &Path) -> bool {
+    if normalize_path_key(a) == normalize_path_key(b) {
+        return true;
+    }
+    let a_canon = a.canonicalize().unwrap_or_else(|_| a.to_path_buf());
+    let b_canon = b.canonicalize().unwrap_or_else(|_| b.to_path_buf());
+    normalize_path_key(&a_canon) == normalize_path_key(&b_canon)
+}
+
+pub fn db_watch_folder_matches_library(db: &Database, library_root: &Path) -> bool {
+    let Ok(Some(folder)) = db.get_project_folder() else {
+        return false;
+    };
+    library_paths_equal(Path::new(&folder), library_root)
+}
+
 pub fn resolve_path(library_root: &Path, relative: &str) -> PathBuf {
     let relative = relative.replace('/', std::path::MAIN_SEPARATOR_STR);
     library_root.join(relative)
@@ -173,8 +189,10 @@ pub fn export_config(db: &Database, library_root: &Path) -> Result<IceTrackVault
                 .get_track_path(track_id)
                 .map_err(|e| e.to_string())?
                 .ok_or_else(|| format!("Track {track_id} not found"))?;
-            let rel = relative_path(&library_root, Path::new(&path))
-                .ok_or_else(|| format!("Track path not under project: {path}"))?;
+            // Omit paths outside library_root (same as playlist export).
+            let Some(rel) = relative_path(&library_root, Path::new(&path)) else {
+                continue;
+            };
             track_order
                 .entry(tag_value)
                 .or_default()
@@ -525,6 +543,47 @@ mod tests {
         assert_eq!(tracks.len(), 1);
         assert_eq!(tracks[0].title, "Intro");
 
+        std::fs::remove_dir_all(&library).ok();
+    }
+
+    #[test]
+    fn export_skips_taglist_tracks_outside_library() {
+        let (db, library) = test_db_with_library();
+        let other_library = std::env::temp_dir().join(format!(
+            "icetrackvault-config-other-{}",
+            uuid::Uuid::new_v4()
+        ));
+        std::fs::create_dir_all(&other_library).expect("create other library");
+        let other_track = other_library.join("outside.mp3");
+        std::fs::write(&other_track, b"x").expect("write outside track");
+        let other_track = other_track.canonicalize().unwrap_or(other_track);
+
+        let taglist_id = db.create_taglist("Events", "Comment", "", "").unwrap();
+        let inside = db.list_tracks().unwrap()[0].id;
+        db.replace_track_tags(inside, &[("Comment".to_string(), "01".to_string())])
+            .unwrap();
+        let (outside_id, _) = db
+            .upsert_track(
+                other_track.to_str().unwrap(),
+                "Outside",
+                "",
+                "",
+                1000,
+                None,
+            )
+            .expect("outside track");
+        db.replace_track_tags(outside_id, &[("Comment".to_string(), "01".to_string())])
+            .unwrap();
+        db.reorder_taglist_tracks(taglist_id, Some("01"), &[outside_id, inside])
+            .unwrap();
+
+        let exported = export_config(&db, &library).expect("export should not fail");
+        assert_eq!(
+            exported.taglists[0].track_order.get("01"),
+            Some(&vec!["01-intro.mp3".to_string()])
+        );
+
+        std::fs::remove_dir_all(&other_library).ok();
         std::fs::remove_dir_all(&library).ok();
     }
 
