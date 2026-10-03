@@ -19,6 +19,22 @@ hero:
       link: https://forms.gle/38pZySw5F1Q8KAez7
 ---
 
+## Introductory tour
+
+New to IceTrackVault? This short video walks through the main window, projects, and playback.
+
+<div class="video-embed">
+  <iframe
+    src="https://www.youtube.com/embed/CBk5WNam518"
+    title="IceTrackVault introductory tour"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+  ></iframe>
+</div>
+
+[Watch on YouTube](https://www.youtube.com/watch?v=CBk5WNam518)
+
 ## About
 
 **IceTrackVault** is a Windows desktop music player built specifically for figure skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — setting up and managing the music creates a lot of extra work. IceTrackVault greatly reduces the heavy workload and tedious change management, streamlining the entire competition music workflow.
