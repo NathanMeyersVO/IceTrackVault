@@ -50,13 +50,13 @@ Leave the project **Unlocked** while you are still importing EMS data, reorderin
 
 ## If the app stops responding
 
-If IceTrackVault becomes unresponsive, **close it** (Task Manager if needed), **restart** the application, and reopen your project from **Project → Projects…**. That usually restores normal operation.
+In the unlikely event IceTrackVault becomes unresponsive, **close it** (Task Manager if needed), **restart** the application, and reopen your project from **Project → Projects…**. That usually restores normal operation.
 
 Regular **Export Project…** backups remain your best protection if you ever need to recover from a bad state.
 
 ## Phone upload: set up early
 
-If you plan to use phone upload for late files, follow [Phone upload setup](./phone-upload) and **test end-to-end well before** the competition—not between groups. Use **View → Phone upload setup…** and run **Test tunnel path** on a quiet day, then prove **Project → Upload track to project… → Upload from phone** once before you rely on it at the competition.
+If you plan to use phone upload for late files, follow [Phone upload setup](./phone-upload) and **test end-to-end well before** the competition. Use **View → Phone upload setup…** and run **Test tunnel path** on a quiet day, then prove **Project → Upload track to project… → Upload from phone** once before you rely on it at the competition.
 
 ## What to read next
 
