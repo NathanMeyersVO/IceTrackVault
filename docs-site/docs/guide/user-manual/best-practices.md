@@ -33,6 +33,15 @@ The window title shows `(locked)` or `(playlists editable)` when a lock is activ
 
 Leave the project **Unlocked** while you are still importing EMS data, reordering, or fixing tags. Switch to a lock mode when you are ready to run music.
 
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/best-practices-lock-mode.png"
+    alt="Projects dialog showing Lock mode options for the active project"
+    data-zoomable
+  />
+  <figcaption><strong>Lock mode</strong> in <strong>Project → Projects…</strong> — lock all edits, or allow playlist edits only during the competition.</figcaption>
+</figure>
+
 ## If the app stops responding
 
 If IceTrackVault becomes unresponsive, **close it** (Task Manager if needed), **restart** the application, and reopen your project from **Project → Projects…**. That usually restores normal operation.

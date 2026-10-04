@@ -58,6 +58,15 @@ Open **View → Phone upload setup…**
 
 Upload from phone is **ready** when enable is on, the origin is valid, and a tunnel token is saved. If **Upload from phone** does not appear in upload dialogs, reopen **Phone upload setup…** and confirm all three.
 
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/phone-upload-setup.png"
+    alt="Phone upload setup dialog with port, origin, token, and test buttons"
+    data-zoomable
+  />
+  <figcaption><strong>View → Phone upload setup…</strong> — local port, public origin, tunnel token, enable switch, and connection tests.</figcaption>
+</figure>
+
 ## Using phone upload at the rink
 
 When setup is ready:
@@ -68,6 +77,15 @@ When setup is ready:
 On the phone, scan the QR code or open the link, then select one or more audio files. Files are added to the project or collection when the upload completes.
 
 **Session links are temporary.** Each upload flow gets a new link. Anyone with the link can upload while that session is open—do not post session URLs publicly.
+
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/phone-upload-qr.png"
+    alt="Upload dialog showing Upload from phone with QR code and session link"
+    data-zoomable
+  />
+  <figcaption><strong>Upload from phone</strong> — QR code and session link for the phone browser while the upload session is open.</figcaption>
+</figure>
 
 ## Troubleshooting
 
