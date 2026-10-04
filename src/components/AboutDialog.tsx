@@ -3,6 +3,7 @@ import { getVersion } from "@tauri-apps/api/app";
 
 import { APP_AUTHOR, APP_NAME, APP_URL, APP_URL_LABEL } from "../lib/appInfo";
 import { AppLogo } from "./AppLogo";
+import { LicenseDialog } from "./LicenseDialog";
 
 interface AboutDialogProps {
   onClose: () => void;
@@ -10,14 +11,15 @@ interface AboutDialogProps {
 
 export function AboutDialog({ onClose }: AboutDialogProps) {
   const [version, setVersion] = useState("…");
+  const [licenseOpen, setLicenseOpen] = useState(false);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !licenseOpen) onClose();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [onClose, licenseOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,8 +51,15 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
         <div className="space-y-3 px-4 py-6 text-center">
           <AppLogo className="mx-auto h-28 w-auto max-w-full object-contain" />
           <p className="text-sm text-muted">Version {version}</p>
-          <div className="space-y-1 text-sm text-foreground">
+          <div className="flex flex-col items-center gap-1 text-sm text-foreground">
             <p>© 2026 {APP_AUTHOR}</p>
+            <button
+              type="button"
+              onClick={() => setLicenseOpen(true)}
+              className="text-accent hover:text-accent-hover hover:underline"
+            >
+              MIT License
+            </button>
             <a
               href={APP_URL}
               className="text-accent hover:text-accent-hover hover:underline"
@@ -71,6 +80,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
           </button>
         </div>
       </div>
+      {licenseOpen ? <LicenseDialog onClose={() => setLicenseOpen(false)} /> : null}
     </div>
   );
 }
