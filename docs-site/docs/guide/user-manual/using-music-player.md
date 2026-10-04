@@ -2,7 +2,7 @@
 
 This chapter covers running music during a skating competition. It explains how **Events** are organized in the sidebar, how each event’s **tracklist** (skating order) works, how to **play and seek** tracks, and how to **reorder events and competitors** to match starting and event orders.
 
-If you have not loaded a project yet, start with [Getting started](./getting-started).
+If you have not loaded a project yet, start with [Getting started](./getting-started). To switch competitions or set lock modes, see [Managing projects](./managing-projects).
 
 ## Main window layout
 

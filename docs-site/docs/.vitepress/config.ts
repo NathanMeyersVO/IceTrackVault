@@ -28,6 +28,10 @@ export default defineConfig({
           { text: "Introduction", link: "/guide/user-manual/" },
           { text: "Getting started", link: "/guide/user-manual/getting-started" },
           {
+            text: "Managing projects",
+            link: "/guide/user-manual/managing-projects",
+          },
+          {
             text: "Using the music player",
             link: "/guide/user-manual/using-music-player",
           },

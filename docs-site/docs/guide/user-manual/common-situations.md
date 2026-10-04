@@ -32,19 +32,23 @@ A competitor's music may be missing: perhaps they never uploaded it, or uploaded
 
 ### Add or assign music
 
-1. **Project → Upload track to project…**
-2. Choose files, drag and drop, or use **Upload from phone** if you configured [Phone upload setup](./phone-upload).
-3. The uploaded track will probably show up in the **NO-TAG** event. (In the unlikely event the track had a **`Composer`** tag set, it wil instead show up in an event matching that tag.) Go to that event and select the track’s **⋮** menu → **Edit tags…**
-4. Add tags for **`Composer`** (set to the event number) and **`Track Title`** (set to the competitor name). Or edit those tags if they already exist. Then **Save**.
+1. Choose **Project → Upload track to project…** The **Upload to project** dialog opens. It explains that files are **copied into your project folder**, then offers one of **three** ways to deliver a music track (or **two** if [Phone upload setup](./phone-upload) is not configured yet).
 
 <figure class="screenshot-box">
   <img
     src="/screenshots/common-situations-upload.png"
-    alt="Upload track to project dialog with file and phone upload options"
+    alt="Upload to project dialog with Choose files, Drag and drop, and Upload from phone sections"
     data-zoomable
   />
-  <figcaption><strong>Upload track to project</strong> — add files from disk, drag and drop, or <strong>Upload from phone</strong>.</figcaption>
+  <figcaption><strong>Upload to project</strong> — three delivery options: <strong>Choose files</strong>, <strong>Drag and drop</strong>, and <strong>Upload from phone</strong> (when phone upload is ready).</figcaption>
 </figure>
+
+2. Pick how to add the audio:
+   - **Choose files** — click **Choose files…** and select one or more audio files from disk.
+   - **Drag and drop** — drop files onto **Drop audio files here** (MP3, FLAC, WAV, and similar formats).
+   - **Upload from phone** — use the phone section to start a session with a QR code and link (requires phone upload setup).
+3. The uploaded track will probably show up in the **NO-TAG** event. (In the unlikely event the track had a **`Composer`** tag set, it will instead show up in an event matching that tag.) Go to that event and select the track’s **⋮** menu → **Edit tags…**
+4. Add tags for **`Composer`** (set to the event number) and **`Track Title`** (set to the competitor name). Or edit those tags if they already exist. Then **Save**.
 
 <figure class="screenshot-box">
   <img
@@ -66,18 +70,9 @@ You can quickly correct this with Use a **swap** operation:
 3. Review the preview, which shows you the details of the files and tags that will be swapped.
 4. Click **OK**.
 
-<figure class="screenshot-box">
-  <img
-    src="/screenshots/common-situations-swap-event.png"
-    alt="Swap Event dialog with preview of files and tags to exchange"
-    data-zoomable
-  />
-  <figcaption><strong>Swap Event…</strong> — pick the other event and review the swap preview before you confirm.</figcaption>
-</figure>
-
 ## Moving a competitor to a different event
 
-Use a **move** when one competitor should be in a different event and you are **not** exchanging music with a track in the other event. There are a couple of ways to do this:
+Use a **move** when a competitor should be in a different event. There are a couple of ways to do this:
 
 ### Drag to the Events list
 
@@ -126,15 +121,6 @@ Use **Replace file** when tags, event, and skater identity are correct but the *
    - IceTrackVault copies the new file into the project folder that holds this track.
    - IceTrackVault copies tags from the old file into the new one.
 4. Confirm when the preview matches what you want.
-
-<figure class="screenshot-box">
-  <img
-    src="/screenshots/common-situations-replace-file.png"
-    alt="Replace file dialog showing what will happen to the project copy and tags"
-    data-zoomable
-  />
-  <figcaption><strong>Replace file…</strong> — confirm <strong>What will happen</strong> before replacing the audio in the project folder.</figcaption>
-</figure>
 
 ## Applying an updated EMS download
 

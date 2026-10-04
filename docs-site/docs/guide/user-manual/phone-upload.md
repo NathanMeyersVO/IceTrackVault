@@ -78,15 +78,6 @@ On the phone, scan the QR code or open the link, then select one or more audio f
 
 **Session links are temporary.** Each upload flow gets a new link. Anyone with the link can upload while that session is open—do not post session URLs publicly.
 
-<figure class="screenshot-box">
-  <img
-    src="/screenshots/phone-upload-qr.png"
-    alt="Upload dialog showing Upload from phone with QR code and session link"
-    data-zoomable
-  />
-  <figcaption><strong>Upload from phone</strong> — QR code and session link for the phone browser while the upload session is open.</figcaption>
-</figure>
-
 ## Troubleshooting
 
 | Symptom | Things to check |

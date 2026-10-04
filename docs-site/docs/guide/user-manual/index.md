@@ -7,6 +7,7 @@ If you are setting up the app for the first time, start with [Getting started](.
 ## Contents
 
 - [Getting started](./getting-started) — install IceTrackVault and create your first competition project from EMS downloads.
+- [Managing projects](./managing-projects) — multiple competitions on one PC, the Projects hub, and lock modes.
 - [Using the music player](./using-music-player) — playback, waveforms, playlists, and event order during the competition.
 - [Solutions for common situations](./common-situations) — missing tracks, wrong uploads, swaps, and other fixes before and during the event.
 - [Stored collections](./stored-collections) — permanent libraries such as national anthems and continuous-play playlists, separate from competition projects.
