@@ -98,5 +98,5 @@ npm run docs:dev
 - Put PNG (or WebP) files in `docs-site/docs/public/screenshots/`.
 - Reference them from Markdown with a root path, e.g. `![Alt text](/screenshots/my-screenshot.png)`.
 - For a bordered image + smaller caption, wrap in `<figure class="screenshot-box">` with `<img … data-zoomable />` and `<figcaption>` (styles in `docs/.vitepress/theme/custom.css`).
-- Images under `/screenshots/` render at a mid width on the page; **click to zoom** to full resolution (via `vitepress-plugin-lightbox` and `docs/.vitepress/theme/`).
+- Images under `/screenshots/` render at **natural size** (never upscaled), capped at **720px** wide, **centered** when narrower than the content column; **click to zoom** to full resolution (via `vitepress-plugin-lightbox` and `docs/.vitepress/theme/`).
 - Pushes to `main` that touch `docs-site/` deploy the site through GitHub Actions (see repo `README`).

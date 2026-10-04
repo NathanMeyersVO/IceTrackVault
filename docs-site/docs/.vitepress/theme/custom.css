@@ -19,11 +19,13 @@
   border-radius: 8px;
 }
 
-/* Guide screenshots: mid-size inline, full resolution via lightbox click */
+/* Guide screenshots: natural width up to 720px; click for full resolution (medium-zoom) */
 .vp-doc img[src*="/screenshots/"] {
-  max-width: 720px;
-  width: 100%;
+  display: block;
+  width: auto;
+  max-width: min(720px, 100%);
   height: auto;
+  margin-inline: auto;
   cursor: zoom-in;
 }
 
@@ -38,8 +40,10 @@
 
 /* Image + caption in one bordered block (use <figure class="screenshot-box">) */
 .vp-doc figure.screenshot-box {
-  max-width: 720px;
-  margin: 1.25rem 0;
+  width: fit-content;
+  max-width: min(720px, 100%);
+  margin-block: 1.25rem;
+  margin-inline: auto;
   padding: 0.75rem 0.75rem 0.5rem;
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
@@ -48,9 +52,10 @@
 
 .vp-doc figure.screenshot-box img {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
-  margin: 0;
+  margin-inline: auto;
   border-radius: 4px;
 }
 
