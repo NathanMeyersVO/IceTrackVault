@@ -2,7 +2,7 @@
 
 This chapter covers running music during a skating competition. It explains how **Events** are organized in the sidebar, how each event’s **tracklist** (skating order) works, how to **play and seek** tracks, and how to **reorder events and competitors** to match starting and event orders.
 
-If you have not loaded a project yet, start with [Getting started](./getting-started).
+If you have not loaded a project yet, start with [Getting started](./getting-started). To switch competitions or set lock modes, see [Managing projects](./managing-projects).
 
 ## Main window layout
 
@@ -37,6 +37,15 @@ You can also use **Page Up** and **Page Down** to move to the previous or next e
 
 At the bottom of the **Events** list, **NO-TAG** lists project tracks that do not have a tag placing them in any event. Those files will not appear under any numbered event until tags are set (we discuss later how to do that).
 
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/music-player-no-tag.png"
+    alt="Events taglist in the sidebar with NO-TAG at the bottom"
+    data-zoomable
+  />
+  <figcaption><strong>NO-TAG</strong> at the bottom of the Events list — tracks waiting for event tags.</figcaption>
+</figure>
+
 ## Per-event tracklist (competitors)
 
 With an event selected, the center table shows the music tracks for that event. They can be reordered, to reflect start order, by grabbing and dragging the grab handle on the left side of the row. Here are the most important controls to use in the tracklist:
@@ -63,7 +72,14 @@ The **Search project…** field above the table finds tracks across the whole pr
 
 At the end of each event, you'll see a footer row labeled **Next project taglist (…)** with the next event name. This provides an easy way to navigate to the next event directly from the current event's tracklist - without having to mouse over to the **Events** list. You can move to the next event by double-clicking on that row, or hitting **Enter** when that row is selected.
 
-
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/music-player-next-event-footer.png"
+    alt="Tracklist footer row labeled Next project taglist"
+    data-zoomable
+  />
+  <figcaption><strong>Next project taglist (…)</strong> footer — jump to the next event without using the sidebar.</figcaption>
+</figure>
 
 ## Playing music
 
@@ -85,6 +101,15 @@ The player bar (bottom) provides:
 
 The waveform display in the player gives you a view into the track's volume, and also shows position and time while the track is playing. You can also click within the track to change playback position - even while the track is playing.
 
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/music-player-waveform.png"
+    alt="Player bar with waveform, transport controls, and elapsed time"
+    data-zoomable
+  />
+  <figcaption>Player bar — transport controls, volume, elapsed time, and clickable <strong>waveform</strong> for seek.</figcaption>
+</figure>
+
 ## Rearranging skating order and event order
 
 The order of events and competitors you see when the competition is first loaded might not match actual event or skating order. IceTrackVault lets you reorder **competitors within an event** and **events within the competition**. Order is stored in the project database and is kept when you reopen the project.
@@ -96,6 +121,14 @@ The order of events and competitors you see when the competition is first loaded
 3. **Press and drag** the grip up or down. A line shows where the row will land.
 4. **Release** to save the new order.
 
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/music-player-reorder-competitors.png"
+    alt="Event tracklist with grip handle for reordering competitors"
+    data-zoomable
+  />
+  <figcaption>Reorder skating order — drag the row <strong>grip</strong> in the event tracklist.</figcaption>
+</figure>
 
 ### Reorder events (rows in the Events taglist)
 
@@ -105,7 +138,14 @@ The order of events and competitors you see when the competition is first loaded
 
 **NO-TAG** is not reorderable; it always stays at the bottom.
 
-
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/music-player-reorder-events.png"
+    alt="Sidebar Events list with grip handles for reordering events"
+    data-zoomable
+  />
+  <figcaption>Reorder events — drag numbered events under <strong>Project Taglists → Events</strong> to match the schedule.</figcaption>
+</figure>
 
 ## Keyboard shortcuts
 

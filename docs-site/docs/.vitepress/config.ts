@@ -28,6 +28,10 @@ export default defineConfig({
           { text: "Introduction", link: "/guide/user-manual/" },
           { text: "Getting started", link: "/guide/user-manual/getting-started" },
           {
+            text: "Managing projects",
+            link: "/guide/user-manual/managing-projects",
+          },
+          {
             text: "Using the music player",
             link: "/guide/user-manual/using-music-player",
           },
@@ -46,6 +50,10 @@ export default defineConfig({
           {
             text: "Best practices",
             link: "/guide/user-manual/best-practices",
+          },
+          {
+            text: "Contact us",
+            link: "/guide/user-manual/contact-us",
           },
         ],
       },

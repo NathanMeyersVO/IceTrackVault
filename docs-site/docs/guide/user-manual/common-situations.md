@@ -6,7 +6,7 @@ next:
 
 # Solutions for common situations
 
-**IceTrackVault** was written not just to play music, but to provide robust support for problems that music coordinators routinely deal with. This page walks through typical issues before and during an event: missing music, incorrect files, swapped short and long programs, moving skaters between events, creating events on the schedule, and applying updated EMS downloads.
+**IceTrackVault** was written not just to play music, but to provide robust support for problems that music coordinators routinely deal with. This page walks through typical issues before and during the competition: missing music, incorrect files, swapped short and long programs, moving skaters between events, creating events on the schedule, and applying updated EMS downloads.
 
 ## Before you edit
 
@@ -15,7 +15,16 @@ Most fixes on this page change **tags** and sometimes **files on disk** in your 
 1. Open **Project → Projects…**
 2. Set **Lock mode** to **Unlocked** for that project
 
-While a lock is active, track row menus and sidebar edits that would change events or tags are unavailable. See [Best practices](./best-practices#use-lock-down-modes-during-the-competition) for when to lock again during the meet.
+While a lock is active, track row menus and sidebar edits that would change events or tags are unavailable. See [Best practices](./best-practices#use-lock-down-modes-during-the-competition) for when to lock again during the competition.
+
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/common-situations-lock-mode.png"
+    alt="Projects dialog with Lock mode set to Unlocked"
+    data-zoomable
+  />
+  <figcaption><strong>Project → Projects…</strong> — set <strong>Lock mode</strong> to <strong>Unlocked</strong> before editing tags or events.</figcaption>
+</figure>
 
 ## Missing track
 
@@ -23,10 +32,32 @@ A competitor's music may be missing: perhaps they never uploaded it, or uploaded
 
 ### Add or assign music
 
-1. **Project → Upload track to project…**
-2. Choose files, drag and drop, or use **Upload from phone** if you configured [Phone upload setup](./phone-upload).
-3. The uploaded track will probably show up in the **NO-TAG** event. (In the unlikely event the track had a **`Composer`** tag set, it wil instead show up in an event matching that tag.) Go to that event and select the track’s **⋮** menu → **Edit tags…**
+1. Choose **Project → Upload track to project…** The **Upload to project** dialog opens. It explains that files are **copied into your project folder**, then offers one of **three** ways to deliver a music track (or **two** if [Phone upload setup](./phone-upload) is not configured yet).
+
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/common-situations-upload.png"
+    alt="Upload to project dialog with Choose files, Drag and drop, and Upload from phone sections"
+    data-zoomable
+  />
+  <figcaption><strong>Upload to project</strong> — three delivery options: <strong>Choose files</strong>, <strong>Drag and drop</strong>, and <strong>Upload from phone</strong> (when phone upload is ready).</figcaption>
+</figure>
+
+2. Pick how to add the audio:
+   - **Choose files** — click **Choose files…** and select one or more audio files from disk.
+   - **Drag and drop** — drop files onto **Drop audio files here** (MP3, FLAC, WAV, and similar formats).
+   - **Upload from phone** — use the phone section to start a session with a QR code and link (requires phone upload setup).
+3. The uploaded track will probably show up in the **NO-TAG** event. (In the unlikely event the track had a **`Composer`** tag set, it will instead show up in an event matching that tag.) Go to that event and select the track’s **⋮** menu → **Edit tags…**
 4. Add tags for **`Composer`** (set to the event number) and **`Track Title`** (set to the competitor name). Or edit those tags if they already exist. Then **Save**.
+
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/common-situations-edit-tags.png"
+    alt="Edit tags dialog showing Composer and Track Title fields"
+    data-zoomable
+  />
+  <figcaption><strong>Edit tags…</strong> — set <strong>Composer</strong> to the event number and <strong>Track Title</strong> to the competitor name.</figcaption>
+</figure>
 
 ## Swap tracks
 
@@ -41,7 +72,7 @@ You can quickly correct this with Use a **swap** operation:
 
 ## Moving a competitor to a different event
 
-Use a **move** when one competitor should be in a different event and you are **not** exchanging music with a track in the other event. There are a couple of ways to do this:
+Use a **move** when a competitor should be in a different event. There are a couple of ways to do this:
 
 ### Drag to the Events list
 
@@ -67,6 +98,15 @@ The schedule report defines most events at project creation. If an event is miss
 5. Click **Add**.
 
 IceTrackVault opens the new empty event. Assign tracks by uploading and tagging, dragging from **NO-TAG**, or moving from another event.
+
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/common-situations-add-event.png"
+    alt="Add event dialog with tag value and display title fields"
+    data-zoomable
+  />
+  <figcaption><strong>+Event</strong> on the Events taglist — enter the EMS <strong>Composer</strong> number and the sidebar display title.</figcaption>
+</figure>
 
 ## Replace track
 
@@ -95,6 +135,15 @@ You might want to download updated tracks and event names from EMS after your or
 5. Click **Apply Selected Changes** (or the equivalent confirm control in the preview).
 
 After apply, spot-check **Events** and a few competitors. Use the sections above for any track still missing, in the wrong event, or needing a file replacement.
+
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/common-situations-ems-apply.png"
+    alt="Apply EMS download preview with merge and full replacement options"
+    data-zoomable
+  />
+  <figcaption><strong>Apply EMS Download…</strong> preview — choose <strong>Merge</strong> or <strong>Full replacement (include removals)</strong>, then apply selected changes.</figcaption>
+</figure>
 
 ## What to read next
 

@@ -1,3 +1,9 @@
+---
+next:
+  text: Contact us
+  link: /guide/user-manual/contact-us
+---
+
 # Best practices
 
 This page is for experienced competition music staff who are **moving from an iTunes workflow** to IceTrackVault. You already know how to run a competition; here we focus on moving forward with **new, unproven software** while you make that transition.
@@ -33,18 +39,27 @@ The window title shows `(locked)` or `(playlists editable)` when a lock is activ
 
 Leave the project **Unlocked** while you are still importing EMS data, reordering, or fixing tags. Switch to a lock mode when you are ready to run music.
 
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/best-practices-lock-mode.png"
+    alt="Projects dialog showing Lock mode options for the active project"
+    data-zoomable
+  />
+  <figcaption><strong>Lock mode</strong> in <strong>Project → Projects…</strong> — lock all edits, or allow playlist edits only during the competition.</figcaption>
+</figure>
+
 ## If the app stops responding
 
-If IceTrackVault becomes unresponsive, **close it** (Task Manager if needed), **restart** the application, and reopen your project from **Project → Projects…**. That usually restores normal operation.
+In the unlikely event IceTrackVault becomes unresponsive, **close it** (Task Manager if needed), **restart** the application, and reopen your project from **Project → Projects…**. That usually restores normal operation.
 
 Regular **Export Project…** backups remain your best protection if you ever need to recover from a bad state.
 
 ## Phone upload: set up early
 
-If you plan to use phone upload for late files, follow [Phone upload setup](./phone-upload) and **test end-to-end well before** the competition—not between groups. Use **View → Phone upload setup…** and run **Test tunnel path** on a quiet day, then prove **Project → Upload track to project… → Upload from phone** once before you rely on it at the competition.
+If you plan to use phone upload for late files, follow [Phone upload setup](./phone-upload) and **test end-to-end well before** the competition. Use **View → Phone upload setup…** and run **Test tunnel path** on a quiet day, then prove **Project → Upload track to project… → Upload from phone** once before you rely on it at the competition.
 
 ## What to read next
 
-- [Solutions for common situations](./common-situations) — missing music, replacements, swaps, EMS re-downloads.
+- [Contact us](./contact-us) — report bugs or ask questions via GitHub or the contact form.
 - [User manual introduction](./index) — full table of contents.
 

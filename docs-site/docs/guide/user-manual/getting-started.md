@@ -1,3 +1,9 @@
+---
+next:
+  text: Managing projects
+  link: /guide/user-manual/managing-projects
+---
+
 # Getting started
 
 IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS is not offered as a supported platform today; see [Build from source](../development) if you are a contributor exploring a local macOS build.
@@ -18,7 +24,9 @@ IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS
   <figcaption>Main window after a fresh installation, with no music loaded. Click the image to view full size.</figcaption>
 </figure>
 
-A new competition project is created using one or more ZIP archives of tracks - tagged and packaged by EMS - along with an EMS-generated schedule report. The schedule report provides the names for each event. To start, you will select the directory where these files are located.
+A new competition project is created using one or more ZIP archives of tracks - tagged and packaged by EMS - along with an EMS-generated schedule report. The schedule report provides the names for each event.
+
+To start, *collect the schedule report and all the music ZIPs in one directory*. Then, in the steps below, you will select the directory where these files are located.
 
 
 1. Open **Project → Projects…** and select "New Project"
@@ -73,3 +81,8 @@ A new competition project is created using one or more ZIP archives of tracks - 
   />
   <figcaption>IceTrackVault has loaded the project. The left-hand column lets you navigate - it's currently showing you "Project Tracks", a list of all the tracks. The big center window shows the tracks, and you can see the music player at the bottom.</figcaption>
 </figure>
+
+## What to read next
+
+- [Managing projects](./managing-projects) — multiple competitions on one PC, the Projects hub, and lock modes.
+- [Using the music player](./using-music-player) — events, playback, and keyboard shortcuts during the competition.

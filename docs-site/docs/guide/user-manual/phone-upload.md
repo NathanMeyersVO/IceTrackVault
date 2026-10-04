@@ -58,6 +58,15 @@ Open **View → Phone upload setup…**
 
 Upload from phone is **ready** when enable is on, the origin is valid, and a tunnel token is saved. If **Upload from phone** does not appear in upload dialogs, reopen **Phone upload setup…** and confirm all three.
 
+<figure class="screenshot-box">
+  <img
+    src="/screenshots/phone-upload-setup.png"
+    alt="Phone upload setup dialog with port, origin, token, and test buttons"
+    data-zoomable
+  />
+  <figcaption><strong>View → Phone upload setup…</strong> — local port, public origin, tunnel token, enable switch, and connection tests.</figcaption>
+</figure>
+
 ## Using phone upload at the rink
 
 When setup is ready:
