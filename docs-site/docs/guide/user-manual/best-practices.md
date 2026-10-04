@@ -1,3 +1,9 @@
+---
+next:
+  text: Contact us
+  link: /guide/user-manual/contact-us
+---
+
 # Best practices
 
 This page is for experienced competition music staff who are **moving from an iTunes workflow** to IceTrackVault. You already know how to run a competition; here we focus on moving forward with **new, unproven software** while you make that transition.
@@ -54,6 +60,6 @@ If you plan to use phone upload for late files, follow [Phone upload setup](./ph
 
 ## What to read next
 
-- [Solutions for common situations](./common-situations) — missing music, replacements, swaps, EMS re-downloads.
+- [Contact us](./contact-us) — report bugs or ask questions via GitHub or the contact form.
 - [User manual introduction](./index) — full table of contents.
 

@@ -12,5 +12,6 @@ If you are setting up the app for the first time, start with [Getting started](.
 - [Stored collections](./stored-collections) — permanent libraries such as national anthems and continuous-play playlists, separate from competition projects.
 - [Phone upload setup](./phone-upload) — Cloudflare tunnel and IceTrackVault settings for uploading tracks from a phone.
 - [Best practices](./best-practices) — staying safe while moving from iTunes: backups, lock modes, recovery, and phone upload timing.
+- [Contact us](./contact-us) — feedback and support via GitHub issues or the contact form.
 
 For developers building from source, see [Build from source](../development).

@@ -47,6 +47,10 @@ export default defineConfig({
             text: "Best practices",
             link: "/guide/user-manual/best-practices",
           },
+          {
+            text: "Contact us",
+            link: "/guide/user-manual/contact-us",
+          },
         ],
       },
       {
