@@ -505,24 +505,24 @@ mod tests {
 
     #[test]
     fn compute_swapped_paths_same_parent_basenames_only() {
-        let a = Path::new(r"C:\lib\foo.mp3");
-        let b = Path::new(r"C:\lib\bar.mp3");
-        let (na, nb) = compute_swapped_paths(a, b, true, true);
+        let a = PathBuf::from("lib").join("foo.mp3");
+        let b = PathBuf::from("lib").join("bar.mp3");
+        let (na, nb) = compute_swapped_paths(&a, &b, true, true);
         assert_eq!(na, b);
         assert_eq!(nb, a);
-        let (na, nb) = compute_swapped_paths(a, b, true, false);
+        let (na, nb) = compute_swapped_paths(&a, &b, true, false);
         assert_eq!(na, a);
         assert_eq!(nb, b);
     }
 
     #[test]
     fn compute_swapped_paths_cross_folder() {
-        let a = Path::new(r"C:\lib\event01\foo.mp3");
-        let b = Path::new(r"C:\lib\event02\bar.mp3");
-        let (na, nb) = compute_swapped_paths(a, b, true, false);
-        assert_eq!(na, Path::new(r"C:\lib\event02\foo.mp3"));
-        assert_eq!(nb, Path::new(r"C:\lib\event01\bar.mp3"));
-        let (na, nb) = compute_swapped_paths(a, b, true, true);
+        let a = PathBuf::from("lib").join("event01").join("foo.mp3");
+        let b = PathBuf::from("lib").join("event02").join("bar.mp3");
+        let (na, nb) = compute_swapped_paths(&a, &b, true, false);
+        assert_eq!(na, PathBuf::from("lib").join("event02").join("foo.mp3"));
+        assert_eq!(nb, PathBuf::from("lib").join("event01").join("bar.mp3"));
+        let (na, nb) = compute_swapped_paths(&a, &b, true, true);
         assert_eq!(na, b);
         assert_eq!(nb, a);
     }
