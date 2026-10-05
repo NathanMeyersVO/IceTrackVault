@@ -1,12 +1,12 @@
 # IceTrackVault
 
-A **Windows** desktop music player with an iTunes-like layout for music coordinators. Manage **projects** (each stores audio under a `library/` folder in app data), browse **project tracks**, manage project playlists and taglists, apply **EMS download** updates (for US Figure Skating EMS projects), and play audio with a waveform view powered by [wavesurfer.js](https://wavesurfer.xyz/). Built with Tauri + React; the source is OS-independent, but only Windows installers are published today.
+A desktop music player for **Windows** and **Linux**, with an iTunes-like layout for music coordinators. Manage **projects** (each stores audio under a `library/` folder in app data), browse **project tracks**, manage project playlists and taglists, apply **EMS download** updates (for US Figure Skating EMS projects), and play audio with a waveform view powered by [wavesurfer.js](https://wavesurfer.xyz/). Built with Tauri + React.
 
 **Documentation & product site:** [nathanmeyersvo.github.io/IceTrackVault](https://nathanmeyersvo.github.io/IceTrackVault/)
 
 ## Platform
 
-- **End users:** Windows only—download from [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases).
+- **End users:** Windows and Linux—download from [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases).
 - **macOS:** Not supported for delivery today. A local macOS build may be possible (`npm run tauri build` on a Mac), but that is not a current priority. The author welcomes help from any interested macOS developer who would like to take on enabling macOS—open an issue or PR on GitHub.
 
 ## Stack
@@ -27,7 +27,8 @@ Build a release installer: `npm run tauri build`
 
 **Contributing:** fork the repo, use `feature/` or `bugfix/` branches on your fork, and open a PR to `main`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-- Windows output (releases): `src-tauri/target/release/bundle/`
+- Windows output (releases): `src-tauri/target/release/bundle/` (`.msi` and `.exe`)
+- Linux output (releases): `src-tauri/target/release/bundle/` (`.deb` and `.AppImage`)
 - macOS output (unofficial): on a Mac, `.app` / `.dmg` under `bundle/` if a local build succeeds
 
 End-user setup, usage, CLI tools, and release downloads are in the [docs site](https://nathanmeyersvo.github.io/IceTrackVault/guide/user-manual/).

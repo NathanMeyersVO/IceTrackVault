@@ -3,7 +3,8 @@
     "strict": true,
     "checks": [
       { "context": "frontend" },
-      { "context": "rust" }
+      { "context": "rust" },
+      { "context": "rust-linux" }
     ]
   },
   "enforce_admins": false,

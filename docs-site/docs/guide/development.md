@@ -1,6 +1,6 @@
 # Build from source
 
-**Windows** is the supported development and release target: CI produces Windows installers only. The codebase is OS-independent (Tauri + Rust), and building on macOS should be possible using the steps below, but macOS delivery is not a current priority. The author welcomes help from macOS developers who want to take on enabling and maintaining macOS—please open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
+**Windows** and **Linux** are the supported development and release targets. CI builds and tests the Rust backend on both, and tagged releases publish Windows installers plus a Linux `.deb` and `.AppImage`. Building on macOS should be possible using the steps below, but macOS delivery is not a current priority. The author welcomes help from macOS developers who want to take on enabling and maintaining macOS—please open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
 
 ## Prerequisites
 
@@ -18,6 +18,19 @@ rustc --version
 ```
 
 Also ensure [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) is installed (included on Windows 10/11).
+
+### Linux
+
+Debian and Ubuntu need the Tauri system libraries (WebKitGTK 4.1 and ALSA):
+
+```bash
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
+  libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev \
+  patchelf pkg-config libasound2-dev
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustc --version
+```
 
 ### macOS
 
@@ -42,7 +55,8 @@ Release installer:
 npm run tauri build
 ```
 
-- Windows output (official releases): `src-tauri/target/release/bundle/`
+- Windows output (official releases): `src-tauri/target/release/bundle/` (`.msi` and `.exe`)
+- Linux output (official releases): `src-tauri/target/release/bundle/` (`.deb` and `.AppImage`; RPM is not built)
 - macOS output (unofficial / contributor): on a Mac, `npm run tauri build` may produce `.app` / `.dmg` under the same `bundle/` path—not tested or shipped by the project today
 
 If line endings look wrong after cloning, run `git add --renormalize .` once (see `.gitattributes` in the repo).

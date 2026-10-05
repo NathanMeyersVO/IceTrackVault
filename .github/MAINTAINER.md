@@ -22,7 +22,7 @@ Enable:
 | Branch name pattern | `main` |
 | Require a pull request before merging | On |
 | Require review from Code Owners | On (requires [.github/CODEOWNERS](CODEOWNERS)) |
-| Require status checks to pass | On — select **frontend** and **rust** after they appear from a PR (from [ci.yml](workflows/ci.yml)) |
+| Require status checks to pass | On — select **frontend**, **rust**, and **rust-linux** after they appear from a PR (from [ci.yml](workflows/ci.yml)) |
 | Require conversation resolution | On (recommended) |
 | Do not allow bypassing the above settings | Off for administrators — so you can still push to `main` directly |
 | Restrict who can push to matching branches | **Org repos only.** On a personal repo, skip this; use no Write/Maintain collaborators plus PR requirements below. |

@@ -13,19 +13,20 @@ Configure this **once per music PC**, then use **Upload from phone** whenever yo
 ## What you need
 
 - A **Cloudflare** account with a domain (or subdomain) you can route through a tunnel.
-- The **`cloudflared`** CLI installed on the same Windows PC that runs IceTrackVault, on your PATH.
+- The **`cloudflared`** CLI installed on the same Windows or Linux computer that runs IceTrackVault, on your PATH.
 - A **public HTTPS origin** (hostname only) that points at your tunnel—for example `https://upload.yourclub.org` (no path after the hostname).
 
 IceTrackVault listens on **127.0.0.1** on a **local port** (default **38444**). Your Cloudflare tunnel must forward that hostname to `http://localhost:38444` unless you change the port in both places.
 
-## Install cloudflared (Windows)
+## Install cloudflared
 
-On the music PC:
+On the music computer:
 
-1. Install from [Cloudflare tunnel downloads](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/), or run:
+1. Install from [Cloudflare tunnel downloads](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/). On Windows you can also run:
    ```powershell
    winget install Cloudflare.cloudflared
    ```
+   On Linux, install the `cloudflared` package from that page and ensure it is on your PATH.
 2. Open a **new** terminal so PATH updates, then confirm `cloudflared` runs.
 
 In IceTrackVault, open **View → Phone upload setup…** and click **Check cloudflared install** to verify the app can find it.

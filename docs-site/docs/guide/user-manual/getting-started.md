@@ -6,12 +6,32 @@ next:
 
 # Getting started
 
-IceTrackVault is available on **Windows** (installers on GitHub Releases). macOS is not offered as a supported platform today; see [Build from source](../development) if you are a contributor exploring a local macOS build.
+IceTrackVault is available on **Windows** and **Linux** (installers on GitHub Releases). macOS is not offered as a supported platform today; see [Build from source](../development) if you are a contributor exploring a local macOS build.
 
 ## Install
 
+### Windows
+
 1. Open [Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases) and download the latest installer (`.msi` and/or `.exe`).
 2. Run the installer. Because the installer is "not downloaded frequently", Windows SmartScreen will probably display a security warning asking whether you want to keep or discard the file; select keep to proceed with the installation.
+
+### Linux
+
+1. Open [Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases) and download the latest `.deb` or `.AppImage`.
+2. On Debian or Ubuntu, install the package (this also installs WebKitGTK):
+
+   ```bash
+   sudo apt install ./IceTrackVault_*_amd64.deb
+   ```
+
+3. Or run the AppImage after marking it executable:
+
+   ```bash
+   chmod +x IceTrackVault_*_amd64.AppImage
+   ./IceTrackVault_*_amd64.AppImage
+   ```
+
+   If the AppImage will not start, install `libfuse2`.
 
 ## First steps in the app
 
