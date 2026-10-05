@@ -75,15 +75,6 @@ If a filename already exists in that collection, IceTrackVault asks whether to o
 
 With a collection open, the center panel lists its tracks. Playback works like event tracklists: single-click or use **↑** / **↓** to highlight a row; double-click or **Enter** to play. Transport controls and shortcuts are described in [Using the music player](./using-music-player#playing-music).
 
-<figure class="screenshot-box">
-  <img
-    src="/screenshots/stored-collections-view.png"
-    alt="Stored collection track list with playback and export controls in the header"
-    data-zoomable
-  />
-  <figcaption>A stored collection open in the center panel. Reorder tracks with the grip on each row.</figcaption>
-</figure>
-
 - **Reorder tracks** — drag the row **grip**.
 - **⋮** menu on a row — **Edit tags…** or **Delete** (removes the file from app storage).
 
@@ -102,15 +93,6 @@ In the collection header, set **Playback** to match how you run that library.
 ### Continuous background
 
 **Continuous background** is for break music and other loops. When one track ends, IceTrackVault advances to the **next track in list order** and wraps from the last track back to the first.
-
-<figure class="screenshot-box">
-  <img
-    src="/screenshots/stored-collections-continuous.png"
-    alt="Continuous background playback mode with background volume slider"
-    data-zoomable
-  />
-  <figcaption><strong>Continuous background</strong> with a background volume level. Export saves these settings in the archive.</figcaption>
-</figure>
 
 - **Background volume** — percentage of the master volume slider in the player bar (shown while continuous mode is selected).
 - **Resume position** — the app remembers the last track and position for that collection when you reopen it or return from elsewhere.
