@@ -766,12 +766,13 @@ mod tests {
 
     #[test]
     fn temp_replace_path_preserves_audio_extension() {
-        let target = Path::new(r"C:\library\Berniece Pacocha.mp3");
-        let temp = temp_replace_path(target);
+        let target = PathBuf::from("library").join("Berniece Pacocha.mp3");
+        let temp = temp_replace_path(&target);
         assert_eq!(
             temp.file_name().and_then(|n| n.to_str()),
             Some("Berniece Pacocha.icetrackvault-replace.mp3")
         );
+        assert_eq!(temp.parent(), target.parent());
     }
 }
 
