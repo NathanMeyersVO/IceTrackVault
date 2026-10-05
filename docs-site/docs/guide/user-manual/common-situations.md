@@ -108,6 +108,8 @@ IceTrackVault opens the new empty event. Assign tracks by uploading and tagging,
   <figcaption><strong>+Event</strong> on the Events taglist — enter the EMS <strong>Composer</strong> number and the sidebar display title.</figcaption>
 </figure>
 
+**Another way:** IceTrackVault also adds an event row when any track’s **`Composer`** tag is set to a number that is not already an event—for example with **⋮ → Edit tags…** or **Change Event…**. The new row appears in **Events** with only the event number in the sidebar (no display title). Click the row and use **Edit title** to add the name shown in the sidebar, the same as for events you create with **+Event**.
+
 ## Replace track
 
 Use **Replace file** when tags, event, and skater identity are correct but the **audio** is wrong—corrupt file, wrong mix, or a corrected upload from the skater. The track stays the same row in the project; only the project copy of the audio changes.
@@ -128,7 +130,7 @@ You might want to download updated tracks and event names from EMS after your or
 
 ### Understand the risk
 
-**Apply EMS Download… is not a read-only preview.** Even in **Merge** mode, the changes you select can **overwrite** music files and metadata and **change the event schedule**—undoing rink-side fixes such as swapped files, tag edits, or phone uploads when EMS applies an update to the same track or event.
+**Apply EMS Download… is not a read-only preview.** Even in **Merge** mode, the changes you select can **overwrite** music files and metadata and **change the event schedule**—undoing fixes such as swapped files, tag edits, or phone uploads when EMS applies an update to the same track or event.
 
 **Full replacement (include removals)** goes further: IceTrackVault treats the EMS download as the **complete** source for competition music and schedule. Tracks in your project that are **not** in the download are proposed for **removal**, along with anything you added manually that EMS does not include.
 
