@@ -158,7 +158,9 @@ export function PhoneUploadSettingsModal({ onClose, onSaved }: PhoneUploadSettin
               </a>
               . Windows:{" "}
               <code className="text-foreground">winget install Cloudflare.cloudflared</code> (or download
-              the .exe). macOS: <code className="text-foreground">brew install cloudflared</code>. Use{" "}
+              the .exe). macOS: <code className="text-foreground">brew install cloudflared</code>. Linux:
+              install the <code className="text-foreground">cloudflared</code> package from Cloudflare and
+              ensure it is on PATH. Use{" "}
               <span className="text-foreground">Check cloudflared install</span> below to verify.
             </li>
             <li>

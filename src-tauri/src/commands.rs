@@ -1796,14 +1796,32 @@ fn session_delivery_application(
 }
 
 #[tauri::command]
-pub fn stage_delivery(
+pub async fn stage_delivery(
     app: AppHandle,
-    state: State<'_, AppState>,
     source_paths: Vec<String>,
     project_id: Option<String>,
     application_id: Option<String>,
 ) -> Result<DeliveryPreview, String> {
-    let progress = DeliveryProgressCtx::from_app(&app);
+    if source_paths.is_empty() {
+        return Err("Select a delivery folder".to_string());
+    }
+    let app = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        stage_delivery_sync(&app, &state, source_paths, project_id, application_id)
+    })
+    .await
+    .map_err(|e| format!("Staging failed: {e}"))?
+}
+
+fn stage_delivery_sync(
+    app: &AppHandle,
+    state: &AppState,
+    source_paths: Vec<String>,
+    project_id: Option<String>,
+    application_id: Option<String>,
+) -> Result<DeliveryPreview, String> {
+    let progress = DeliveryProgressCtx::from_app(app);
     if source_paths.is_empty() {
         return Err("Select a delivery folder".to_string());
     }
@@ -1915,16 +1933,41 @@ pub fn preview_delivery_with_mode(
 }
 
 #[tauri::command]
-pub fn apply_staged_delivery(
+pub async fn apply_staged_delivery(
     app: AppHandle,
-    state: State<'_, AppState>,
     staging_session_id: String,
     change_ids: Vec<String>,
     apply_mode: String,
     new_project_name: Option<String>,
     application_id: Option<String>,
 ) -> Result<ApplyDeliveryResult, String> {
-    let progress = DeliveryProgressCtx::from_app(&app);
+    let app = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        apply_staged_delivery_sync(
+            &app,
+            &state,
+            staging_session_id,
+            change_ids,
+            apply_mode,
+            new_project_name,
+            application_id,
+        )
+    })
+    .await
+    .map_err(|e| format!("Apply failed: {e}"))?
+}
+
+fn apply_staged_delivery_sync(
+    app: &AppHandle,
+    state: &AppState,
+    staging_session_id: String,
+    change_ids: Vec<String>,
+    apply_mode: String,
+    new_project_name: Option<String>,
+    application_id: Option<String>,
+) -> Result<ApplyDeliveryResult, String> {
+    let progress = DeliveryProgressCtx::from_app(app);
     let session = state
         .delivery_sessions
         .get(&staging_session_id)

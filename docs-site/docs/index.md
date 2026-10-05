@@ -3,7 +3,7 @@ layout: home
 hero:
   name: IceTrackVault
   text: Music player for figure skating competitions
-  tagline: Manage competition music, with waveform playback on Windows.
+  tagline: Manage competition music, with waveform playback on Windows and Linux.
   image:
     src: /screenshots/sample-view.png
     alt: IceTrackVault main window showing project tracks and waveform playback
@@ -37,7 +37,7 @@ New to IceTrackVault? This short video walks through the main window, projects, 
 
 ## About
 
-**IceTrackVault** is a Windows desktop music player built specifically for figure skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — setting up and managing the music creates a lot of extra work. IceTrackVault greatly reduces the heavy workload and tedious change management, streamlining the entire competition music workflow.
+**IceTrackVault** is a desktop music player for Windows and Linux, built specifically for figure skating competitions. While event organizers have long relied on iTunes — using templates and build procedures provided by US Figure Skating — setting up and managing the music creates a lot of extra work. IceTrackVault greatly reduces the heavy workload and tedious change management, streamlining the entire competition music workflow.
 
 Here is how the application simplifies competition management:
 
@@ -62,6 +62,6 @@ Here is how the application simplifies competition management:
 
 ---
 
-Pre-built **Windows installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS is not supported for end users today - but the codebase is OS-independent and a macOS build should be possible. Contributions from macOS developers who want to help enable macOS are welcome: open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault). See [Build from source](/guide/development) for prerequisites.
+Pre-built **Windows and Linux installers** are on [GitHub Releases](https://github.com/NathanMeyersVO/IceTrackVault/releases). macOS is not supported for end users today. Contributions from macOS developers who want to help enable macOS are welcome: open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault). See [Build from source](/guide/development) for prerequisites.
 
 **Documentation:** [User manual](/guide/user-manual/) · [Source on GitHub](https://github.com/NathanMeyersVO/IceTrackVault) · [Contact the IceTrackVault team](https://forms.gle/38pZySw5F1Q8KAez7)

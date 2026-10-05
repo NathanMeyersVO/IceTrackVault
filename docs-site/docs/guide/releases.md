@@ -1,15 +1,15 @@
 # Download & releases
 
-IceTrackVault ships **Windows-only** installers. macOS builds are not published or maintained as part of releases today.
+IceTrackVault ships **Windows** and **Linux** installers. macOS builds are not published or maintained as part of releases today.
 
-Pre-built **Windows** installers are published as [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) assets:
+Pre-built installers are published as [GitHub Release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) assets:
 
 **[github.com/NathanMeyersVO/IceTrackVault/releases](https://github.com/NathanMeyersVO/IceTrackVault/releases)**
 
-1. Download the latest installer (`.msi` and/or `.exe` setup, depending on what the build produced).
-2. Installers are Authenticode-signed via [Azure Artifact Signing](https://learn.microsoft.com/en-us/azure/artifact-signing/overview). Microsoft SmartScreen may still show a warning on brand-new releases until the certificate and files build reputation.
+1. **Windows:** download the latest installer (`.msi` and/or `.exe` setup). Installers are Authenticode-signed via [Azure Artifact Signing](https://learn.microsoft.com/en-us/azure/artifact-signing/overview). Microsoft SmartScreen may still show a warning on brand-new releases until the certificate and files build reputation.
+2. **Linux:** download the `.deb` (Debian and Ubuntu) or the `.AppImage`. Linux packages are not code-signed.
 
-The source is Tauri-based and a local macOS build may be possible, but that is not a current priority. The author welcomes help from any interested macOS developer who would like to take on enabling macOS—see [Build from source](./development) and [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
+A local macOS build may be possible, but that is not a current priority. The author welcomes help from any interested macOS developer who would like to take on enabling macOS—see [Build from source](./development) and [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
 
 ## Maintainers — ship a new version
 
@@ -23,13 +23,13 @@ The source is Tauri-based and a local macOS build may be possible, but that is n
    ```
 
 4. In GitHub **Actions**, wait for the **Release** workflow to finish.
-5. Open the new **draft** release under **Releases**, verify the Windows assets, then **Publish release**.
+5. Open the new **draft** release under **Releases**, verify the Windows assets (`.msi` / `.exe`) and the Linux assets (`.deb` / `.AppImage`), then **Publish release**.
 
 Use tag names like `v1.0.0` that match the app version `1.0.0`.
 
 ## Maintainers — code signing (Azure OIDC)
 
-Release builds sign Windows binaries and installers during `tauri build` using **Azure Artifact Signing**, **`azure/login` (OIDC)**, and [`src-tauri/sign-windows.ps1`](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/src-tauri/sign-windows.ps1) (signtool + the Artifact Signing client DLL), configured in the Release workflow (see [`.github/workflows/release.yml`](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/.github/workflows/release.yml)).
+Release builds sign Windows binaries and installers during `tauri build` using **Azure Artifact Signing**, **`azure/login` (OIDC)**, and [`src-tauri/sign-windows.ps1`](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/src-tauri/sign-windows.ps1) (signtool + the Artifact Signing client DLL), configured in the Release workflow (see [`.github/workflows/release.yml`](https://github.com/NathanMeyersVO/IceTrackVault/blob/main/.github/workflows/release.yml)). Linux `.deb` and `.AppImage` packages from the same workflow are not code-signed.
 
 ### GitHub Actions secrets
 

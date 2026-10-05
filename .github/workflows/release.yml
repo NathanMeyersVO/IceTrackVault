@@ -79,7 +79,58 @@ jobs:
           projectPath: src-tauri
           tagName: ${{ github.ref_name }}
           releaseName: IceTrackVault ${{ github.ref_name }}
-          releaseBody: See the assets below to download and install this version on Windows.
+          releaseBody: See the assets below to download and install this version on Windows (.msi / .exe) or Linux (.deb / .AppImage). Windows installers are Authenticode-signed. Linux packages are not code-signed.
           releaseDraft: true
           prerelease: false
           args: --target x86_64-pc-windows-msvc --config tauri.windows.conf.json
+
+  publish-linux:
+    environment: release
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libglib2.0-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            pkg-config \
+            libasound2-dev
+
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: src-tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: IceTrackVault ${{ github.ref_name }}
+          releaseBody: See the assets below to download and install this version on Windows (.msi / .exe) or Linux (.deb / .AppImage). Windows installers are Authenticode-signed. Linux packages are not code-signed.
+          releaseDraft: true
+          prerelease: false
+          args: --bundles deb,appimage

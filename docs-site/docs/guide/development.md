@@ -1,6 +1,6 @@
 # Build from source
 
-**Windows** is the supported development and release target: CI produces Windows installers only. The codebase is OS-independent (Tauri + Rust), and building on macOS should be possible using the steps below, but macOS delivery is not a current priority. The author welcomes help from macOS developers who want to take on enabling and maintaining macOS—please open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
+**Windows** and **Linux** are the supported development and release targets. CI builds and tests the Rust backend on both, and tagged releases publish Windows installers plus a Linux `.deb` and `.AppImage`. Building on macOS should be possible using the steps below, but macOS delivery is not a current priority. The author welcomes help from macOS developers who want to take on enabling and maintaining macOS—please open an issue or pull request on [GitHub](https://github.com/NathanMeyersVO/IceTrackVault).
 
 ## Prerequisites
 
@@ -18,6 +18,39 @@ rustc --version
 ```
 
 Also ensure [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) is installed (included on Windows 10/11).
+
+### Linux
+
+Debian and Ubuntu need the Tauri system libraries (WebKitGTK 4.1 and ALSA):
+
+```bash
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-dev libglib2.0-dev build-essential curl wget file \
+  libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev \
+  patchelf pkg-config libasound2-dev
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustc --version
+```
+
+**`libglib2.0-dev`** provides `glib-2.0.pc` and `gobject-2.0.pc` (used by Rust `glib-sys` / `gobject-sys`). It is listed explicitly so pkg-config errors are easy to grep; WebKitGTK dev packages also depend on it.
+
+### Troubleshooting (Linux)
+
+#### `Package glib-2.0` or `gobject-2.0 was not found` / `glib-sys` or `gobject-sys` build failure
+
+If `cargo` or `npm run tauri dev` fails with pkg-config errors for `glib-2.0` or `gobject-2.0`, the WebKitGTK / GLib development packages are missing. Install the [Linux](#linux) apt packages above (same list as CI in `.github/workflows/ci.yml`), then verify:
+
+```bash
+pkg-config --modversion glib-2.0
+pkg-config --modversion gobject-2.0
+pkg-config --modversion webkit2gtk-4.1
+```
+
+All three commands should print a version without errors. Then retry `npm run tauri dev`.
+
+If packages are installed but pkg-config still cannot find them, check that you are not in a minimal environment without `dev` packages. On unusual setups, ensure `PKG_CONFIG_PATH` includes the directory that contains `glib-2.0.pc` (often `/usr/lib/x86_64-linux-gnu/pkgconfig` on amd64).
+
+See also [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ### macOS
 
@@ -42,7 +75,8 @@ Release installer:
 npm run tauri build
 ```
 
-- Windows output (official releases): `src-tauri/target/release/bundle/`
+- Windows output (official releases): `src-tauri/target/release/bundle/` (`.msi` and `.exe`)
+- Linux output (official releases): `src-tauri/target/release/bundle/` (`.deb` and `.AppImage`; RPM is not built)
 - macOS output (unofficial / contributor): on a Mac, `npm run tauri build` may produce `.app` / `.dmg` under the same `bundle/` path—not tested or shipped by the project today
 
 If line endings look wrong after cloning, run `git add --renormalize .` once (see `.gitattributes` in the repo).

@@ -11,8 +11,8 @@ import {
   groupSelectionState,
 } from "../lib/deliveryPreviewGroups";
 import { getDeliveryCopy } from "../lib/applicationConfig";
+import { yieldToMainThread } from "../lib/yieldToMainThread";
 import { usePlayerStore } from "../store/playerStore";
-import { DeliveryBusyOverlay } from "./DeliveryBusyOverlay";
 
 export interface DeliveryPreviewModalProps {
   preview: DeliveryPreview;
@@ -29,7 +29,7 @@ export function DeliveryPreviewModal({
   mode,
   projectName,
   applicationId,
-  overlayClassName = "z-50",
+  overlayClassName = "z-[90]",
   onClose,
   onApplied,
 }: DeliveryPreviewModalProps) {
@@ -43,8 +43,8 @@ export function DeliveryPreviewModal({
   const [previewRefreshing, setPreviewRefreshing] = useState(mode === "update");
   const [error, setError] = useState<string | null>(null);
   const deliveryCopy = getDeliveryCopy(applicationId);
-  const deliveryProgress = usePlayerStore((s) => s.deliveryProgress);
   const setDeliveryProgress = usePlayerStore((s) => s.setDeliveryProgress);
+  const setDeliveryApplyBusy = usePlayerStore((s) => s.setDeliveryApplyBusy);
 
   const groups = useMemo(() => groupDeliveryChanges(preview.changes), [preview.changes]);
 
@@ -137,10 +137,15 @@ export function DeliveryPreviewModal({
     setExpandedGroups(new Set());
   }, []);
 
+  const applyBusyTitle =
+    mode === "create" ? "Creating project…" : deliveryCopy.applyingBusyTitle;
+
   const apply = async () => {
     setBusy(true);
+    setDeliveryApplyBusy(true, applyBusyTitle);
     setError(null);
     try {
+      await yieldToMainThread();
       await api.applyStagedDelivery(
         preview.staging_session_id,
         [...selected],
@@ -153,20 +158,19 @@ export function DeliveryPreviewModal({
       setError(String(e));
     } finally {
       setBusy(false);
+      setDeliveryApplyBusy(false);
       setDeliveryProgress(null);
     }
   };
+
+  if (busy) {
+    return null;
+  }
 
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center bg-black/60 p-4 ${overlayClassName}`}
     >
-      {busy ? (
-        <DeliveryBusyOverlay
-          title={mode === "create" ? "Creating project…" : deliveryCopy.applyingBusyTitle}
-          progress={deliveryProgress}
-        />
-      ) : null}
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg border border-border bg-surface shadow-xl">
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-sm font-semibold text-foreground">
@@ -192,24 +196,45 @@ export function DeliveryPreviewModal({
         </div>
 
         {mode === "update" && (
-          <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-2 text-xs">
-            <label className="flex items-center gap-1.5">
-              <input
-                type="radio"
-                checked={applyMode === "merge"}
-                onChange={() => setApplyMode("merge")}
-              />
-              Merge (keep tracks not in {deliveryCopy.deliverySingular})
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input
-                type="radio"
-                checked={applyMode === "full_replace"}
-                onChange={() => setApplyMode("full_replace")}
-              />
-              Full replacement (include removals)
-            </label>
-          </div>
+          <>
+            <div
+              className="border-b border-border px-4 py-2"
+              role="note"
+              aria-label={deliveryCopy.previewApplyRiskTitle}
+            >
+              <p className="rounded-md border border-border/80 bg-surface-hover/40 px-3 py-2 text-xs text-muted">
+                <span className="font-medium text-foreground">
+                  {deliveryCopy.previewApplyRiskTitle}
+                </span>
+                <span className="mt-1 block">{deliveryCopy.previewApplyRiskBody}</span>
+              </p>
+            </div>
+            <div className="border-b border-border px-4 py-2 text-xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    checked={applyMode === "merge"}
+                    onChange={() => setApplyMode("merge")}
+                  />
+                  Merge (keep tracks not in {deliveryCopy.deliverySingular})
+                </label>
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    checked={applyMode === "full_replace"}
+                    onChange={() => setApplyMode("full_replace")}
+                  />
+                  Full replacement (include removals)
+                </label>
+              </div>
+              <p className="mt-2 text-muted">
+                {applyMode === "merge"
+                  ? deliveryCopy.previewApplyMergeModeHelp
+                  : deliveryCopy.previewApplyFullReplaceModeHelp}
+              </p>
+            </div>
+          </>
         )}
 
         <div className="flex flex-wrap gap-x-3 gap-y-1 border-b border-border px-4 py-2 text-xs">

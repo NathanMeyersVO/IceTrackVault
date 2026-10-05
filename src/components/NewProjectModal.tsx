@@ -6,6 +6,7 @@ import { useDeliveryFolderConfirm } from "../hooks/useDeliveryFolderConfirm";
 import { getDeliveryCopy } from "../lib/applicationConfig";
 import { APPLICATION_OPTIONS } from "../lib/applicationLabels";
 import { api, type ApplicationId, type DeliveryPreview } from "../lib/tauri";
+import { yieldToMainThread } from "../lib/yieldToMainThread";
 import { usePlayerStore } from "../store/playerStore";
 
 export interface NewProjectModalProps {
@@ -26,6 +27,7 @@ export function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalPr
       setDeliveryStaging(true, applicationId);
       setError(null);
       try {
+        await yieldToMainThread();
         const preview = await api.stageDelivery(sourcePaths, null, applicationId);
         setDeliveryPreview(preview);
       } catch (e) {
@@ -58,7 +60,7 @@ export function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalPr
 
   return (
     <>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
         <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-lg border border-border bg-surface shadow-xl">
           <div className="border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold text-foreground">New project</h2>
@@ -129,7 +131,7 @@ export function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalPr
           mode="create"
           projectName={newName.trim()}
           applicationId={applicationId}
-          overlayClassName="z-[70]"
+          overlayClassName="z-[90]"
           onClose={() => setDeliveryPreview(null)}
           onApplied={() => {
             setDeliveryPreview(null);

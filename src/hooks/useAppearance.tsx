@@ -73,7 +73,9 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyAppearance(settings);
-  }, [settings]);
+    document.documentElement.style.colorScheme =
+      getScheme(themeId).mode === "light" ? "light" : "dark";
+  }, [settings, themeId]);
 
   useEffect(() => {
     let cancelled = false;

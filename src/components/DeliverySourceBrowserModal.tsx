@@ -200,7 +200,7 @@ export function DeliverySourceBrowserModal({
   }, [browse?.path, onContinue]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4">
       <div className="flex max-h-[92vh] w-full max-w-4xl flex-col rounded-lg border border-border bg-surface shadow-xl">
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-base font-semibold text-foreground">{title}</h2>

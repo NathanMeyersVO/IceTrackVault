@@ -8,7 +8,6 @@ import {
   api,
   type ArchiveExportProgress,
   type AudioCacheProgress,
-  type DeliveryProgress,
   type ProjectLoadProgress,
 } from "../lib/tauri";
 
@@ -33,7 +32,6 @@ export function useProject() {
     setProjectSearchQuery,
     setPendingPartitionFocus,
     setProjectScanProgress,
-    setDeliveryProgress,
     setArchiveExportProgress,
     setProjectLoadProgress,
     markProjectLoadChecked,
@@ -128,7 +126,11 @@ export function useProject() {
       .getProjectLoadProgress()
       .then((progress) => {
         if (!cancelled) {
-          markProjectLoadChecked(progress);
+          if (progress != null) {
+            setProjectLoadProgress(progress);
+          } else {
+            markProjectLoadChecked(null);
+          }
         }
       })
       .catch((error) => {
@@ -149,6 +151,41 @@ export function useProject() {
   }, [markProjectLoadChecked, setProjectLoadProgress]);
 
   useEffect(() => {
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const poll = async () => {
+      const { projectLoadProgress, projectLoadChecked } = usePlayerStore.getState();
+      const active =
+        projectLoadProgress != null && !projectLoadProgress.finished;
+      if (projectLoadChecked && !active) {
+        if (intervalId != null) {
+          window.clearInterval(intervalId);
+          intervalId = undefined;
+        }
+        return;
+      }
+      try {
+        const progress = await api.getProjectLoadProgress();
+        if (cancelled || progress == null) return;
+        setProjectLoadProgress(progress);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    intervalId = window.setInterval(() => void poll(), 500);
+    void poll();
+
+    return () => {
+      cancelled = true;
+      if (intervalId != null) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [setProjectLoadProgress]);
+
+  useEffect(() => {
 
     const unlisten = listen<AudioCacheProgress>("project-scan-progress", (event) => {
 
@@ -165,26 +202,6 @@ export function useProject() {
     };
 
   }, [setProjectScanProgress]);
-
-
-
-  useEffect(() => {
-
-    const unlisten = listen<DeliveryProgress>("delivery-progress", (event) => {
-
-      setDeliveryProgress(event.payload);
-
-    });
-
-
-
-    return () => {
-
-      unlisten.then((fn) => fn());
-
-    };
-
-  }, [setDeliveryProgress]);
 
   useEffect(() => {
     const unlisten = listen<ArchiveExportProgress>("archive-export-progress", (event) => {
