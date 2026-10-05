@@ -11,6 +11,7 @@ import {
   groupSelectionState,
 } from "../lib/deliveryPreviewGroups";
 import { getDeliveryCopy } from "../lib/applicationConfig";
+import { yieldToMainThread } from "../lib/yieldToMainThread";
 import { usePlayerStore } from "../store/playerStore";
 
 export interface DeliveryPreviewModalProps {
@@ -144,6 +145,7 @@ export function DeliveryPreviewModal({
     setDeliveryApplyBusy(true, applyBusyTitle);
     setError(null);
     try {
+      await yieldToMainThread();
       await api.applyStagedDelivery(
         preview.staging_session_id,
         [...selected],

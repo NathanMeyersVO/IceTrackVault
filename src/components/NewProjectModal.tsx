@@ -6,6 +6,7 @@ import { useDeliveryFolderConfirm } from "../hooks/useDeliveryFolderConfirm";
 import { getDeliveryCopy } from "../lib/applicationConfig";
 import { APPLICATION_OPTIONS } from "../lib/applicationLabels";
 import { api, type ApplicationId, type DeliveryPreview } from "../lib/tauri";
+import { yieldToMainThread } from "../lib/yieldToMainThread";
 import { usePlayerStore } from "../store/playerStore";
 
 export interface NewProjectModalProps {
@@ -26,6 +27,7 @@ export function NewProjectModal({ onClose, onProjectCreated }: NewProjectModalPr
       setDeliveryStaging(true, applicationId);
       setError(null);
       try {
+        await yieldToMainThread();
         const preview = await api.stageDelivery(sourcePaths, null, applicationId);
         setDeliveryPreview(preview);
       } catch (e) {

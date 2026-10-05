@@ -10,6 +10,7 @@ import { NowPlayingBar } from "./components/NowPlayingBar";
 import { TrackDragLayer } from "./components/TrackDragLayer";
 import { AudioCacheBanner } from "./components/AudioCacheBanner";
 import { DeliveryBusyOverlay } from "./components/DeliveryBusyOverlay";
+import { useDeliveryProgressEvents } from "./hooks/useDeliveryProgressEvents";
 import { useProject, usePlayer } from "./hooks/usePlayer";
 import { initPlayerController } from "./playerController";
 import { useSidebarWidth } from "./hooks/useSidebarWidth";
@@ -108,6 +109,8 @@ export default function App() {
   useEffect(() => {
     initPlayerController();
   }, []);
+
+  useDeliveryProgressEvents();
 
   const { selectTrack, playTrack, togglePlayPause, adjustVolume, seekToStart, seekToEnd } = usePlayer();
   const { width: sidebarWidth, onResizeStart } = useSidebarWidth();

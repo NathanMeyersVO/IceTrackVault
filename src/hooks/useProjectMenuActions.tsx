@@ -21,6 +21,7 @@ import { PhoneUploadSettingsModal } from "../components/PhoneUploadSettingsModal
 import { UploadTracksModal } from "../components/UploadTracksModal";
 import { usePhoneUploadSettings } from "./usePhoneUploadSettings";
 import { getDeliveryCopy, normalizeApplicationId } from "../lib/applicationConfig";
+import { yieldToMainThread } from "../lib/yieldToMainThread";
 import { api, type DeliveryPreview } from "../lib/tauri";
 import { useProject } from "./usePlayer";
 import { useProjectUiReset } from "./useProjectUiReset";
@@ -165,6 +166,7 @@ export function useProjectMenuActions() {
       setDeliveryStaging(true);
       setConfigError(null);
       try {
+        await yieldToMainThread();
         const preview = await api.stageDelivery(
           sourcePaths,
           activeProject.id,

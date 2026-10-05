@@ -8,7 +8,6 @@ import {
   api,
   type ArchiveExportProgress,
   type AudioCacheProgress,
-  type DeliveryProgress,
   type ProjectLoadProgress,
 } from "../lib/tauri";
 
@@ -33,7 +32,6 @@ export function useProject() {
     setProjectSearchQuery,
     setPendingPartitionFocus,
     setProjectScanProgress,
-    setDeliveryProgress,
     setArchiveExportProgress,
     setProjectLoadProgress,
     markProjectLoadChecked,
@@ -204,26 +202,6 @@ export function useProject() {
     };
 
   }, [setProjectScanProgress]);
-
-
-
-  useEffect(() => {
-
-    const unlisten = listen<DeliveryProgress>("delivery-progress", (event) => {
-
-      setDeliveryProgress(event.payload);
-
-    });
-
-
-
-    return () => {
-
-      unlisten.then((fn) => fn());
-
-    };
-
-  }, [setDeliveryProgress]);
 
   useEffect(() => {
     const unlisten = listen<ArchiveExportProgress>("archive-export-progress", (event) => {
