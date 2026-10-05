@@ -126,12 +126,20 @@ Use **Replace file** when tags, event, and skater identity are correct but the *
 
 You might want to download updated tracks and event names from EMS after your original setup.
 
-1. **Export Project…** first to create a safety backup ([Best practices](./best-practices#export-before-ems-updates)).
+### Understand the risk
+
+**Apply EMS Download… is not a read-only preview.** Even in **Merge** mode, the changes you select can **overwrite** music files and metadata and **change the event schedule**—undoing rink-side fixes such as swapped files, tag edits, or phone uploads when EMS applies an update to the same track or event.
+
+**Full replacement (include removals)** goes further: IceTrackVault treats the EMS download as the **complete** source for competition music and schedule. Tracks in your project that are **not** in the download are proposed for **removal**, along with anything you added manually that EMS does not include.
+
+Always **Export Project…** before applying ([Best practices](./best-practices#export-before-ems-updates)).
+
+1. **Export Project…** first to create a safety backup.
 2. Ensure the project is **Unlocked**.
 3. **Project → Apply EMS Download…** and select the new download folder (same idea as creating a project).
-4. Review the preview summary. Choose how to apply:
-   - **Merge** — add and update tracks and schedule entries; generally safer for routine updates.
-   - **Full replacement (include removals)** — treat the download as complete and authoritative: a *full replacement* of the current competition information and music.
+4. Read the in-app warning, review the change list, and choose how to apply:
+   - **Merge** — add and update tracks and schedule entries; keeps project tracks that are **not** in the EMS download, but still **overwrites** selected matches.
+   - **Full replacement (include removals)** — authoritative EMS snapshot: removes project tracks not in the download (when you apply those removals) and applies all merge-style overwrites.
 5. Click **Apply Selected Changes** (or the equivalent confirm control in the preview).
 
 After apply, spot-check **Events** and a few competitors. Use the sections above for any track still missing, in the wrong event, or needing a file replacement.
@@ -142,7 +150,7 @@ After apply, spot-check **Events** and a few competitors. Use the sections above
     alt="Apply EMS download preview with merge and full replacement options"
     data-zoomable
   />
-  <figcaption><strong>Apply EMS Download…</strong> preview — choose <strong>Merge</strong> or <strong>Full replacement (include removals)</strong>, then apply selected changes.</figcaption>
+  <figcaption><strong>Apply EMS Download…</strong> preview — read the overwrite warning, choose <strong>Merge</strong> or <strong>Full replacement (include removals)</strong>, then apply selected changes.</figcaption>
 </figure>
 
 ## What to read next

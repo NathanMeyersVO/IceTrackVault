@@ -28,6 +28,11 @@ export interface DeliveryCopy {
   applyUpdateDropZoneLabel: string;
   previewCreateTitle: string;
   previewApplyTitle: string;
+  /** Shown in apply preview when updating an existing project */
+  previewApplyRiskTitle: string;
+  previewApplyRiskBody: string;
+  previewApplyMergeModeHelp: string;
+  previewApplyFullReplaceModeHelp: string;
   stagingBusyTitle: string;
   applyingBusyTitle: string;
   appliedSuccessMessage: string;
@@ -70,6 +75,13 @@ const NONE_DELIVERY_COPY: DeliveryCopy = {
   applyUpdateDropZoneLabel: "Drop delivery folder here",
   previewCreateTitle: "Create project from delivery",
   previewApplyTitle: "Apply delivery update",
+  previewApplyRiskTitle: "This can overwrite work in your project",
+  previewApplyRiskBody:
+    "Applying selected changes may replace audio files, update metadata, and change the event schedule. Use Project → Export Project… first if you need a backup.",
+  previewApplyMergeModeHelp:
+    "Updates from the delivery can still replace tracks and schedule entries you changed at the rink. Tracks not in this delivery stay in the project unless you select schedule removals.",
+  previewApplyFullReplaceModeHelp:
+    "Treats the delivery as complete: project tracks not in the folder are removed when you apply those removals, plus all merge overwrite behavior.",
   stagingBusyTitle: "Staging delivery…",
   applyingBusyTitle: "Applying delivery update…",
   appliedSuccessMessage: "Delivery update applied",
@@ -103,6 +115,13 @@ const USFS_EMS_DELIVERY_COPY: DeliveryCopy = {
   applyUpdateDropZoneLabel: "Drop EMS download folder here",
   previewCreateTitle: "Create project from EMS download",
   previewApplyTitle: "Apply EMS download",
+  previewApplyRiskTitle: "This can overwrite work in your project",
+  previewApplyRiskBody:
+    "Applying selected changes may replace audio files, update metadata, and change the event schedule. Use Project → Export Project… first if you need a backup.",
+  previewApplyMergeModeHelp:
+    "EMS updates can still replace tracks and schedule entries you changed at the rink. Tracks not in this EMS download stay in the project unless you select schedule removals.",
+  previewApplyFullReplaceModeHelp:
+    "Treats the EMS download as complete: project tracks not in the download are removed when you apply those removals, plus all merge overwrite behavior.",
   stagingBusyTitle: "Staging EMS download…",
   applyingBusyTitle: "Applying EMS download…",
   appliedSuccessMessage: "EMS download applied",

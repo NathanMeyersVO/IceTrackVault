@@ -16,6 +16,8 @@ A desktop music player for **Windows** and **Linux**, with an iTunes-like layout
 
 ## Quick start (developers)
 
+On **Linux** (Debian/Ubuntu), install [Tauri system libraries](docs-site/docs/guide/development.md#linux) (WebKitGTK 4.1, ALSA, and related `-dev` packages) before building. Windows needs [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
+
 ```bash
 git clone https://github.com/NathanMeyersVO/IceTrackVault.git
 cd IceTrackVault

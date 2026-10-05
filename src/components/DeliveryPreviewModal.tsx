@@ -196,24 +196,45 @@ export function DeliveryPreviewModal({
         </div>
 
         {mode === "update" && (
-          <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-2 text-xs">
-            <label className="flex items-center gap-1.5">
-              <input
-                type="radio"
-                checked={applyMode === "merge"}
-                onChange={() => setApplyMode("merge")}
-              />
-              Merge (keep tracks not in {deliveryCopy.deliverySingular})
-            </label>
-            <label className="flex items-center gap-1.5">
-              <input
-                type="radio"
-                checked={applyMode === "full_replace"}
-                onChange={() => setApplyMode("full_replace")}
-              />
-              Full replacement (include removals)
-            </label>
-          </div>
+          <>
+            <div
+              className="border-b border-border px-4 py-2"
+              role="note"
+              aria-label={deliveryCopy.previewApplyRiskTitle}
+            >
+              <p className="rounded-md border border-border/80 bg-surface-hover/40 px-3 py-2 text-xs text-muted">
+                <span className="font-medium text-foreground">
+                  {deliveryCopy.previewApplyRiskTitle}
+                </span>
+                <span className="mt-1 block">{deliveryCopy.previewApplyRiskBody}</span>
+              </p>
+            </div>
+            <div className="border-b border-border px-4 py-2 text-xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    checked={applyMode === "merge"}
+                    onChange={() => setApplyMode("merge")}
+                  />
+                  Merge (keep tracks not in {deliveryCopy.deliverySingular})
+                </label>
+                <label className="flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    checked={applyMode === "full_replace"}
+                    onChange={() => setApplyMode("full_replace")}
+                  />
+                  Full replacement (include removals)
+                </label>
+              </div>
+              <p className="mt-2 text-muted">
+                {applyMode === "merge"
+                  ? deliveryCopy.previewApplyMergeModeHelp
+                  : deliveryCopy.previewApplyFullReplaceModeHelp}
+              </p>
+            </div>
+          </>
         )}
 
         <div className="flex flex-wrap gap-x-3 gap-y-1 border-b border-border px-4 py-2 text-xs">

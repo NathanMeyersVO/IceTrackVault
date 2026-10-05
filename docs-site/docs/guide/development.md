@@ -32,6 +32,25 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustc --version
 ```
 
+This pulls in **`libglib2.0-dev`** (among others), which provides `glib-2.0.pc` for the Rust `glib-sys` crate.
+
+### Troubleshooting (Linux)
+
+#### `Package glib-2.0 was not found` / `glib-sys` build failure
+
+If `cargo` or `npm run tauri dev` fails with pkg-config errors for `glib-2.0`, the WebKitGTK / GTK development packages are missing. Install the [Linux](#linux) apt packages above (same list as CI in `.github/workflows/ci.yml`), then verify:
+
+```bash
+pkg-config --modversion glib-2.0
+pkg-config --modversion webkit2gtk-4.1
+```
+
+Both commands should print a version without errors. Then retry `npm run tauri dev`.
+
+If packages are installed but pkg-config still cannot find them, check that you are not in a minimal environment without `dev` packages. On unusual setups, ensure `PKG_CONFIG_PATH` includes the directory that contains `glib-2.0.pc` (often `/usr/lib/x86_64-linux-gnu/pkgconfig` on amd64).
+
+See also [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+
 ### macOS
 
 ```bash

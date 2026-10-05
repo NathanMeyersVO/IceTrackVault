@@ -23,6 +23,7 @@ Thank you for helping improve IceTrackVault. This project uses a **fork-and-pull
 - Fill out the PR template (summary and test plan).
 - Keep PRs focused; split unrelated changes when possible.
 - Run before opening or updating a PR:
+  - On **Linux**, install system dependencies from the [development guide](docs-site/docs/guide/development.md#linux) before `npm run tauri dev` or `cargo test`.
   - `npm test`
   - `npm run build`
   - `cargo test --manifest-path src-tauri/Cargo.toml --lib`

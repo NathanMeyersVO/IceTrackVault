@@ -24,7 +24,7 @@ That archive is your safety net if you need to recover or move the project.
 
 ## Export before EMS updates
 
-Before **Project → Apply EMS Download…**, export a backup. Applying an EMS download could replace tracks or change event names. If you choose a total replacement, the EMS download will remove anything you added. Making a backup can help protect you against such surprises.
+Before **Project → Apply EMS Download…**, export a backup. **Merge** still applies overwrites for the changes you select—replacing audio, updating metadata, and changing schedule entries can undo work you did after the last import. **Full replacement (include removals)** treats the EMS download as complete and can **remove** project tracks that are not in the download, including music you added manually. A recent **Export Project…** archive is your recovery path if the result is not what you intended.
 
 If the project is locked (see below), set **Lock mode** to **Unlocked** before you apply an EMS download.
 
