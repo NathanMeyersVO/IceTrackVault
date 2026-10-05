@@ -394,7 +394,7 @@ export function ProjectHubModal({ onClose }: ProjectHubModalProps) {
           confirmLabel="Delete"
           destructive
           busy={busy}
-          overlayClassName="z-[60]"
+          overlayClassName="z-[95]"
           onConfirm={() => void confirmDelete()}
           onCancel={() => setDeleteTarget(null)}
         />

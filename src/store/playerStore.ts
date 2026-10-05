@@ -155,6 +155,8 @@ interface PlayerStore {
   scanning: boolean;
   deliveryStaging: boolean;
   deliveryStagingApplicationId: ApplicationId | null;
+  deliveryApplyBusy: boolean;
+  deliveryApplyTitle: string | null;
   deliveryProgress: DeliveryProgress | null;
   archiveExportProgress: ArchiveExportProgress | null;
   projectFolder: string | null;
@@ -193,6 +195,7 @@ interface PlayerStore {
   setPlayback: (playback: PlaybackState) => void;
   setScanning: (scanning: boolean) => void;
   setDeliveryStaging: (deliveryStaging: boolean, applicationId?: ApplicationId | null) => void;
+  setDeliveryApplyBusy: (busy: boolean, title?: string | null) => void;
   setDeliveryProgress: (deliveryProgress: DeliveryProgress | null) => void;
   setArchiveExportProgress: (archiveExportProgress: ArchiveExportProgress | null) => void;
   setProjectFolder: (projectFolder: string | null) => void;
@@ -260,6 +263,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   scanning: false,
   deliveryStaging: false,
   deliveryStagingApplicationId: null,
+  deliveryApplyBusy: false,
+  deliveryApplyTitle: null,
   deliveryProgress: null,
   archiveExportProgress: null,
   projectFolder: null,
@@ -318,6 +323,12 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
         : null,
       deliveryProgress: null,
     })),
+  setDeliveryApplyBusy: (deliveryApplyBusy, title) =>
+    set({
+      deliveryApplyBusy,
+      deliveryApplyTitle: deliveryApplyBusy ? (title ?? null) : null,
+      ...(deliveryApplyBusy ? {} : { deliveryProgress: null }),
+    }),
   setDeliveryProgress: (deliveryProgress) => set({ deliveryProgress }),
   setArchiveExportProgress: (archiveExportProgress) => set({ archiveExportProgress }),
   setProjectFolder: (projectFolder) => set({ projectFolder }),
@@ -327,10 +338,16 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
     set({ projectLoadProgress, projectLoadChecked: true }),
   markProjectLoadChecked: (progress) =>
     set((state) => {
+      if (progress != null && !progress.finished) {
+        return { projectLoadChecked: true, projectLoadProgress: progress };
+      }
+      if (progress != null && progress.finished) {
+        return { projectLoadChecked: true, projectLoadProgress: progress };
+      }
       if (state.projectLoadProgress && !state.projectLoadProgress.finished) {
         return { projectLoadChecked: true };
       }
-      return { projectLoadChecked: true, projectLoadProgress: progress };
+      return { projectLoadChecked: true, projectLoadProgress: null };
     }),
   beginTransport: (targetMs) =>
     set((state) => ({

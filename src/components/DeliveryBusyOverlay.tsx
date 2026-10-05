@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+
 import {
   deliveryProgressPercent,
   formatDeliveryProgressDetail,
@@ -23,9 +25,9 @@ export function DeliveryBusyOverlay({
     percentProp !== undefined ? percentProp : deliveryProgressPercent(progress ?? null);
   const determinate = percent != null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[100] isolate flex items-center justify-center bg-black/70 p-4 pointer-events-auto"
       role="alertdialog"
       aria-busy="true"
       aria-label={title}
@@ -51,6 +53,7 @@ export function DeliveryBusyOverlay({
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

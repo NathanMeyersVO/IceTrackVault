@@ -12,7 +12,6 @@ import {
 } from "../lib/deliveryPreviewGroups";
 import { getDeliveryCopy } from "../lib/applicationConfig";
 import { usePlayerStore } from "../store/playerStore";
-import { DeliveryBusyOverlay } from "./DeliveryBusyOverlay";
 
 export interface DeliveryPreviewModalProps {
   preview: DeliveryPreview;
@@ -29,7 +28,7 @@ export function DeliveryPreviewModal({
   mode,
   projectName,
   applicationId,
-  overlayClassName = "z-50",
+  overlayClassName = "z-[90]",
   onClose,
   onApplied,
 }: DeliveryPreviewModalProps) {
@@ -43,8 +42,8 @@ export function DeliveryPreviewModal({
   const [previewRefreshing, setPreviewRefreshing] = useState(mode === "update");
   const [error, setError] = useState<string | null>(null);
   const deliveryCopy = getDeliveryCopy(applicationId);
-  const deliveryProgress = usePlayerStore((s) => s.deliveryProgress);
   const setDeliveryProgress = usePlayerStore((s) => s.setDeliveryProgress);
+  const setDeliveryApplyBusy = usePlayerStore((s) => s.setDeliveryApplyBusy);
 
   const groups = useMemo(() => groupDeliveryChanges(preview.changes), [preview.changes]);
 
@@ -137,8 +136,12 @@ export function DeliveryPreviewModal({
     setExpandedGroups(new Set());
   }, []);
 
+  const applyBusyTitle =
+    mode === "create" ? "Creating project…" : deliveryCopy.applyingBusyTitle;
+
   const apply = async () => {
     setBusy(true);
+    setDeliveryApplyBusy(true, applyBusyTitle);
     setError(null);
     try {
       await api.applyStagedDelivery(
@@ -153,20 +156,19 @@ export function DeliveryPreviewModal({
       setError(String(e));
     } finally {
       setBusy(false);
+      setDeliveryApplyBusy(false);
       setDeliveryProgress(null);
     }
   };
+
+  if (busy) {
+    return null;
+  }
 
   return (
     <div
       className={`fixed inset-0 flex items-center justify-center bg-black/60 p-4 ${overlayClassName}`}
     >
-      {busy ? (
-        <DeliveryBusyOverlay
-          title={mode === "create" ? "Creating project…" : deliveryCopy.applyingBusyTitle}
-          progress={deliveryProgress}
-        />
-      ) : null}
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-lg border border-border bg-surface shadow-xl">
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-sm font-semibold text-foreground">

@@ -33,6 +33,14 @@ IceTrackVault is available on **Windows** and **Linux** (installers on GitHub Re
 
    If the AppImage will not start, install `libfuse2`.
 
+4. For **file and folder pickers** (import, open archive, etc.), install portal support if dialogs do not appear:
+
+   ```bash
+   sudo apt install xdg-desktop-portal xdg-desktop-portal-gtk
+   ```
+
+   When installing a `.deb` from your `Downloads` folder, apt may warn that `_apt` cannot read the file; copy the package to `/tmp` first or use `sudo dpkg -i ~/Downloads/IceTrackVault_*_amd64.deb`.
+
 ## First steps in the app
 
 <figure class="screenshot-box">

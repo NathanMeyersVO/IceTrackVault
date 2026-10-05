@@ -78,6 +78,8 @@ function MainContent() {
 
 export default function App() {
   const deliveryStaging = usePlayerStore((state) => state.deliveryStaging);
+  const deliveryApplyBusy = usePlayerStore((state) => state.deliveryApplyBusy);
+  const deliveryApplyTitle = usePlayerStore((state) => state.deliveryApplyTitle);
   const deliveryProgress = usePlayerStore((state) => state.deliveryProgress);
   const deliveryStagingApplicationId = usePlayerStore(
     (state) => state.deliveryStagingApplicationId,
@@ -94,7 +96,10 @@ export default function App() {
   const archiveExportActive =
     archiveExportProgress != null && !archiveExportProgress.finished;
   const showProjectLoad =
-    !deliveryStaging && !archiveExportActive && (!projectLoadChecked || projectLoadActive);
+    !deliveryStaging &&
+    !deliveryApplyBusy &&
+    !archiveExportActive &&
+    (!projectLoadChecked || projectLoadActive);
   const projectLoadTitle =
     projectLoadActive && projectLoadProgress.project_name
       ? `Loading ${projectLoadProgress.project_name}`
@@ -128,6 +133,11 @@ export default function App() {
     <div className="flex h-full flex-col">
       {deliveryStaging ? (
         <DeliveryBusyOverlay title={stagingTitle} progress={deliveryProgress} />
+      ) : deliveryApplyBusy ? (
+        <DeliveryBusyOverlay
+          title={deliveryApplyTitle ?? "Working…"}
+          progress={deliveryProgress}
+        />
       ) : archiveExportActive && archiveExportProgress ? (
         <DeliveryBusyOverlay
           title={archiveExportTitle(archiveExportProgress)}

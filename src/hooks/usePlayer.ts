@@ -128,7 +128,11 @@ export function useProject() {
       .getProjectLoadProgress()
       .then((progress) => {
         if (!cancelled) {
-          markProjectLoadChecked(progress);
+          if (progress != null) {
+            setProjectLoadProgress(progress);
+          } else {
+            markProjectLoadChecked(null);
+          }
         }
       })
       .catch((error) => {
@@ -147,6 +151,41 @@ export function useProject() {
       unlisten.then((fn) => fn());
     };
   }, [markProjectLoadChecked, setProjectLoadProgress]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const poll = async () => {
+      const { projectLoadProgress, projectLoadChecked } = usePlayerStore.getState();
+      const active =
+        projectLoadProgress != null && !projectLoadProgress.finished;
+      if (projectLoadChecked && !active) {
+        if (intervalId != null) {
+          window.clearInterval(intervalId);
+          intervalId = undefined;
+        }
+        return;
+      }
+      try {
+        const progress = await api.getProjectLoadProgress();
+        if (cancelled || progress == null) return;
+        setProjectLoadProgress(progress);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    intervalId = window.setInterval(() => void poll(), 500);
+    void poll();
+
+    return () => {
+      cancelled = true;
+      if (intervalId != null) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [setProjectLoadProgress]);
 
   useEffect(() => {
 
